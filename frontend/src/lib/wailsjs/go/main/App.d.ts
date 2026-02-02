@@ -12,13 +12,21 @@ export function GetImageViewerData():Promise<main.ImageViewerData>;
 
 export function GetMachineData():Promise<utils.MachineInfo>;
 
+export function GetPDFViewerData():Promise<main.PDFViewerData>;
+
 export function GetStartupFile():Promise<string>;
 
+export function GetViewerData():Promise<main.ViewerData>;
+
 export function OpenDefaultAppsSettings():Promise<void>;
+
+export function OpenImage(arg1:string,arg2:string):Promise<void>;
 
 export function OpenImageWindow(arg1:string,arg2:string):Promise<void>;
 
 export function OpenPDF(arg1:string,arg2:string):Promise<void>;
+
+export function OpenPDFWindow(arg1:string,arg2:string):Promise<void>;
 
 export function QuitApp():Promise<void>;
 

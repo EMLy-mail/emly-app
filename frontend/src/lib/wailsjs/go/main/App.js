@@ -18,12 +18,24 @@ export function GetMachineData() {
   return window['go']['main']['App']['GetMachineData']();
 }
 
+export function GetPDFViewerData() {
+  return window['go']['main']['App']['GetPDFViewerData']();
+}
+
 export function GetStartupFile() {
   return window['go']['main']['App']['GetStartupFile']();
 }
 
+export function GetViewerData() {
+  return window['go']['main']['App']['GetViewerData']();
+}
+
 export function OpenDefaultAppsSettings() {
   return window['go']['main']['App']['OpenDefaultAppsSettings']();
+}
+
+export function OpenImage(arg1, arg2) {
+  return window['go']['main']['App']['OpenImage'](arg1, arg2);
 }
 
 export function OpenImageWindow(arg1, arg2) {
@@ -32,6 +44,10 @@ export function OpenImageWindow(arg1, arg2) {
 
 export function OpenPDF(arg1, arg2) {
   return window['go']['main']['App']['OpenPDF'](arg1, arg2);
+}
+
+export function OpenPDFWindow(arg1, arg2) {
+  return window['go']['main']['App']['OpenPDFWindow'](arg1, arg2);
 }
 
 export function QuitApp() {

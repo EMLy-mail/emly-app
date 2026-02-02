@@ -49,10 +49,14 @@
 <Sidebar.Root style="opacity: 0.8;">
   <Sidebar.Header>
     <div
-      class="sidebar-title"
+      class="sidebar-title items-center justify-center p-3 border-b border-white/10"
       style="padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: center;"
     >
-      <img src="/logo.png" alt="Logo" />
+      <img src="/appicon.png" alt="Logo" width="64" height="64" />
+      <span
+        class="font-bold text-lg mt-2 pl-3"
+        style="font-family: system-ui, sans-serif;">EMLy by 3gIT</span
+      >
     </div>
   </Sidebar.Header>
   <Sidebar.Content>

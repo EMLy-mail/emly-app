@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, MailOpen, Image, FileText, File } from "@lucide/svelte";
-  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow } from "$lib/wailsjs/go/main/App";
+  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage } from "$lib/wailsjs/go/main/App";
   import type { internal } from "$lib/wailsjs/go/models";
   import { sidebarOpen } from "$lib/stores/app";
   import { onDestroy, onMount } from "svelte";
@@ -23,6 +23,7 @@
     if(mailState.currentEmail !== null) {
         sidebarOpen.set(false);
     }
+    console.log(mailState.currentEmail?.attachments)
   })
 
   onDestroy(() => {
@@ -55,10 +56,27 @@
 
   async function openPDFHandler(base64Data: string, filename: string) {
     try {
-      await OpenPDF(base64Data, filename);
+      if (settingsStore.settings.useBuiltinPDFViewer) {
+         await OpenPDFWindow(base64Data, filename);
+      } else {
+         await OpenPDF(base64Data, filename);
+      }
     } catch (error) {
       console.error("Failed to open PDF:", error);
         toast.error(m.mail_error_pdf());
+    }
+  }
+
+  async function openImageHandler(base64Data: string, filename: string) {
+    try {
+      if (settingsStore.settings.useBuiltinPreview) {
+         await OpenImageWindow(base64Data, filename);
+      } else {
+         await OpenImage(base64Data, filename);
+      }
+    } catch (error) {
+      console.error("Failed to open image:", error);
+        toast.error(m.mail_error_image());
     }
   }
 
@@ -177,10 +195,10 @@
           <div class="att-list">
             {#if mailState.currentEmail.attachments && mailState.currentEmail.attachments.length > 0}
               {#each mailState.currentEmail.attachments as att}
-                {#if att.contentType.startsWith("image/") && shouldPreview(att.filename)}
+                {#if att.contentType.startsWith("image/")}
                   <button
                     class="att-btn image"
-                    onclick={() => OpenImageWindow(arrayBufferToBase64(att.data), att.filename)}
+                    onclick={() => openImageHandler(arrayBufferToBase64(att.data), att.filename)}
                   >
                     <Image size="14" />
                     <span class="att-name">{att.filename}</span>

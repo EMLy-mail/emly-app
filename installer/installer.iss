@@ -1,6 +1,6 @@
 [Setup]
 AppName=EMLy
-AppVersion=1.0.0
+AppVersion=1.1.4
 DefaultDirName={autopf}\EMLy
 OutputBaseFilename=EMLy_Installer
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -8,6 +8,8 @@ DisableProgramGroupPage=yes
 ; Request administrative privileges for HKA to write to HKLM if needed, 
 ; or use "lowest" if purely per-user, but file associations usually work better with admin rights or proper HKA handling.
 PrivilegesRequired=admin
+SetupIconFile=..\build\windows\icon.ico
+UninstallDisplayIcon={app}\EMLy.exe
 
 [Files]
 ; Source path relative to this .iss file (assuming it is in the "installer" folder and build is in "../build")

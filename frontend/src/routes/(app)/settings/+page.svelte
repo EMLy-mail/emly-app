@@ -21,26 +21,26 @@
   import { dangerZoneEnabled, unsavedChanges } from "$lib/stores/app";
   import { LogDebug } from "$lib/wailsjs/runtime/runtime";
   import { settingsStore } from "$lib/stores/settings.svelte";
-  import { GetMachineData } from "$lib/wailsjs/go/main/App";
   import * as m from "$lib/paraglide/messages";
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
 
   let { data } = $props();
-  let machineData = $derived(data.machineData);
   let config = $derived(data.config);
 
   const defaults: EMLy_GUI_Settings = {
     selectedLanguage: "it",
     useBuiltinPreview: true,
+    useBuiltinPDFViewer: true,
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
   };
 
-
-  async function setLanguage(lang: EMLy_GUI_Settings["selectedLanguage"] | null) {
+  async function setLanguage(
+    lang: EMLy_GUI_Settings["selectedLanguage"] | null,
+  ) {
     if (!browser) return;
     try {
-      await setLocale(lang || "en", {reload: false});
+      await setLocale(lang || "en", { reload: false });
       toast.success(m.settings_toast_language_changed());
     } catch {
       toast.error(m.settings_toast_language_change_failed());
@@ -48,30 +48,27 @@
   }
 
   // Clone store state for form editing
-  let form = $state<EMLy_GUI_Settings>({ ...settingsStore.settings });
-  let lastSaved = $state<EMLy_GUI_Settings>({
-    ...settingsStore.settings,
-  });
+  // Use normalizeSettings to ensure new fields (like useBuiltinPDFViewer) are populated with defaults
+  let form = $state<EMLy_GUI_Settings>(normalizeSettings(settingsStore.settings));
+  let lastSaved = $state<EMLy_GUI_Settings>(normalizeSettings(settingsStore.settings));
   let dangerWarningOpen = $state(false);
 
-  function normalizeSettings(
-    s: EMLy_GUI_Settings,
-  ): EMLy_GUI_Settings {
+  function normalizeSettings(s: EMLy_GUI_Settings): EMLy_GUI_Settings {
     return {
       selectedLanguage: s.selectedLanguage || defaults.selectedLanguage || "en",
       useBuiltinPreview: !!s.useBuiltinPreview,
+      useBuiltinPDFViewer:
+        s.useBuiltinPDFViewer ?? defaults.useBuiltinPDFViewer ?? true,
       previewFileSupportedTypes:
         s.previewFileSupportedTypes || defaults.previewFileSupportedTypes || [],
     };
   }
 
-  function isSameSettings(
-    a: EMLy_GUI_Settings,
-    b: EMLy_GUI_Settings,
-  ) {
+  function isSameSettings(a: EMLy_GUI_Settings, b: EMLy_GUI_Settings) {
     return (
       (a.selectedLanguage ?? "") === (b.selectedLanguage ?? "") &&
       !!a.useBuiltinPreview === !!b.useBuiltinPreview &&
+      !!a.useBuiltinPDFViewer === !!b.useBuiltinPDFViewer &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -152,8 +149,9 @@
       isSameSettings(lastSaved, defaults) &&
       !isSameSettings(lastSaved, settingsStore.settings)
     ) {
-      form = { ...settingsStore.settings };
-      lastSaved = { ...settingsStore.settings };
+      // Ensure we normalize when syncing from store too
+      form = normalizeSettings(settingsStore.settings);
+      lastSaved = normalizeSettings(settingsStore.settings);
     }
   });
 
@@ -162,9 +160,6 @@
   $effect(() => {
     (async () => {
       if ($dangerZoneEnabled && !previousDangerZoneEnabled) {
-        if (!data.machineData || data.machineData === undefined) {
-          data.machineData = await GetMachineData();
-        }
         dangerWarningOpen = true;
         toast.info("Here be dragons!", { icon: Flame });
       }
@@ -191,16 +186,15 @@
       <Button
         class="cursor-pointer hover:cursor-pointer"
         variant="ghost"
-        onclick={() => goto("/")}><ChevronLeft class="size-4" /> {m.settings_back()}</Button
+        onclick={() => goto("/")}
+        ><ChevronLeft class="size-4" /> {m.settings_back()}</Button
       >
     </header>
 
     <Card.Root>
       <Card.Header class="space-y-1">
         <Card.Title>{m.settings_language_title()}</Card.Title>
-        <Card.Description
-          >{m.settings_language_description()}</Card.Description
-        >
+        <Card.Description>{m.settings_language_description()}</Card.Description>
       </Card.Header>
       <Card.Content>
         <RadioGroup.Root
@@ -237,16 +231,17 @@
           </div>
         </RadioGroup.Root>
         <div class="text-xs text-muted-foreground mt-4">
-          <strong>Info:</strong> {m.settings_language_info()}
+          <strong>Info:</strong>
+          {m.settings_language_info()}
         </div>
       </Card.Content>
     </Card.Root>
 
     <Card.Root>
       <Card.Header class="space-y-1">
-        <Card.Title>{m.settings_preview_files_title()}</Card.Title>
+        <Card.Title>{m.settings_preview_page_title()}</Card.Title>
         <Card.Description
-          >{m.settings_preview_files_description()}</Card.Description
+          >{m.settings_preview_page_description()}</Card.Description
         >
       </Card.Header>
       <Card.Content class="space-y-4">
@@ -315,28 +310,20 @@
                 PNG (.png)
               </Label>
             </div>
+            <p class="text-xs text-muted-foreground mt-2">
+              {m.settings_preview_images_hint()}
+            </p>
+            <Separator />
           </div>
-          <p class="text-xs text-muted-foreground mt-2">
-            {m.settings_preview_images_hint()}
-          </p>
         </div>
-      </Card.Content>
-    </Card.Root>
-
-    <Card.Root>
-      <Card.Header class="space-y-1">
-        <Card.Title>{m.settings_preview_page_title()}</Card.Title>
-        <Card.Description
-          >{m.settings_preview_page_description()}</Card.Description
-        >
-      </Card.Header>
-      <Card.Content class="space-y-4">
         <div class="space-y-3">
           <div
             class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
           >
             <div>
-              <div class="font-medium">{m.settings_preview_builtin_label()}</div>
+              <div class="font-medium">
+                {m.settings_preview_builtin_label()}
+              </div>
               <div class="text-sm text-muted-foreground">
                 {m.settings_preview_builtin_hint()}
               </div>
@@ -352,14 +339,36 @@
         </div>
         <Separator />
 
-        
+        <div class="space-y-3">
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+          >
+            <div>
+              <div class="font-medium">
+                {m.settings_preview_pdf_builtin_label()}
+              </div>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_preview_pdf_builtin_hint()}
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.useBuiltinPDFViewer}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            {m.settings_preview_pdf_builtin_info()}
+          </p>
+        </div>
       </Card.Content>
     </Card.Root>
 
     {#if $dangerZoneEnabled}
       <Card.Root class="border-destructive/50 bg-destructive/15">
         <Card.Header class="space-y-1">
-          <Card.Title class="text-destructive">{m.settings_danger_zone_title()}</Card.Title>
+          <Card.Title class="text-destructive"
+            >{m.settings_danger_zone_title()}</Card.Title
+          >
           <Card.Description
             >{m.settings_danger_zone_description()}</Card.Description
           >
@@ -369,13 +378,35 @@
             class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
           >
             <div class="space-y-1">
-              <Label class="text-sm">{m.settings_danger_devtools_label()}</Label>
+              <Label class="text-sm">{m.settings_danger_devtools_label()}</Label
+              >
               <div class="text-sm text-muted-foreground">
                 {m.settings_danger_devtools_hint()}
               </div>
             </div>
           </div>
           <Separator />
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+          >
+            <div class="space-y-1">
+              <Label class="text-sm">{m.settings_danger_reload_label()}</Label>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_danger_reload_hint()}
+              </div>
+            </div>
+
+            <a
+              data-sveltekit-reload
+              href="/"
+              class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+              style="text-decoration: none;"
+            >
+              {m.settings_danger_reload_button()}
+            </a>
+          </div>
+          <Separator />
+
           <div
             class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
           >
@@ -401,7 +432,7 @@
                   </AlertDialog.Title>
                   <AlertDialog.Description>
                     {m.settings_danger_reset_dialog_description_part1()}
-                    <br/>
+                    <br />
                     {m.settings_danger_reset_dialog_description_part2()}
                   </AlertDialog.Description>
                 </AlertDialog.Header>
@@ -423,30 +454,11 @@
             </AlertDialog.Root>
           </div>
           <div class="text-xs text-muted-foreground">
-            <strong>{m.settings_danger_warning() }</strong>
+            <strong>{m.settings_danger_warning()}</strong>
           </div>
           <Separator />
 
           <div class="text-xs text-muted-foreground">
-            OS: {machineData?.Version} ({machineData?.OS})
-            <br />
-            Hostname: {machineData?.Hostname}
-            <br />
-            ID: {machineData?.HWID}
-            <br />
-            CPU: {machineData?.CPU.processors[0].model.trim()} ({machineData
-              ?.CPU.total_hardware_threads} cores)
-            <br />
-            RAM: {Math.round(
-              (machineData?.RAM.total_physical_bytes ?? 0) /
-                (1024 * 1024 * 1024),
-            )} GB
-            <br />
-            GPU: {machineData?.GPU.cards?.find(
-              (c) => !(c.pci?.product?.name ?? "").includes("Virtual"),
-            )?.pci?.product?.name ?? "N/A"}
-            <br />
-            <br />
             GUI: {config
               ? `${config.GUISemver} (${config.GUIReleaseChannel})`
               : "N/A"}
@@ -462,7 +474,9 @@
     <AlertDialog.Root bind:open={dangerWarningOpen}>
       <AlertDialog.Content>
         <AlertDialog.Header>
-          <AlertDialog.Title>{m.settings_danger_alert_title()}</AlertDialog.Title>
+          <AlertDialog.Title
+            >{m.settings_danger_alert_title()}</AlertDialog.Title
+          >
           <AlertDialog.Description>
             {m.settings_danger_alert_description()}
           </AlertDialog.Description>

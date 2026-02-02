@@ -33,6 +33,7 @@ func main() {
 	windowTitle := "EMLy - EML Viewer for 3gIT"
 	windowWidth := 1024
 	windowHeight := 768
+	frameless := true
 
 	for _, arg := range args {
 		if strings.Contains(arg, "--view-image") {
@@ -43,6 +44,13 @@ func main() {
 			windowTitle = "EMLy Image Viewer"
 			windowWidth = 800
 			windowHeight = 600
+		}
+		if strings.Contains(arg, "--view-pdf") {
+			uniqueId = "emly-pdf-viewer-" + strings.ReplaceAll(arg, "--view-pdf=", "")
+			windowTitle = "EMLy PDF Viewer"
+			windowWidth = 800
+			windowHeight = 600
+			frameless = true
 		}
 	}
 
@@ -76,7 +84,7 @@ func main() {
 		EnableDefaultContextMenu: true,
 		MinWidth:                 964,
 		MinHeight:                690,
-		Frameless:                true,
+		Frameless:                frameless,
 	})
 
 	if err != nil {

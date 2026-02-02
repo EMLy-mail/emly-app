@@ -24,12 +24,15 @@ type App struct {
 	StartupFilePath string
 	openImagesMux   sync.Mutex
 	openImages      map[string]bool
+	openPDFsMux     sync.Mutex
+	openPDFs        map[string]bool
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{
 		openImages: make(map[string]bool),
+		openPDFs:   make(map[string]bool),
 	}
 }
 
@@ -147,8 +150,92 @@ func (a *App) OpenImageWindow(base64Data string, filename string) error {
 	return nil
 }
 
+// OpenPDFWindow opens a new window instance to display the PDF
+func (a *App) OpenPDFWindow(base64Data string, filename string) error {
+	a.openPDFsMux.Lock()
+	if a.openPDFs[filename] {
+		a.openPDFsMux.Unlock()
+		return fmt.Errorf("pdf '%s' is already open", filename)
+	}
+	a.openPDFs[filename] = true
+	a.openPDFsMux.Unlock()
+
+	// 1. Decode base64
+	data, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		a.openPDFsMux.Lock()
+		delete(a.openPDFs, filename)
+		a.openPDFsMux.Unlock()
+		return fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	// 2. Save to temp file
+	tempDir := os.TempDir()
+	// Use timestamp to make unique
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s", filename))
+	if err := os.WriteFile(tempFile, data, 0644); err != nil {
+		a.openPDFsMux.Lock()
+		delete(a.openPDFs, filename)
+		a.openPDFsMux.Unlock()
+		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	// 3. Launch new instance
+	exe, err := os.Executable()
+	if err != nil {
+		a.openPDFsMux.Lock()
+		delete(a.openPDFs, filename)
+		a.openPDFsMux.Unlock()
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	cmd := exec.Command(exe, "--view-pdf="+tempFile)
+	if err := cmd.Start(); err != nil {
+		a.openPDFsMux.Lock()
+		delete(a.openPDFs, filename)
+		a.openPDFsMux.Unlock()
+		return fmt.Errorf("failed to start viewer: %w", err)
+	}
+
+	// Monitor process in background to release lock when closed
+	go func() {
+		cmd.Wait()
+		a.openPDFsMux.Lock()
+		delete(a.openPDFs, filename)
+		a.openPDFsMux.Unlock()
+	}()
+
+	return nil
+}
+
 // OpenPDF saves PDF to temp and opens with default app
 func (a *App) OpenPDF(base64Data string, filename string) error {
+	if base64Data == "" {
+		return fmt.Errorf("no data provided")
+	}
+	// 1. Decode base64
+	data, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	// 2. Save to temp file
+	tempDir := os.TempDir()
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s", filename))
+	if err := os.WriteFile(tempFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	// 3. Open with default app (Windows)
+	cmd := exec.Command("cmd", "/c", "start", "", tempFile)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	return nil
+}
+
+// OpenImage saves image to temp and opens with default app (Windows)
+func (a *App) OpenImage(base64Data string, filename string) error {
 	if base64Data == "" {
 		return fmt.Errorf("no data provided")
 	}
@@ -178,6 +265,16 @@ type ImageViewerData struct {
 	Filename string `json:"filename"`
 }
 
+type PDFViewerData struct {
+	Data     string `json:"data"`
+	Filename string `json:"filename"`
+}
+
+type ViewerData struct {
+	ImageData *ImageViewerData `json:"imageData,omitempty"`
+	PDFData   *PDFViewerData   `json:"pdfData,omitempty"`
+}
+
 // GetImageViewerData checks CLI args and returns image data if in viewer mode
 func (a *App) GetImageViewerData() (*ImageViewerData, error) {
 	for _, arg := range os.Args {
@@ -192,6 +289,62 @@ func (a *App) GetImageViewerData() (*ImageViewerData, error) {
 			return &ImageViewerData{
 				Data:     encoded,
 				Filename: filepath.Base(filePath),
+			}, nil
+		}
+	}
+	return nil, nil
+}
+
+// GetPDFViewerData checks CLI args and returns pdf data if in viewer mode
+func (a *App) GetPDFViewerData() (*PDFViewerData, error) {
+	for _, arg := range os.Args {
+		if strings.HasPrefix(arg, "--view-pdf=") {
+			filePath := strings.TrimPrefix(arg, "--view-pdf=")
+			data, err := os.ReadFile(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read text file: %w", err)
+			}
+			// Return encoded base64 so frontend can handle it same way
+			encoded := base64.StdEncoding.EncodeToString(data)
+			return &PDFViewerData{
+				Data:     encoded,
+				Filename: filepath.Base(filePath),
+			}, nil
+		}
+	}
+	return nil, nil
+}
+
+func (a *App) GetViewerData() (*ViewerData, error) {
+	for _, arg := range os.Args {
+		if strings.HasPrefix(arg, "--view-image=") {
+			filePath := strings.TrimPrefix(arg, "--view-image=")
+			data, err := os.ReadFile(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read text file: %w", err)
+			}
+			// Return encoded base64 so frontend can handle it same way
+			encoded := base64.StdEncoding.EncodeToString(data)
+			return &ViewerData{
+				ImageData: &ImageViewerData{
+					Data:     encoded,
+					Filename: filepath.Base(filePath),
+				},
+			}, nil
+		}
+		if strings.HasPrefix(arg, "--view-pdf=") {
+			filePath := strings.TrimPrefix(arg, "--view-pdf=")
+			data, err := os.ReadFile(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read text file: %w", err)
+			}
+			// Return encoded base64 so frontend can handle it same way
+			encoded := base64.StdEncoding.EncodeToString(data)
+			return &ViewerData{
+				PDFData: &PDFViewerData{
+					Data:     encoded,
+					Filename: filepath.Base(filePath),
+				},
 			}, nil
 		}
 	}

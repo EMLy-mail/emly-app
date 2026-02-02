@@ -1,14 +1,18 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { GetImageViewerData, GetStartupFile, ReadEML } from '$lib/wailsjs/go/main/App';
+import { GetViewerData, GetStartupFile, ReadEML } from '$lib/wailsjs/go/main/App';
 import DOMPurify from 'dompurify';
 
 export const load: PageLoad = async () => {
     try {
-        // Check if we are in viewer mode
-        const viewerData = await GetImageViewerData();
-        if (viewerData && viewerData.data) {
-            throw redirect(302, "/image-viewer");
+        const viewerData = await GetViewerData();
+        if (viewerData) {
+            if (viewerData.imageData) {
+                throw redirect(302, "/image");
+            }
+            if (viewerData.pdfData) {
+                throw redirect(302, "/pdf");
+            }
         }
 
         // Check if opened with a file

@@ -6,7 +6,7 @@
     RotateCw,
     ZoomIn,
     ZoomOut,
-    Square,
+    AlignHorizontalSpaceAround,
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
@@ -36,7 +36,7 @@
         imageData = result.data;
         filename = result.filename;
         // Adjust title
-        document.title = filename + " - EMLy Viewer";
+        document.title = filename + " - EMLy Image Viewer";
         sidebarOpen.set(false);
       } else {
         toast.error("No image data provided");
@@ -131,7 +131,7 @@
       </button>
       <div class="separator"></div>
       <button class="btn" onclick={reset} title="Reset">
-        <Square size="16" />
+        <AlignHorizontalSpaceAround size="16" />
       </button>
     </div>
   </div>
