@@ -1,0 +1,22 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "EMLy",
+  "outputfilename": "EMLy",
+  "frontend:install": "bun install",
+  "frontend:build": "bun run build",
+  "frontend:dev:watcher": "bun run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Flavio Fois",
+    "email": "f.fois@3git.eu"
+  },
+  "wailsjsdir": "./frontend/src/lib",
+  "fileAssociations": [
+    {
+      "ext": "eml",
+      "name": "Email Message",
+      "description": "EML File",
+      "iconName": "emlFileIcon"
+    }
+  ]
+}

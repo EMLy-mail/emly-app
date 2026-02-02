@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="%paraglide.lang%">
+	<head>
+		<meta name="wails-options" content="noautoinject" />
+		<script src="/wails/ipc.js"></script>
+		<script src="/wails/runtime.js"></script>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1"
+		/>
+		<script>
+			(() => {
+				try {
+					const key = "emly_theme";
+					const stored = localStorage.getItem(key);
+					const theme = stored === "light" || stored === "dark" ? stored : "dark";
+					document.documentElement.classList.toggle("dark", theme === "dark");
+				} catch {
+					// If storage is blocked, default to dark.
+					document.documentElement.classList.add("dark");
+				}
+			})();
+		</script>
+		<style>
+			#app-loading {
+				position: fixed;
+				inset: 0;
+				z-index: 9999;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				background-color: #ffffff;
+				color: #000000;
+				font-family: system-ui, -apple-system, sans-serif;
+				transition: opacity 0.3s ease-out;
+			}
+			:global(html.dark) #app-loading {
+				background-color: #09090b;
+				color: #ffffff;
+			}
+			/* Fallback if :global isn't supported here (it's plain HTML) */
+			html.dark #app-loading {
+				background-color: #09090b;
+				color: #ffffff;
+			}
+			
+			.loader-spinner {
+				width: 32px;
+				height: 32px;
+				border: 3px solid currentColor;
+				border-bottom-color: transparent;
+				border-radius: 50%;
+				animation: spin 1s linear infinite;
+				margin-bottom: 1rem;
+			}
+
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+		</style>
+		%sveltekit.head%
+	</head>
+	
+	<body data-sveltekit-preload-data="hover">
+		<div id="app-loading">
+			<div class="loader-spinner"></div>
+			<div>Loading, please wait.</div>
+		</div>
+		<div style="display: contents;">%sveltekit.body%</div>
+	</body>
+</html>
