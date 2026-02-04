@@ -34,7 +34,7 @@
 	"settings_msg_converter_description": "Configura come vengono elaborati i file MSG.",
 	"settings_msg_converter_label": "Usa convertitore MSG in EML",
 	"settings_msg_converter_hint": "Usa un'applicazione esterna per convertire i file .MSG in .EML. Disabilitalo per usare la versione OSS (meno accurata).",
-	"settings_danger_zone_title": "Zona Pericolo",
+	"settings_danger_zone_title": "Zona Pericolosa",
 	"settings_danger_zone_description": "Azioni avanzate. Procedere con cautela.",
 	"settings_danger_devtools_label": "Apri DevTools",
 	"settings_danger_devtools_hint": "A causa di limitazioni del framework, i DevTools devono essere aperti manualmente. Per aprire i DevTools, premi Ctrl+Shift+F12.",
@@ -85,5 +85,9 @@
 	"mail_pec_signed_badge": "Mail firmata",
 	"mail_pec_feature_warning": "PEC rilevata: alcune funzionalità potrebbero essere limitate.",
 	"mail_sign_label": "Firma:",
-	"mail_loading_msg_conversion": "Conversione file MSG in corso... Potrebbe richiedere del tempo."
+	"mail_loading_msg_conversion": "Conversione file MSG in corso... Potrebbe richiedere del tempo.",
+	"mail_pdf_already_open": "Il file PDF è già aperto in una finestra separata.",
+	"settings_danger_debugger_protection_label": "Abilita protezione da debugger",
+	"settings_danger_debugger_protection_hint": "Questo impedirà che il debug dell'app venga eseguito da un debugger collegato.",
+	"settings_danger_debugger_protection_info": "Info: Questa azione non è attualmente configurabile ed è sempre abilitata per le build private."
 }

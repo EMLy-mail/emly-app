@@ -37,10 +37,17 @@
     toggleMaximize();
   }
 
+  function handleWheel(event: WheelEvent) {
+    if (event.ctrlKey) {
+      event.preventDefault();
+    }
+  }
+
   syncMaxState();
 </script>
 
-<div class="app-layout">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="app-layout" onwheel={handleWheel}>
   <!-- Titlebar -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div

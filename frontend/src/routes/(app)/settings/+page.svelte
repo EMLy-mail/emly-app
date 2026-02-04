@@ -24,16 +24,19 @@
   import * as m from "$lib/paraglide/messages";
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
+  import { dev } from '$app/environment';
 
   let { data } = $props();
   let config = $derived(data.config);
+
+  let runningInDevMode: boolean = dev || false;
 
   const defaults: EMLy_GUI_Settings = {
     selectedLanguage: "it",
     useBuiltinPreview: true,
     useBuiltinPDFViewer: true,
-    useMsgConverter: true,
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
+    enableAttachedDebuggerProtection: true,
   };
 
   async function setLanguage(
@@ -60,9 +63,10 @@
       useBuiltinPreview: !!s.useBuiltinPreview,
       useBuiltinPDFViewer:
         s.useBuiltinPDFViewer ?? defaults.useBuiltinPDFViewer ?? true,
-      useMsgConverter: s.useMsgConverter ?? defaults.useMsgConverter ?? true,
       previewFileSupportedTypes:
         s.previewFileSupportedTypes || defaults.previewFileSupportedTypes || [],
+      enableAttachedDebuggerProtection:
+        s.enableAttachedDebuggerProtection ?? defaults.enableAttachedDebuggerProtection ?? true,
     };
   }
 
@@ -71,7 +75,7 @@
       (a.selectedLanguage ?? "") === (b.selectedLanguage ?? "") &&
       !!a.useBuiltinPreview === !!b.useBuiltinPreview &&
       !!a.useBuiltinPDFViewer === !!b.useBuiltinPDFViewer &&
-      !!a.useMsgConverter === !!b.useMsgConverter &&
+      !!a.enableAttachedDebuggerProtection === !!b.enableAttachedDebuggerProtection &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -366,36 +370,7 @@
       </Card.Content>
     </Card.Root>
 
-    <Card.Root>
-      <Card.Header class="space-y-1">
-        <Card.Title>{m.settings_msg_converter_title()}</Card.Title>
-        <Card.Description
-          >{m.settings_msg_converter_description()}</Card.Description
-        >
-      </Card.Header>
-      <Card.Content class="space-y-4">
-        <div class="space-y-3">
-          <div
-            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-          >
-            <div>
-              <Label class="text-base">
-                {m.settings_msg_converter_label()}
-              </Label>
-              <p class="text-sm text-muted-foreground">
-                {m.settings_msg_converter_hint()}
-              </p>
-            </div>
-            <Switch
-              bind:checked={form.useMsgConverter}
-              class="cursor-pointer hover:cursor-pointer"
-            />
-          </div>
-        </div>
-      </Card.Content>
-    </Card.Root>
-
-    {#if $dangerZoneEnabled}
+    {#if $dangerZoneEnabled || dev}
       <Card.Root class="border-destructive/50 bg-destructive/15">
         <Card.Header class="space-y-1">
           <Card.Title class="text-destructive"
@@ -487,6 +462,26 @@
           </div>
           <div class="text-xs text-muted-foreground">
             <strong>{m.settings_danger_warning()}</strong>
+          </div>
+          <Separator />
+
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
+          >
+            <div class="space-y-1">
+              <Label class="text-sm">{m.settings_danger_debugger_protection_label()}</Label>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_danger_debugger_protection_hint()}
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.enableAttachedDebuggerProtection}
+              class="cursor-pointer hover:cursor-pointer"
+              disabled={!runningInDevMode}
+            />
+          </div>
+          <div class="text-xs text-muted-foreground">
+            <strong>{m.settings_danger_debugger_protection_info()}</strong>
           </div>
           <Separator />
 

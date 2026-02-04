@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { X, MailOpen, Image, FileText, File, ShieldCheck, Shield, Signature, FileUser, Loader2 } from "@lucide/svelte";
+  import { X, MailOpen, Image, FileText, File, ShieldCheck, Shield, Signature, FileCode, Loader2 } from "@lucide/svelte";
   import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage, ReadMSG, ReadPEC, OpenEMLWindow } from "$lib/wailsjs/go/main/App";
   import type { internal } from "$lib/wailsjs/go/models";
   import { sidebarOpen } from "$lib/stores/app";
   import { onDestroy, onMount } from "svelte";
   import { toast } from "svelte-sonner";
   import { EventsOn, WindowShow, WindowUnminimise } from "$lib/wailsjs/runtime/runtime";
-  import type { SupportedFileTypePreview } from "$lib/types";
   import { mailState } from "$lib/stores/mail-state.svelte";
   import { settingsStore } from "$lib/stores/settings.svelte";
   import * as m from "$lib/paraglide/messages";
@@ -15,6 +14,9 @@
   let isLoading = $state(false);
   let loadingText = $state("");
 
+
+  let iFrameUtilHTML = "<style>body{margin:0;padding:20px;font-family:sans-serif;} a{pointer-events:none!important;cursor:default!important;}</style><script>function handleWheel(event){if(event.ctrlKey){event.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});<\/script>";
+
   function onClear() {
     mailState.clear();
   }
@@ -22,7 +24,7 @@
   $effect(() => {
     console.log("Current email changed:", mailState.currentEmail);
     if(mailState.currentEmail !== null) {
-        sidebarOpen.set(false);
+      sidebarOpen.set(false);
     }
     console.log(mailState.currentEmail?.attachments)
   })
@@ -47,21 +49,12 @@
               let emlContent;
               
               if (lowerArg.endsWith(".msg")) {
-                  const useExt = settingsStore.settings.useMsgConverter ?? true;
-                  if (useExt) {
-                     loadingText = m.mail_loading_msg_conversion();
-                  }
-                  emlContent = await ReadMSG(arg, useExt);
-                  if(emlContent.isPec) {
-                     toast.warning(m.mail_pec_feature_warning());
-                  }
+                  loadingText = m.mail_loading_msg_conversion();
+                  emlContent = await ReadMSG(arg, true);
               } else {
                   // EML handling
                   try {
                     emlContent = await ReadPEC(arg);
-                    if(emlContent.isPec) {
-                      toast.warning(m.mail_pec_feature_warning());
-                    }
                   } catch (e) {
                     console.warn("ReadPEC failed, trying ReadEML:", e);
                     emlContent = await ReadEML(arg);
@@ -103,9 +96,13 @@
       } else {
          await OpenPDF(base64Data, filename);
       }
-    } catch (error) {
+    } catch (error: string | any) {
+      if(error.includes(filename) && error.includes("already open")) {
+        toast.error(m.mail_pdf_already_open());
+        return;
+      }
       console.error("Failed to open PDF:", error);
-        toast.error(m.mail_error_pdf());
+      toast.error(m.mail_error_pdf());
     }
   }
 
@@ -141,16 +138,10 @@
         // If the file is .eml, otherwise if is .msg, read accordingly
         let email: internal.EmailData;
         if(result.toLowerCase().endsWith(".msg")) {
-          const useExt = settingsStore.settings.useMsgConverter ?? true;
-          if (useExt) {
-             loadingText = m.mail_loading_msg_conversion();
-          }
-          email = await ReadMSG(result, useExt);
+          loadingText = m.mail_loading_msg_conversion();
+          email = await ReadMSG(result, true);
         } else {
           email = await ReadEML(result);
-        }
-        if(email.isPec) {
-          toast.warning(m.mail_pec_feature_warning(), {duration: 10000});
         }
         mailState.setParams(email);
         sidebarOpen.set(false);
@@ -182,15 +173,10 @@
     return "";
   }
 
-  function getFileExtension(filename: string): string {
-    return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
-  }
-
-  function shouldPreview(filename: string): boolean {
-    if (!settingsStore.settings.useBuiltinPreview) return false;
-    const ext = getFileExtension(filename);
-    const supported = settingsStore.settings.previewFileSupportedTypes || [];
-    return supported.includes(ext as SupportedFileTypePreview);
+  function handleWheel(event: WheelEvent) {
+    if (event.ctrlKey) {
+      event.preventDefault();
+    }
   }
 </script>
 
@@ -290,7 +276,7 @@
                     class="att-btn pdf"
                     onclick={() => openPDFHandler(arrayBufferToBase64(att.data), att.filename)}
                   >
-                    <FileText size="15" />
+                    <FileText />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {:else if att.filename.toLowerCase().endsWith(".eml")}
@@ -316,7 +302,7 @@
                     href={`data:${att.contentType};base64,${arrayBufferToBase64(att.data)}`}
                     download={att.filename}
                   >
-                    <FileUser size="14" />
+                    <FileCode size="14" />
                     <span class="att-name">{att.filename}</span>
                   </a>
                 {:else}
@@ -342,11 +328,11 @@
 
         <div class="email-body-wrapper">
           <iframe
-            srcdoc={mailState.currentEmail.body +
-              "<style>body{margin:0;padding:20px;font-family:sans-serif;} a{pointer-events:none!important;cursor:default!important;}</style>"}
+            srcdoc={mailState.currentEmail.body + iFrameUtilHTML}
             title="Email Body"
             class="email-iframe"
-            sandbox="allow-same-origin"
+            sandbox="allow-same-origin allow-scripts"
+            onwheel={handleWheel}
           ></iframe>
         </div>
       </div>
@@ -639,28 +625,6 @@
     font-size: 11px;
     color: rgba(255, 255, 255, 0.4);
     font-style: italic;
-  }
-
-  .badged-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .signed-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    vertical-align: middle;
-    user-select: none;
-    width: fit-content;
   }
 
   .pec-badge {

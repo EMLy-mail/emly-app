@@ -11,7 +11,7 @@
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import AppSidebar from "$lib/components/SidebarApp.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import { dev } from '$app/environment';
+  import { dev } from "$app/environment";
   import {
     PanelRightClose,
     PanelRightOpen,
@@ -30,9 +30,11 @@
     Quit,
   } from "$lib/wailsjs/runtime/runtime";
   import { RefreshCcwDot } from "@lucide/svelte";
+  import { IsDebuggerRunning, QuitApp } from "$lib/wailsjs/go/main/App";
 
   let versionInfo: utils.Config | null = $state(null);
   let isMaximized = $state(false);
+  let isDebugerOn: boolean = $state(false);
 
   async function syncMaxState() {
     isMaximized = await WindowIsMaximised();
@@ -67,8 +69,30 @@
   }
 
   onMount(async () => {
+    if (browser) {
+      detectDebugging();
+      setInterval(detectDebugging, 1000);
+    }
+
     versionInfo = data.data as utils.Config;
   });
+
+  function handleWheel(event: WheelEvent) {
+    if (event.ctrlKey) {
+      event.preventDefault();
+    }
+  }
+
+  async function detectDebugging() {
+    if (!browser) return;
+    if (isDebugerOn === true) return; // Prevent multiple detections
+    isDebugerOn = await IsDebuggerRunning();
+    if (isDebugerOn) {
+      if(dev) toast.warning("Debugger is attached.");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await QuitApp();
+    }
+  }
 
   let { data, children } = $props();
 
@@ -101,7 +125,7 @@
   syncMaxState();
 </script>
 
-<div class="app">
+<div class="app" onwheel={handleWheel}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="titlebar"
@@ -113,7 +137,8 @@
       <div class="version-wrapper">
         <version>
           {#if dev}
-            v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel} <debug>(DEBUG BUILD)</debug>
+            v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel}
+            <debug>(DEBUG BUILD)</debug>
           {:else}
             v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel}
           {/if}
@@ -123,12 +148,15 @@
             <div class="tooltip-item">
               <span class="label">GUI:</span>
               <span class="value">v{versionInfo.EMLy.GUISemver}</span>
-              <span class="channel">({versionInfo.EMLy.GUIReleaseChannel})</span>
+              <span class="channel">({versionInfo.EMLy.GUIReleaseChannel})</span
+              >
             </div>
             <div class="tooltip-item">
               <span class="label">SDK:</span>
               <span class="value">v{versionInfo.EMLy.SDKDecoderSemver}</span>
-              <span class="channel">({versionInfo.EMLy.SDKDecoderReleaseChannel})</span>
+              <span class="channel"
+                >({versionInfo.EMLy.SDKDecoderReleaseChannel})</span
+              >
             </div>
           </div>
         {/if}
@@ -294,7 +322,7 @@
     opacity: 0.4;
   }
 
-  .title version debug{
+  .title version debug {
     color: #e11d48;
     opacity: 1;
     font-weight: 600;

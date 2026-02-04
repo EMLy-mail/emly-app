@@ -5,9 +5,11 @@ import { getFromLocalStorage, saveToLocalStorage } from "$lib/utils/localStorage
 const STORAGE_KEY = "emly_gui_settings";
 
 const defaults: EMLy_GUI_Settings = {
-    selectedLanguage: "en",
+    selectedLanguage: "it",
     useBuiltinPreview: true,
+    useBuiltinPDFViewer: true,
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
+    enableAttachedDebuggerProtection: true,
 };
 
 class SettingsStore {

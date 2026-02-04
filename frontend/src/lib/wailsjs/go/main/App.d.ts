@@ -18,6 +18,8 @@ export function GetStartupFile():Promise<string>;
 
 export function GetViewerData():Promise<main.ViewerData>;
 
+export function IsDebuggerRunning():Promise<boolean>;
+
 export function OpenDefaultAppsSettings():Promise<void>;
 
 export function OpenEMLWindow(arg1:string,arg2:string):Promise<void>;

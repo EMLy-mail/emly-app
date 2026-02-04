@@ -6,8 +6,8 @@ interface EMLy_GUI_Settings {
     selectedLanguage: SupportedLanguages = "en" | "it";
     useBuiltinPreview: boolean;
     useBuiltinPDFViewer?: boolean;
-    useMsgConverter?: boolean;
     previewFileSupportedTypes?: SupportedFileTypePreview[];
+    enableAttachedDebuggerProtection?: boolean;
 }
 
 type SupportedLanguages = "en" | "it";

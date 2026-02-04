@@ -1,19 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { PageData } from './$types';
+  import type { PageData } from "./$types";
   import {
     RotateCcw,
     RotateCw,
     ZoomIn,
     ZoomOut,
-    AlignHorizontalSpaceAround
+    AlignHorizontalSpaceAround,
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
   import * as pdfjsLib from "pdfjs-dist";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-  if (typeof Promise.withResolvers === 'undefined') {
+  if (typeof Promise.withResolvers === "undefined") {
     // @ts-ignore
     Promise.withResolvers = function () {
       let resolve, reject;
@@ -36,7 +36,7 @@
   let scale = $state(1.5); // Default scale
   let error = $state("");
   let loading = $state(true);
-  
+
   let pdfDoc = $state<pdfjsLib.PDFDocumentProxy | null>(null);
   let pageNum = $state(1);
   let totalPages = $state(0);
@@ -53,7 +53,7 @@
         const len = binaryString.length;
         const bytes = new Uint8Array(len);
         for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
+          bytes[i] = binaryString.charCodeAt(i);
         }
         pdfData = bytes;
         filename = result.filename;
@@ -62,10 +62,10 @@
         sidebarOpen.set(false);
 
         await loadPDF();
-
       } else {
         toast.error("No PDF data provided");
-        error = "No PDF data provided. Please open this window from the main EMLy application.";
+        error =
+          "No PDF data provided. Please open this window from the main EMLy application.";
         loading = false;
       }
     } catch (e) {
@@ -76,29 +76,30 @@
 
   async function loadPDF() {
     if (!pdfData) return;
-    
+
     // Set a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-        if (loading) {
-            loading = false;
-            error = "Timeout loading PDF. The worker might have failed to initialize.";
-            toast.error(error);
-        }
+      if (loading) {
+        loading = false;
+        error =
+          "Timeout loading PDF. The worker might have failed to initialize.";
+        toast.error(error);
+      }
     }, 10000);
 
     try {
-        const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-        pdfDoc = await loadingTask.promise;
-        totalPages = pdfDoc.numPages;
-        pageNum = 1;
-        await renderPage(pageNum);
-        loading = false;
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+      pdfDoc = await loadingTask.promise;
+      totalPages = pdfDoc.numPages;
+      pageNum = 1;
+      await renderPage(pageNum);
+      loading = false;
     } catch (e) {
-        console.error(e);
-        error = "Error parsing PDF: " + e;
-        loading = false;
+      console.error(e);
+      error = "Error parsing PDF: " + e;
+      loading = false;
     } finally {
-        clearTimeout(timeout);
+      clearTimeout(timeout);
     }
   }
 
@@ -106,36 +107,36 @@
     if (!pdfDoc || !canvasRef) return;
 
     if (renderTask) {
-        await renderTask.promise.catch(() => {}); // Cancel previous render if any (though we wait usually)
+      await renderTask.promise.catch(() => {}); // Cancel previous render if any (though we wait usually)
     }
 
     try {
-        const page = await pdfDoc.getPage(num);
-        
-        // Calculate scale if needed or use current scale
-        // We apply rotation to the viewport
-        const viewport = page.getViewport({ scale: scale, rotation: rotation });
+      const page = await pdfDoc.getPage(num);
 
-        const canvas = canvasRef;
-        const context = canvas.getContext('2d');
+      // Calculate scale if needed or use current scale
+      // We apply rotation to the viewport
+      const viewport = page.getViewport({ scale: scale, rotation: rotation });
 
-        if (!context) return;
+      const canvas = canvasRef;
+      const context = canvas.getContext("2d");
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+      if (!context) return;
 
-        const renderContext = {
-            canvasContext: context,
-            viewport: viewport
-        };
-        
-        // Cast to any to avoid type mismatch with PDF.js definitions
-        await page.render(renderContext as any).promise;
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport,
+      };
+
+      // Cast to any to avoid type mismatch with PDF.js definitions
+      await page.render(renderContext as any).promise;
     } catch (e: any) {
-        if (e.name !== 'RenderingCancelledException') {
-            console.error(e);
-            toast.error("Error rendering page: " + e.message);
-        }
+      if (e.name !== "RenderingCancelledException") {
+        console.error(e);
+        toast.error("Error rendering page: " + e.message);
+      }
     }
   }
 
@@ -143,11 +144,13 @@
     if (!pdfDoc || !canvasContainerRef) return;
     // We need to fetch page to get dimensions
     loading = true;
-    pdfDoc.getPage(pageNum).then(page => {
-        const containerWidth = canvasContainerRef!.clientWidth - 40; // padding
-        const viewport = page.getViewport({ scale: 1, rotation: rotation });
-        scale = containerWidth / viewport.width;
-        renderPage(pageNum).then(() => { loading = false; });
+    pdfDoc.getPage(pageNum).then((page) => {
+      const containerWidth = canvasContainerRef!.clientWidth - 40; // padding
+      const viewport = page.getViewport({ scale: 1, rotation: rotation });
+      scale = containerWidth / viewport.width;
+      renderPage(pageNum).then(() => {
+        loading = false;
+      });
     });
   }
 
@@ -157,7 +160,7 @@
     const _deps = [scale, rotation];
 
     if (pdfDoc) {
-        renderPage(pageNum);
+      renderPage(pageNum);
     }
   });
 
@@ -180,7 +183,6 @@
     pageNum--;
     renderPage(pageNum);
   }
-
 </script>
 
 <div class="viewer-container">
@@ -345,15 +347,15 @@
     padding: 20px;
     background: #333; /* Dark background for contrast */
   }
-  
+
   canvas {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     max-width: none; /* Allow canvas to be larger than container */
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track {

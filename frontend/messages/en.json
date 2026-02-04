@@ -85,5 +85,9 @@
 	"mail_pec_signed_badge": "Signed mail",
 	"mail_pec_feature_warning": "PEC detected: some features may be limited.",
 	"mail_sign_label": "Sign:",
-	"mail_loading_msg_conversion": "Converting MSG file... This might take a while."
+	"mail_loading_msg_conversion": "Converting MSG file... This might take a while.",
+	"mail_pdf_already_open": "The PDF is already open in another window.",
+	"settings_danger_debugger_protection_label": "Enable attached debugger protection",
+	"settings_danger_debugger_protection_hint": "This will prevent the app from being debugged by an attached debugger.",
+	"settings_danger_debugger_protection_info": "Info: This actions are currently not configurable and is always enabled for private builds."
 }

@@ -101,12 +101,12 @@ func (a *App) ReadMSG(filePath string, useExternalConverter bool) (*internal.Ema
 	if useExternalConverter {
 		return internal.ReadMsgFile(filePath)
 	}
-	return internal.OSSReadMsgFile(filePath)
+	return internal.ReadMsgFile(filePath)
 }
 
 // ReadMSGOSS reads a .msg file and returns the email data
 func (a *App) ReadMSGOSS(filePath string) (*internal.EmailData, error) {
-	return internal.OSSReadMsgFile(filePath)
+	return internal.ReadMsgFile(filePath)
 }
 
 // ShowOpenFileDialog shows the file open dialog for EML files
@@ -496,4 +496,11 @@ func (a *App) CheckIsDefaultEMLHandler() (bool, error) {
 func (a *App) OpenDefaultAppsSettings() error {
 	cmd := exec.Command("cmd", "/c", "start", "ms-settings:defaultapps")
 	return cmd.Start()
+}
+
+func (a *App) IsDebuggerRunning() bool {
+	if a == nil {
+		return false
+	}
+	return utils.IsDebugged()
 }
