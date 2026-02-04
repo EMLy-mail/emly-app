@@ -1,8 +1,12 @@
+#define ApplicationName 'EMLy'
+#define ApplicationVersion GetVersionNumbersString('EMLy.exe')
+#define ApplicationVersion '1.2.4_beta'
+
 [Setup]
-AppName=EMLy
-AppVersion=1.2.2
+AppName={#ApplicationName}
+AppVersion={#ApplicationVersion}
 DefaultDirName={autopf}\EMLy
-OutputBaseFilename=EMLy_Installer_1.2.2
+OutputBaseFilename={#ApplicationName}_Installer_{#ApplicationVersion}
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 ; Request administrative privileges for HKA to write to HKLM if needed, 
@@ -10,12 +14,12 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 SetupIconFile=..\build\windows\icon.ico
 UninstallDisplayIcon={app}\EMLy.exe
+AppVerName={#ApplicationName} {#ApplicationVersion}
 
 [Files]
 ; Source path relative to this .iss file (assuming it is in the "installer" folder and build is in "../build")
 Source: "..\build\bin\EMLy.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\bin\config.ini"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\bin\signed_msg.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
 ; 1. Register the .eml extension and point it to our internal ProgID "EMLy.EML"
