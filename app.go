@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/sys/windows/registry"
 
@@ -26,6 +27,8 @@ type App struct {
 	openImages      map[string]bool
 	openPDFsMux     sync.Mutex
 	openPDFs        map[string]bool
+	openEMLsMux     sync.Mutex
+	openEMLs        map[string]bool
 }
 
 // NewApp creates a new App application struct
@@ -33,6 +36,7 @@ func NewApp() *App {
 	return &App{
 		openImages: make(map[string]bool),
 		openPDFs:   make(map[string]bool),
+		openEMLs:   make(map[string]bool),
 	}
 }
 
@@ -87,9 +91,87 @@ func (a *App) ReadEML(filePath string) (*internal.EmailData, error) {
 	return internal.ReadEmlFile(filePath)
 }
 
+// ReadPEC reads a PEC .eml file and returns the inner email data
+func (a *App) ReadPEC(filePath string) (*internal.EmailData, error) {
+	return internal.ReadPecInnerEml(filePath)
+}
+
+// ReadMSG reads a .msg file and returns the email data
+func (a *App) ReadMSG(filePath string, useExternalConverter bool) (*internal.EmailData, error) {
+	if useExternalConverter {
+		return internal.ReadMsgFile(filePath)
+	}
+	return internal.OSSReadMsgFile(filePath)
+}
+
+// ReadMSGOSS reads a .msg file and returns the email data
+func (a *App) ReadMSGOSS(filePath string) (*internal.EmailData, error) {
+	return internal.OSSReadMsgFile(filePath)
+}
+
 // ShowOpenFileDialog shows the file open dialog for EML files
 func (a *App) ShowOpenFileDialog() (string, error) {
 	return internal.ShowFileDialog(a.ctx)
+}
+
+// OpenEMLWindow saves EML to temp and opens a new instance of the app
+func (a *App) OpenEMLWindow(base64Data string, filename string) error {
+	a.openEMLsMux.Lock()
+	if a.openEMLs[filename] {
+		a.openEMLsMux.Unlock()
+		return fmt.Errorf("eml '%s' is already open", filename)
+	}
+	a.openEMLs[filename] = true
+	a.openEMLsMux.Unlock()
+
+	// 1. Decode base64
+	data, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		a.openEMLsMux.Lock()
+		delete(a.openEMLs, filename)
+		a.openEMLsMux.Unlock()
+		return fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	// 2. Save to temp file
+	tempDir := os.TempDir()
+	// Use timestamp or unique ID to avoid conflicts if multiple files have same name
+	timestamp := time.Now().Format("20060102_150405")
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s_%s_%s", "emly_attachment", timestamp, filename))
+	if err := os.WriteFile(tempFile, data, 0644); err != nil {
+		a.openEMLsMux.Lock()
+		delete(a.openEMLs, filename)
+		a.openEMLsMux.Unlock()
+		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	// 3. Launch new instance
+	exe, err := os.Executable()
+	if err != nil {
+		a.openEMLsMux.Lock()
+		delete(a.openEMLs, filename)
+		a.openEMLsMux.Unlock()
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	// Run EMLy with the file path as argument
+	cmd := exec.Command(exe, tempFile)
+	if err := cmd.Start(); err != nil {
+		a.openEMLsMux.Lock()
+		delete(a.openEMLs, filename)
+		a.openEMLsMux.Unlock()
+		return fmt.Errorf("failed to start viewer: %w", err)
+	}
+
+	// Monitor process in background to release lock when closed
+	go func() {
+		cmd.Wait()
+		a.openEMLsMux.Lock()
+		delete(a.openEMLs, filename)
+		a.openEMLsMux.Unlock()
+	}()
+
+	return nil
 }
 
 // OpenImageWindow opens a new window instance to display the image
@@ -114,7 +196,8 @@ func (a *App) OpenImageWindow(base64Data string, filename string) error {
 	// 2. Save to temp file
 	tempDir := os.TempDir()
 	// Use timestamp to make unique
-	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s", filename))
+	timestamp := time.Now().Format("20060102_150405")
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s_%s", timestamp, filename))
 	if err := os.WriteFile(tempFile, data, 0644); err != nil {
 		a.openImagesMux.Lock()
 		delete(a.openImages, filename)
@@ -221,7 +304,9 @@ func (a *App) OpenPDF(base64Data string, filename string) error {
 
 	// 2. Save to temp file
 	tempDir := os.TempDir()
-	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s", filename))
+	// Use timestamp to make unique
+	timestamp := time.Now().Format("20060102_150405")
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s_%s", timestamp, filename))
 	if err := os.WriteFile(tempFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write temp file: %w", err)
 	}
@@ -247,7 +332,9 @@ func (a *App) OpenImage(base64Data string, filename string) error {
 
 	// 2. Save to temp file
 	tempDir := os.TempDir()
-	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s", filename))
+	// Use timestamp to make unique
+	timestamp := time.Now().Format("20060102_150405")
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s_%s", timestamp, filename))
 	if err := os.WriteFile(tempFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write temp file: %w", err)
 	}

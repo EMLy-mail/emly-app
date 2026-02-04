@@ -7,11 +7,11 @@
   import "../layout.css";
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
-  import { GetConfig } from "$lib/wailsjs/go/main/App";
   import type { utils } from "$lib/wailsjs/go/models";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import AppSidebar from "$lib/components/SidebarApp.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+  import { dev } from '$app/environment';
   import {
     PanelRightClose,
     PanelRightOpen,
@@ -20,6 +20,7 @@
   } from "@lucide/svelte";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { toast } from "svelte-sonner";
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
 
   import {
     WindowMinimise,
@@ -28,6 +29,7 @@
     WindowIsMaximised,
     Quit,
   } from "$lib/wailsjs/runtime/runtime";
+  import { RefreshCcwDot } from "@lucide/svelte";
 
   let versionInfo: utils.Config | null = $state(null);
   let isMaximized = $state(false);
@@ -65,10 +67,10 @@
   }
 
   onMount(async () => {
-    versionInfo = await GetConfig();
+    versionInfo = data.data as utils.Config;
   });
 
-  let { children } = $props();
+  let { data, children } = $props();
 
   const THEME_KEY = "emly_theme";
   let theme = $state<"dark" | "light">("dark");
@@ -109,24 +111,24 @@
     <div class="title">
       <bold>EMLy</bold>
       <div class="version-wrapper">
-        <version
-          >v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
-            .GUIReleaseChannel}</version
-        >
+        <version>
+          {#if dev}
+            v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel} <debug>(DEBUG BUILD)</debug>
+          {:else}
+            v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel}
+          {/if}
+        </version>
         {#if versionInfo}
           <div class="version-tooltip">
             <div class="tooltip-item">
               <span class="label">GUI:</span>
               <span class="value">v{versionInfo.EMLy.GUISemver}</span>
-              <span class="channel">({versionInfo.EMLy.GUIReleaseChannel})</span
-              >
+              <span class="channel">({versionInfo.EMLy.GUIReleaseChannel})</span>
             </div>
             <div class="tooltip-item">
               <span class="label">SDK:</span>
               <span class="value">v{versionInfo.EMLy.SDKDecoderSemver}</span>
-              <span class="channel"
-                >({versionInfo.EMLy.SDKDecoderReleaseChannel})</span
-              >
+              <span class="channel">({versionInfo.EMLy.SDKDecoderReleaseChannel})</span>
             </div>
           </div>
         {/if}
@@ -159,8 +161,10 @@
         {#await navigating?.complete}
           <div class="loading-overlay">
             <div class="spinner"></div>
-            <span style="opacity: 0.5; font-size: 13px">Loading...</span>
-            </div>
+            <span style="opacity: 0.5; font-size: 13px"
+              >{m.layout_loading_text()}</span
+            >
+          </div>
         {:then}
           {@render children()}
         {/await}
@@ -192,7 +196,7 @@
     <House
       size="16"
       onclick={() => {
-        if(page.url.pathname !== "/") goto("/");
+        if (page.url.pathname !== "/") goto("/");
       }}
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
@@ -200,11 +204,26 @@
     <Settings
       size="16"
       onclick={() => {
-        if (page.url.pathname !== "/settings" && page.url.pathname !== "/settings/") goto("/settings");
+        if (
+          page.url.pathname !== "/settings" &&
+          page.url.pathname !== "/settings/"
+        )
+          goto("/settings");
       }}
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
     />
+
+    <a
+      data-sveltekit-reload
+      href="/"
+      class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+      style="text-decoration: none; margin-left: auto; height: 24px; font-size: 12px; padding: 0 8px;"
+      aria-label={m.settings_danger_reload_button()}
+      title={m.settings_danger_reload_button() + " app"}
+    >
+      <RefreshCcwDot />
+    </a>
   </div>
 
   <div style="display:none">
@@ -273,6 +292,12 @@
   .title version {
     color: rgb(228, 221, 221);
     opacity: 0.4;
+  }
+
+  .title version debug{
+    color: #e11d48;
+    opacity: 1;
+    font-weight: 600;
   }
 
   .version-wrapper {

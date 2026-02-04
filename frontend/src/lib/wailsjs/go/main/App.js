@@ -34,6 +34,10 @@ export function OpenDefaultAppsSettings() {
   return window['go']['main']['App']['OpenDefaultAppsSettings']();
 }
 
+export function OpenEMLWindow(arg1, arg2) {
+  return window['go']['main']['App']['OpenEMLWindow'](arg1, arg2);
+}
+
 export function OpenImage(arg1, arg2) {
   return window['go']['main']['App']['OpenImage'](arg1, arg2);
 }
@@ -56,6 +60,18 @@ export function QuitApp() {
 
 export function ReadEML(arg1) {
   return window['go']['main']['App']['ReadEML'](arg1);
+}
+
+export function ReadMSG(arg1, arg2) {
+  return window['go']['main']['App']['ReadMSG'](arg1, arg2);
+}
+
+export function ReadMSGOSS(arg1) {
+  return window['go']['main']['App']['ReadMSGOSS'](arg1);
+}
+
+export function ReadPEC(arg1) {
+  return window['go']['main']['App']['ReadPEC'](arg1);
 }
 
 export function SaveConfig(arg1) {

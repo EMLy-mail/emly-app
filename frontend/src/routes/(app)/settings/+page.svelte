@@ -32,6 +32,7 @@
     selectedLanguage: "it",
     useBuiltinPreview: true,
     useBuiltinPDFViewer: true,
+    useMsgConverter: true,
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
   };
 
@@ -59,6 +60,7 @@
       useBuiltinPreview: !!s.useBuiltinPreview,
       useBuiltinPDFViewer:
         s.useBuiltinPDFViewer ?? defaults.useBuiltinPDFViewer ?? true,
+      useMsgConverter: s.useMsgConverter ?? defaults.useMsgConverter ?? true,
       previewFileSupportedTypes:
         s.previewFileSupportedTypes || defaults.previewFileSupportedTypes || [],
     };
@@ -69,6 +71,7 @@
       (a.selectedLanguage ?? "") === (b.selectedLanguage ?? "") &&
       !!a.useBuiltinPreview === !!b.useBuiltinPreview &&
       !!a.useBuiltinPDFViewer === !!b.useBuiltinPDFViewer &&
+      !!a.useMsgConverter === !!b.useMsgConverter &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -359,6 +362,35 @@
           <p class="text-xs text-muted-foreground mt-2">
             {m.settings_preview_pdf_builtin_info()}
           </p>
+        </div>
+      </Card.Content>
+    </Card.Root>
+
+    <Card.Root>
+      <Card.Header class="space-y-1">
+        <Card.Title>{m.settings_msg_converter_title()}</Card.Title>
+        <Card.Description
+          >{m.settings_msg_converter_description()}</Card.Description
+        >
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        <div class="space-y-3">
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+          >
+            <div>
+              <Label class="text-base">
+                {m.settings_msg_converter_label()}
+              </Label>
+              <p class="text-sm text-muted-foreground">
+                {m.settings_msg_converter_hint()}
+              </p>
+            </div>
+            <Switch
+              bind:checked={form.useMsgConverter}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
         </div>
       </Card.Content>
     </Card.Root>

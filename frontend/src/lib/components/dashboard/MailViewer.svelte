@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { X, MailOpen, Image, FileText, File } from "@lucide/svelte";
-  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage } from "$lib/wailsjs/go/main/App";
+  import { X, MailOpen, Image, FileText, File, ShieldCheck, Shield, Signature, FileUser, Loader2 } from "@lucide/svelte";
+  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage, ReadMSG, ReadPEC, OpenEMLWindow } from "$lib/wailsjs/go/main/App";
   import type { internal } from "$lib/wailsjs/go/models";
   import { sidebarOpen } from "$lib/stores/app";
   import { onDestroy, onMount } from "svelte";
@@ -13,6 +13,7 @@
 
   let unregisterEvents = () => {};
   let isLoading = $state(false);
+  let loadingText = $state("");
 
   function onClear() {
     mailState.clear();
@@ -33,19 +34,60 @@
   onMount(async () => {
     // Listen for second instance args
     unregisterEvents = EventsOn("launchArgs", async (args: string[]) => {
+      console.log("got event launchArgs:", args);
       if (args && args.length > 0) {
         for (const arg of args) {
-          if (arg.toLowerCase().endsWith(".eml")) {
-            console.log("Loading EML from second instance:", arg);
+          const lowerArg = arg.toLowerCase();
+          if (lowerArg.endsWith(".eml") || lowerArg.endsWith(".msg")) {
+            console.log("Loading file from second instance:", arg);
             isLoading = true;
+            loadingText = m.layout_loading_text();
+            
             try {
-              const emlContent = await ReadEML(arg);
+              let emlContent;
+              
+              if (lowerArg.endsWith(".msg")) {
+                  const useExt = settingsStore.settings.useMsgConverter ?? true;
+                  if (useExt) {
+                     loadingText = m.mail_loading_msg_conversion();
+                  }
+                  emlContent = await ReadMSG(arg, useExt);
+                  if(emlContent.isPec) {
+                     toast.warning(m.mail_pec_feature_warning());
+                  }
+              } else {
+                  // EML handling
+                  try {
+                    emlContent = await ReadPEC(arg);
+                    if(emlContent.isPec) {
+                      toast.warning(m.mail_pec_feature_warning());
+                    }
+                  } catch (e) {
+                    console.warn("ReadPEC failed, trying ReadEML:", e);
+                    emlContent = await ReadEML(arg);
+                  }
+
+                  if (emlContent && emlContent.body) {
+                    const trimmed = emlContent.body.trim();
+                    const clean = trimmed.replace(/[\s\r\n]+/g, '');
+                    if (clean.length > 0 && clean.length % 4 === 0 && /^[A-Za-z0-9+/]+=*$/.test(clean)) {
+                      try {
+                        emlContent.body = window.atob(clean);
+                      } catch (e) { }
+                    }
+                  }
+              }
+
               mailState.setParams(emlContent);
               sidebarOpen.set(false);
               WindowUnminimise();
               WindowShow();
+            } catch (error) {
+              console.error("Failed to load email:", error);
+              toast.error("Failed to load email file");
             } finally {
               isLoading = false;
+              loadingText = "";
             }
             break;
           }
@@ -80,23 +122,49 @@
     }
   }
 
+  async function openEMLHandler(base64Data: string, filename: string) {
+    try {
+      await OpenEMLWindow(base64Data, filename);
+    } catch (error) {
+       console.error("Failed to open EML:", error);
+       toast.error("Failed to open EML attachment");
+    }
+  }
+
   async function onOpenMail() {
     isLoading = true;
+    loadingText = m.layout_loading_text();
     const result = await ShowOpenFileDialog();
     if (result && result.length > 0) {
       // Handle opening the mail file
       try {
-        const email: internal.EmailData = await ReadEML(result);
+        // If the file is .eml, otherwise if is .msg, read accordingly
+        let email: internal.EmailData;
+        if(result.toLowerCase().endsWith(".msg")) {
+          const useExt = settingsStore.settings.useMsgConverter ?? true;
+          if (useExt) {
+             loadingText = m.mail_loading_msg_conversion();
+          }
+          email = await ReadMSG(result, useExt);
+        } else {
+          email = await ReadEML(result);
+        }
+        if(email.isPec) {
+          toast.warning(m.mail_pec_feature_warning(), {duration: 10000});
+        }
         mailState.setParams(email);
         sidebarOpen.set(false);
 
       } catch (error) {
         console.error("Failed to read EML file:", error);
+        toast.error(m.mail_error_opening());
       } finally {
         isLoading = false;
+        loadingText = "";
       }
     } else {
         isLoading = false;
+        loadingText = "";
     }
   }
 
@@ -127,6 +195,12 @@
 </script>
 
 <div class="panel fill" aria-label="Events">
+  {#if isLoading}
+    <div class="loading-overlay">
+      <Loader2 class="spinner" size="48" />
+      <div class="loading-text">{loadingText}</div>
+    </div>
+  {/if}
   <div class="events" role="log" aria-live="polite">
     {#if mailState.currentEmail === null}
       <div class="empty-state">
@@ -187,6 +261,14 @@
               <span class="label">{m.mail_bcc()}</span>
               <span class="value">{mailState.currentEmail.bcc.join(", ")}</span>
             {/if}
+
+            {#if mailState.currentEmail.isPec}
+              <span class="label">{m.mail_sign_label()}</span>
+              <span class="value"><span class="pec-badge" title="Posta Elettronica Certificata">
+                   <ShieldCheck size="14" />
+                   PEC
+                </span></span>
+            {/if}
           </div>
         </div>
 
@@ -211,6 +293,32 @@
                     <FileText size="15" />
                     <span class="att-name">{att.filename}</span>
                   </button>
+                {:else if att.filename.toLowerCase().endsWith(".eml")}
+                   <button
+                    class="att-btn eml"
+                    onclick={() => openEMLHandler(arrayBufferToBase64(att.data), att.filename)}
+                  >
+                    <MailOpen size="14" />
+                    <span class="att-name">{att.filename}</span>
+                  </button>
+                {:else if mailState.currentEmail.isPec && att.filename.toLowerCase().endsWith(".p7s")}
+                  <a
+                    class="att-btn file"
+                    href={`data:${att.contentType};base64,${arrayBufferToBase64(att.data)}`}
+                    download={att.filename}
+                  >
+                    <Signature size="14" />
+                    <span class="att-name">{att.filename}</span>
+                  </a>
+                {:else if mailState.currentEmail.isPec && att.filename.toLowerCase() === "daticert.xml"}
+                  <a
+                    class="att-btn file"
+                    href={`data:${att.contentType};base64,${arrayBufferToBase64(att.data)}`}
+                    download={att.filename}
+                  >
+                    <FileUser size="14" />
+                    <span class="att-name">{att.filename}</span>
+                  </a>
                 {:else}
                   <a
                     class="att-btn file"
@@ -247,6 +355,38 @@
 </div>
 
 <style>
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    backdrop-filter: blur(4px);
+    gap: 16px;
+  }
+
+  /* Make sure internal loader spins if not using class-based animation library like Tailwind */
+  :global(.spinner) {
+      animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
   .panel {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -403,6 +543,9 @@
   .att-btn.pdf { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
   .att-btn.pdf:hover { color: #fca5a5; }
 
+  .att-btn.eml { color: hsl(49, 80%, 49%); border-color: rgba(224, 206, 39, 0.3); }
+  .att-btn.eml:hover { color: hsl(49, 80%, 65%); }
+
   .att-name {
     white-space: nowrap;
     overflow: hidden;
@@ -496,5 +639,43 @@
     font-size: 11px;
     color: rgba(255, 255, 255, 0.4);
     font-style: italic;
+  }
+
+  .badged-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .signed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    vertical-align: middle;
+    user-select: none;
+    width: fit-content;
+  }
+
+  .pec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    vertical-align: middle;
+    user-select: none;
+    width: fit-content;
   }
 </style>

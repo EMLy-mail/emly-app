@@ -1,7 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { GetViewerData, GetStartupFile, ReadEML } from '$lib/wailsjs/go/main/App';
+import { GetViewerData, GetStartupFile, ReadEML, ReadMSG } from '$lib/wailsjs/go/main/App';
 import DOMPurify from 'dompurify';
+import { settingsStore } from '$lib/stores/settings.svelte';
+import type { internal } from '$lib/wailsjs/go/models';
 
 export const load: PageLoad = async () => {
     try {
@@ -18,7 +20,15 @@ export const load: PageLoad = async () => {
         // Check if opened with a file
         const startupFile = await GetStartupFile();
         if (startupFile) {
-            const emlContent = await ReadEML(startupFile);
+            let emlContent: internal.EmailData;
+            
+            if (startupFile.toLowerCase().endsWith(".msg")) {
+                const useExt = settingsStore.settings.useMsgConverter ?? true;
+                emlContent = await ReadMSG(startupFile, useExt);
+            } else {
+                emlContent = await ReadEML(startupFile);
+            }
+
             if (emlContent) {
                 emlContent.body = DOMPurify.sanitize(emlContent.body || "");
                 return { email: emlContent };

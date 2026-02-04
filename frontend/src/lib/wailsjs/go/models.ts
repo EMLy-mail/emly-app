@@ -199,6 +199,8 @@ export namespace internal {
 	    subject: string;
 	    body: string;
 	    attachments: EmailAttachment[];
+	    isPec: boolean;
+	    hasInnerEmail: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new EmailData(source);
@@ -213,6 +215,8 @@ export namespace internal {
 	        this.subject = source["subject"];
 	        this.body = source["body"];
 	        this.attachments = this.convertValues(source["attachments"], EmailAttachment);
+	        this.isPec = source["isPec"];
+	        this.hasInnerEmail = source["hasInnerEmail"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

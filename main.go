@@ -23,6 +23,7 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 	log.Println("user opened second from", secondInstanceData.WorkingDirectory)
 	runtime.WindowUnminimise(a.ctx)
 	runtime.WindowShow(a.ctx)
+	log.Println("launchArgs", secondInstanceArgs)
 	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
 }
 
@@ -60,6 +61,9 @@ func main() {
 	// Parse args again to set startup file on the app instance
 	for _, arg := range args {
 		if strings.HasSuffix(strings.ToLower(arg), ".eml") {
+			app.StartupFilePath = arg
+		}
+		if strings.HasSuffix(strings.ToLower(arg), ".msg") {
 			app.StartupFilePath = arg
 		}
 	}

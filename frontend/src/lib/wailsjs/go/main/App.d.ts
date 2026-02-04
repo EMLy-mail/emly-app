@@ -20,6 +20,8 @@ export function GetViewerData():Promise<main.ViewerData>;
 
 export function OpenDefaultAppsSettings():Promise<void>;
 
+export function OpenEMLWindow(arg1:string,arg2:string):Promise<void>;
+
 export function OpenImage(arg1:string,arg2:string):Promise<void>;
 
 export function OpenImageWindow(arg1:string,arg2:string):Promise<void>;
@@ -31,6 +33,12 @@ export function OpenPDFWindow(arg1:string,arg2:string):Promise<void>;
 export function QuitApp():Promise<void>;
 
 export function ReadEML(arg1:string):Promise<internal.EmailData>;
+
+export function ReadMSG(arg1:string,arg2:boolean):Promise<internal.EmailData>;
+
+export function ReadMSGOSS(arg1:string):Promise<internal.EmailData>;
+
+export function ReadPEC(arg1:string):Promise<internal.EmailData>;
 
 export function SaveConfig(arg1:utils.Config):Promise<void>;
 
