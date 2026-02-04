@@ -6,7 +6,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
   import { Switch } from "$lib/components/ui/switch";
-  import { ChevronLeft, Command, Option, Flame } from "@lucide/svelte";
+  import { ChevronLeft, Flame } from "@lucide/svelte";
   import type { EMLy_GUI_Settings } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { It, Us } from "svelte-flags";

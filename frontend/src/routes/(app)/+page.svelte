@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MailViewer from "$lib/components/dashboard/MailViewer.svelte";
+  import MailViewer from "$lib/components/MailViewer.svelte";
   import { mailState } from "$lib/stores/mail-state.svelte";
 
   let { data } = $props();
