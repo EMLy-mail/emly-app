@@ -9,6 +9,7 @@
   import { mailState } from "$lib/stores/mail-state.svelte";
   import { settingsStore } from "$lib/stores/settings.svelte";
   import * as m from "$lib/paraglide/messages";
+  import { dev } from "$app/environment";
 
   let unregisterEvents = () => {};
   let isLoading = $state(false);
@@ -22,11 +23,13 @@
   }
 
   $effect(() => {
-    console.log("Current email changed:", mailState.currentEmail);
+    if(dev) {
+      console.log(mailState.currentEmail)
+    }
+    console.info("Current email changed:", mailState.currentEmail?.subject);
     if(mailState.currentEmail !== null) {
       sidebarOpen.set(false);
     }
-    console.log(mailState.currentEmail?.attachments)
   })
 
   onDestroy(() => {
