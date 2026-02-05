@@ -10,8 +10,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/sys/windows/registry"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 
 	"emly/backend/utils"
 	internal "emly/backend/utils/mail"
@@ -516,4 +519,18 @@ func (a *App) IsDebuggerRunning() bool {
 		return false
 	}
 	return utils.IsDebugged()
+}
+
+func (a *App) ConvertToUTF8(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+
+	// If invalid UTF-8, assume Windows-1252 (superset of ISO-8859-1)
+	decoder := charmap.Windows1252.NewDecoder()
+	decoded, _, err := transform.String(decoder, s)
+	if err != nil {
+		return s // Return as-is if decoding fails
+	}
+	return decoded
 }

@@ -11,3 +11,17 @@ export type WithoutChild<T> = T extends { child?: any } ? Omit<T, "child"> : T;
 export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "children"> : T;
 export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+
+export function isBase64(str: string): boolean {
+	if (!str) return false;
+	const base64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+	return base64Regex.test(str);
+}
+
+export function isHtml(str: string): boolean {
+	if (!str) return false;
+	const htmlRegex = /<[^>]+>/;
+	return htmlRegex.test(str);
+}
+
+

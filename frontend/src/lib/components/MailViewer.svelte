@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, MailOpen, Image, FileText, File, ShieldCheck, Shield, Signature, FileCode, Loader2 } from "@lucide/svelte";
-  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage, ReadMSG, ReadPEC, OpenEMLWindow } from "$lib/wailsjs/go/main/App";
+  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage, ReadMSG, ReadPEC, OpenEMLWindow, ConvertToUTF8 } from "$lib/wailsjs/go/main/App";
   import type { internal } from "$lib/wailsjs/go/models";
   import { sidebarOpen } from "$lib/stores/app";
   import { onDestroy, onMount } from "svelte";
@@ -10,6 +10,7 @@
   import { settingsStore } from "$lib/stores/settings.svelte";
   import * as m from "$lib/paraglide/messages";
   import { dev } from "$app/environment";
+  import { isBase64, isHtml } from "$lib/utils";
 
   let unregisterEvents = () => {};
   let isLoading = $state(false);
@@ -23,13 +24,49 @@
   }
 
   $effect(() => {
-    if(dev) {
-      console.log(mailState.currentEmail)
-    }
-    console.info("Current email changed:", mailState.currentEmail?.subject);
-    if(mailState.currentEmail !== null) {
-      sidebarOpen.set(false);
-    }
+    const process = async () => {
+      if (mailState.currentEmail?.body) {
+        let content = mailState.currentEmail.body;
+        // 1. Try to decode if not HTML
+        if (!isHtml(content)) {
+          const clean = content.replace(/[\s\r\n]+/g, '');
+          if (isBase64(clean)) {
+            try {
+              const decoded = window.atob(clean);
+              content = decoded;
+            } catch (e) {
+              console.warn("Failed to decode base64 body:", e);
+            }
+          }
+        }
+
+        // 2. If it is HTML (original or decoded), try to fix encoding
+        if (isHtml(content)) {
+            try {
+              const fixed = await ConvertToUTF8(content);
+              if (fixed) {
+                content = fixed;
+              }
+            } catch (e) { 
+                console.warn("Failed to fix encoding:", e);
+            }
+        }
+        
+        // 3. Update if changed
+        if (content !== mailState.currentEmail.body) {
+           mailState.currentEmail.body = content;
+        }
+      }
+
+      if(dev) {
+        console.log(mailState.currentEmail)
+      }
+      console.info("Current email changed:", mailState.currentEmail?.subject);
+      if(mailState.currentEmail !== null) {
+        sidebarOpen.set(false);
+      }
+    };
+    process();
   })
 
   onDestroy(() => {
