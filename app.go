@@ -44,7 +44,20 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	Log("Wails startup")
+
+	isViewer := false
+	for _, arg := range os.Args {
+		if strings.Contains(arg, "--view-image") || strings.Contains(arg, "--view-pdf") {
+			isViewer = true
+			break
+		}
+	}
+
+	if isViewer {
+		Log("Second instance launch")
+	} else {
+		Log("Wails startup")
+	}
 }
 
 func (a *App) GetConfig() *utils.Config {
