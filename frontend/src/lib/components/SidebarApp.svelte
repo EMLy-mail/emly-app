@@ -3,7 +3,7 @@
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import { dangerZoneEnabled } from "$lib/stores/app";
   import * as m from "$lib/paraglide/messages.js";
-  import { Mail } from "@lucide/svelte/icons";
+  import { Mail, Heart } from "@lucide/svelte/icons";
 
   const CLICK_WINDOW_MS = 4000;
   const REQUIRED_CLICKS = 10;
@@ -42,6 +42,13 @@
       icon: SettingsIcon,
       disabled: false,
       id: 2,
+    },
+    {
+      title: m.sidebar_credits(),
+      url: "/credits",
+      icon: Heart,
+      disabled: false,
+      id: 3,
     },
   ];
 </script>

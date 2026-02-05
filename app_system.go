@@ -144,3 +144,16 @@ func (a *App) OpenFolderInExplorer(folderPath string) error {
 	cmd := exec.Command("explorer", folderPath)
 	return cmd.Start()
 }
+
+// OpenURLInBrowser opens the specified URL in the system's default web browser.
+// Uses the Windows "start" command to launch the default browser.
+//
+// Parameters:
+//   - url: The URL to open (must be a valid http/https URL)
+//
+// Returns:
+//   - error: Error if launching the browser fails
+func (a *App) OpenURLInBrowser(url string) error {
+	cmd := exec.Command("cmd", "/c", "start", "", url)
+	return cmd.Start()
+}

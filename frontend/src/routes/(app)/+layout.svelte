@@ -23,6 +23,7 @@
     FolderOpen,
     CheckCircle,
     Camera,
+    Heart,
   } from "@lucide/svelte";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { toast } from "svelte-sonner";
@@ -253,8 +254,10 @@
           {#if dev}
             v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel}
             <debug>(DEBUG BUILD)</debug>
-          {:else}
+          {:else if versionInfo?.EMLy.GUIReleaseChannel !== "stable"}
             v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy.GUIReleaseChannel}
+          {:else}
+            v{versionInfo?.EMLy.GUISemver}
           {/if}
         </version>
         {#if versionInfo}
@@ -351,6 +354,15 @@
           page.url.pathname !== "/settings/"
         )
           goto("/settings");
+      }}
+      style="cursor: pointer; opacity: 0.7;"
+      class="hover:opacity-100 transition-opacity"
+    />
+    <Heart
+      size="16"
+      onclick={() => {
+        if (page.url.pathname !== "/credits" && page.url.pathname !== "/credits/")
+          goto("/credits");
       }}
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"

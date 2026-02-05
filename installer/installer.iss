@@ -1,6 +1,6 @@
 #define ApplicationName 'EMLy'
 #define ApplicationVersion GetVersionNumbersString('EMLy.exe')
-#define ApplicationVersion '1.3.1_beta'
+#define ApplicationVersion '1.4.0'
 
 [Setup]
 AppName={#ApplicationName}
