@@ -886,3 +886,62 @@ func (a *App) OpenFolderInExplorer(folderPath string) error {
 	cmd := exec.Command("explorer", folderPath)
 	return cmd.Start()
 }
+
+// ExportSettings opens a save dialog and exports settings JSON to the selected file
+func (a *App) ExportSettings(settingsJSON string) (string, error) {
+	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		DefaultFilename: "emly_settings.json",
+		Title:           "Export Settings",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "JSON Files (*.json)",
+				Pattern:     "*.json",
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to open save dialog: %w", err)
+	}
+
+	if savePath == "" {
+		return "", nil // User cancelled
+	}
+
+	// Ensure .json extension
+	if !strings.HasSuffix(strings.ToLower(savePath), ".json") {
+		savePath += ".json"
+	}
+
+	if err := os.WriteFile(savePath, []byte(settingsJSON), 0644); err != nil {
+		return "", fmt.Errorf("failed to write settings file: %w", err)
+	}
+
+	return savePath, nil
+}
+
+// ImportSettings opens an open dialog and returns the contents of the selected JSON file
+func (a *App) ImportSettings() (string, error) {
+	openPath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Import Settings",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "JSON Files (*.json)",
+				Pattern:     "*.json",
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to open file dialog: %w", err)
+	}
+
+	if openPath == "" {
+		return "", nil // User cancelled
+	}
+
+	data, err := os.ReadFile(openPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read settings file: %w", err)
+	}
+
+	return string(data), nil
+}

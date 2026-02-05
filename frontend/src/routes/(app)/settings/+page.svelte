@@ -6,7 +6,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
   import { Switch } from "$lib/components/ui/switch";
-  import { ChevronLeft, Flame } from "@lucide/svelte";
+  import { ChevronLeft, Flame, Download, Upload } from "@lucide/svelte";
   import type { EMLy_GUI_Settings } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { It, Us } from "svelte-flags";
@@ -25,6 +25,7 @@
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
   import { dev } from '$app/environment';
+  import { ExportSettings, ImportSettings } from "$lib/wailsjs/go/main/App";
 
   let { data } = $props();
   let config = $derived(data.config);
@@ -173,6 +174,42 @@
       previousDangerZoneEnabled = $dangerZoneEnabled;
     })();
   });
+
+  async function exportSettings() {
+    try {
+      const settingsJSON = JSON.stringify(form, null, 2);
+      const result = await ExportSettings(settingsJSON);
+      if (result) {
+        toast.success(m.settings_export_success());
+      }
+    } catch (err) {
+      console.error("Failed to export settings:", err);
+      toast.error(m.settings_export_error());
+    }
+  }
+
+  async function importSettings() {
+    try {
+      const result = await ImportSettings();
+      if (result) {
+        try {
+          const imported = JSON.parse(result) as EMLy_GUI_Settings;
+          // Validate that it looks like a valid settings object
+          if (typeof imported === 'object' && imported !== null) {
+            form = normalizeSettings(imported);
+            toast.success(m.settings_import_success());
+          } else {
+            toast.error(m.settings_import_invalid());
+          }
+        } catch {
+          toast.error(m.settings_import_invalid());
+        }
+      }
+    } catch (err) {
+      console.error("Failed to import settings:", err);
+      toast.error(m.settings_import_error());
+    }
+  }
 </script>
 
 <div class="min-h-[calc(100vh-1rem)] from-background to-muted/30">
@@ -240,6 +277,52 @@
         <div class="text-xs text-muted-foreground mt-4">
           <strong>Info:</strong>
           {m.settings_language_info()}
+        </div>
+      </Card.Content>
+    </Card.Root>
+
+    <Card.Root>
+      <Card.Header class="space-y-1">
+        <Card.Title>{m.settings_export_import_title()}</Card.Title>
+        <Card.Description>{m.settings_export_import_description()}</Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        <div
+          class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+        >
+          <div>
+            <div class="font-medium">{m.settings_export_button()}</div>
+            <div class="text-sm text-muted-foreground">
+              {m.settings_export_hint()}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            class="cursor-pointer hover:cursor-pointer"
+            onclick={exportSettings}
+          >
+            <Download class="size-4 mr-2" />
+            {m.settings_export_button()}
+          </Button>
+        </div>
+        <Separator />
+        <div
+          class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+        >
+          <div>
+            <div class="font-medium">{m.settings_import_button()}</div>
+            <div class="text-sm text-muted-foreground">
+              {m.settings_import_hint()}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            class="cursor-pointer hover:cursor-pointer"
+            onclick={importSettings}
+          >
+            <Upload class="size-4 mr-2" />
+            {m.settings_import_button()}
+          </Button>
         </div>
       </Card.Content>
     </Card.Root>

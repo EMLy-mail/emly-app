@@ -109,5 +109,16 @@
 	"bugreport_open_folder": "Apri Cartella",
 	"bugreport_close": "Chiudi",
 	"bugreport_error": "Impossibile creare la segnalazione bug.",
-	"bugreport_copied": "Percorso copiato negli appunti!"
+	"bugreport_copied": "Percorso copiato negli appunti!",
+	"settings_export_import_title": "Esporta / Importa Impostazioni",
+	"settings_export_import_description": "Esporta le impostazioni correnti in un file o importa impostazioni da un file precedentemente esportato.",
+	"settings_export_button": "Esporta Impostazioni",
+	"settings_export_hint": "Salva le impostazioni correnti in un file JSON.",
+	"settings_import_button": "Importa Impostazioni",
+	"settings_import_hint": "Carica impostazioni da un file JSON precedentemente esportato.",
+	"settings_export_success": "Impostazioni esportate con successo!",
+	"settings_export_error": "Impossibile esportare le impostazioni.",
+	"settings_import_success": "Impostazioni importate con successo!",
+	"settings_import_error": "Impossibile importare le impostazioni.",
+	"settings_import_invalid": "File impostazioni non valido."
 }

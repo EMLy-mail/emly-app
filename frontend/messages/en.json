@@ -109,5 +109,16 @@
 	"bugreport_open_folder": "Open Folder",
 	"bugreport_close": "Close",
 	"bugreport_error": "Failed to create bug report.",
-	"bugreport_copied": "Path copied to clipboard!"
+	"bugreport_copied": "Path copied to clipboard!",
+	"settings_export_import_title": "Export / Import Settings",
+	"settings_export_import_description": "Export your current settings to a file or import settings from a previously exported file.",
+	"settings_export_button": "Export Settings",
+	"settings_export_hint": "Save your current settings to a JSON file.",
+	"settings_import_button": "Import Settings",
+	"settings_import_hint": "Load settings from a previously exported JSON file.",
+	"settings_export_success": "Settings exported successfully!",
+	"settings_export_error": "Failed to export settings.",
+	"settings_import_success": "Settings imported successfully!",
+	"settings_import_error": "Failed to import settings.",
+	"settings_import_invalid": "Invalid settings file."
 }
