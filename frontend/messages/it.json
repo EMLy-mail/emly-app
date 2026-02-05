@@ -120,5 +120,8 @@
 	"settings_export_error": "Impossibile esportare le impostazioni.",
 	"settings_import_success": "Impostazioni importate con successo!",
 	"settings_import_error": "Impossibile importare le impostazioni.",
-	"settings_import_invalid": "File impostazioni non valido."
+	"settings_import_invalid": "File impostazioni non valido.",
+	"settings_email_dark_viewer_label": "Tema scuro per contenuto email",
+	"settings_email_dark_viewer_hint": "Visualizza il corpo dell'email con uno sfondo scuro che corrisponde al tema dell'app.",
+	"settings_email_dark_viewer_info": "Info: Quando disabilitato, le email verranno visualizzate con lo sfondo chiaro originale. Alcune email potrebbero essere progettate per sfondi chiari e apparire meglio con questa opzione disabilitata."
 }

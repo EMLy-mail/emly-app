@@ -38,6 +38,7 @@
     useBuiltinPDFViewer: true,
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
     enableAttachedDebuggerProtection: true,
+    useDarkEmailViewer: true,
   };
 
   async function setLanguage(
@@ -68,6 +69,8 @@
         s.previewFileSupportedTypes || defaults.previewFileSupportedTypes || [],
       enableAttachedDebuggerProtection:
         s.enableAttachedDebuggerProtection ?? defaults.enableAttachedDebuggerProtection ?? true,
+      useDarkEmailViewer:
+        s.useDarkEmailViewer ?? defaults.useDarkEmailViewer ?? true,
     };
   }
 
@@ -77,6 +80,7 @@
       !!a.useBuiltinPreview === !!b.useBuiltinPreview &&
       !!a.useBuiltinPDFViewer === !!b.useBuiltinPDFViewer &&
       !!a.enableAttachedDebuggerProtection === !!b.enableAttachedDebuggerProtection &&
+      !!a.useDarkEmailViewer === !!b.useDarkEmailViewer &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -448,6 +452,29 @@
           </div>
           <p class="text-xs text-muted-foreground mt-2">
             {m.settings_preview_pdf_builtin_info()}
+          </p>
+        </div>
+        <Separator />
+
+        <div class="space-y-3">
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+          >
+            <div>
+              <div class="font-medium">
+                {m.settings_email_dark_viewer_label()}
+              </div>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_email_dark_viewer_hint()}
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.useDarkEmailViewer}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            {m.settings_email_dark_viewer_info()}
           </p>
         </div>
       </Card.Content>

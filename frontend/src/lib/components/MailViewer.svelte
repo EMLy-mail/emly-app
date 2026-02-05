@@ -20,7 +20,8 @@
 
   // Import refactored utilities
   import {
-    IFRAME_UTIL_HTML,
+    IFRAME_UTIL_HTML_DARK,
+    IFRAME_UTIL_HTML_LIGHT,
     CONTENT_TYPES,
     PEC_FILES,
     arrayBufferToBase64,
@@ -33,6 +34,7 @@
     processEmailBody,
     isEmailFile,
   } from '$lib/utils/mail';
+  import { settingsStore } from '$lib/stores/settings.svelte';
 
   // ============================================================================
   // State
@@ -41,6 +43,13 @@
   let unregisterEvents = () => {};
   let isLoading = $state(false);
   let loadingText = $state('');
+
+  // Derived iframe HTML based on dark/light setting
+  let iframeUtilHtml = $derived(
+    settingsStore.settings.useDarkEmailViewer !== false
+      ? IFRAME_UTIL_HTML_DARK
+      : IFRAME_UTIL_HTML_LIGHT
+  );
 
   // ============================================================================
   // Event Handlers
@@ -347,9 +356,9 @@
         </div>
 
         <!-- Email Body -->
-        <div class="email-body-wrapper">
+        <div class="email-body-wrapper" class:light-theme={settingsStore.settings.useDarkEmailViewer === false}>
           <iframe
-            srcdoc={mailState.currentEmail.body + IFRAME_UTIL_HTML}
+            srcdoc={mailState.currentEmail.body + iframeUtilHtml}
             title="Email Body"
             class="email-iframe"
             sandbox="allow-same-origin allow-scripts"
@@ -579,9 +588,15 @@
 
   .email-body-wrapper {
     flex: 1;
-    background: white;
+    background: #0d0d0d;
     position: relative;
     min-height: 200px;
+    border-radius: 0 0 14px 14px;
+    overflow: hidden;
+  }
+
+  .email-body-wrapper.light-theme {
+    background: #ffffff;
   }
 
   .email-iframe {

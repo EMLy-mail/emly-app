@@ -120,5 +120,8 @@
 	"settings_export_error": "Failed to export settings.",
 	"settings_import_success": "Settings imported successfully!",
 	"settings_import_error": "Failed to import settings.",
-	"settings_import_invalid": "Invalid settings file."
+	"settings_import_invalid": "Invalid settings file.",
+	"settings_email_dark_viewer_label": "Dark theme for email content",
+	"settings_email_dark_viewer_hint": "Display email body with a dark background matching the app theme.",
+	"settings_email_dark_viewer_info": "Info: When disabled, emails will display with their original light background. Some emails may be designed for light backgrounds and look better with this disabled."
 }

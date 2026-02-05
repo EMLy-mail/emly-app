@@ -10,6 +10,7 @@ const defaults: EMLy_GUI_Settings = {
     useBuiltinPDFViewer: true,
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
     enableAttachedDebuggerProtection: true,
+    useDarkEmailViewer: true,
 };
 
 class SettingsStore {
