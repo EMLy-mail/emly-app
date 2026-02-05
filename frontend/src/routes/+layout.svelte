@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { setupConsoleLogger } from '$lib/utils/logger-hook';
 
 	let { children } = $props();
 
 	onMount(() => {
+		setupConsoleLogger();
 		const loader = document.getElementById('app-loading');
 		if (loader) {
 			loader.style.opacity = '0';

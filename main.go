@@ -28,6 +28,11 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 }
 
 func main() {
+	if err := InitLogger(); err != nil {
+		log.Println("Error initializing logger:", err)
+	}
+	defer CloseLogger()
+
 	// Check for custom args
 	args := os.Args
 	uniqueId := "emly-app-lock"

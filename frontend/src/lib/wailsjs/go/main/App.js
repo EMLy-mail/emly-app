@@ -6,6 +6,10 @@ export function CheckIsDefaultEMLHandler() {
   return window['go']['main']['App']['CheckIsDefaultEMLHandler']();
 }
 
+export function FrontendLog(arg1, arg2) {
+  return window['go']['main']['App']['FrontendLog'](arg1, arg2);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }

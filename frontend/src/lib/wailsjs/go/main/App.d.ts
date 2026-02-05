@@ -6,6 +6,8 @@ import {internal} from '../models';
 
 export function CheckIsDefaultEMLHandler():Promise<boolean>;
 
+export function FrontendLog(arg1:string,arg2:string):Promise<void>;
+
 export function GetConfig():Promise<utils.Config>;
 
 export function GetImageViewerData():Promise<main.ImageViewerData>;
