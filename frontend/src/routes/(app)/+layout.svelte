@@ -31,10 +31,12 @@
   } from "$lib/wailsjs/runtime/runtime";
   import { RefreshCcwDot } from "@lucide/svelte";
   import { IsDebuggerRunning, QuitApp } from "$lib/wailsjs/go/main/App";
+  import { settingsStore } from "$lib/stores/settings.svelte.js";
 
   let versionInfo: utils.Config | null = $state(null);
   let isMaximized = $state(false);
   let isDebugerOn: boolean = $state(false);
+  let isDebbugerProtectionOn: boolean = $state(true);
 
   async function syncMaxState() {
     isMaximized = await WindowIsMaximised();
@@ -69,7 +71,7 @@
   }
 
   onMount(async () => {
-    if (browser) {
+    if (browser && isDebbugerProtectionOn) {
       detectDebugging();
       setInterval(detectDebugging, 1000);
     }
@@ -118,6 +120,8 @@
     } catch {
       stored = null;
     }
+    isDebbugerProtectionOn = settingsStore.settings.enableAttachedDebuggerProtection ? true : false;
+    $inspect(isDebbugerProtectionOn, "isDebbugerProtectionOn");
 
     applyTheme(stored === "light" ? "light" : "dark");
   });
