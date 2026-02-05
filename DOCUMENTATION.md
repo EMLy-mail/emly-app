@@ -37,11 +37,15 @@ EMLy is built using the **Wails v2** framework, which combines a Go backend with
 ├─────────────────────────────────────────────────────────┤
 │  Wails Bridge (Auto-generated TypeScript bindings)      │
 ├─────────────────────────────────────────────────────────┤
-│  Backend (Go)                                           │
-│  ├── App Logic (app.go)                                 │
-│  ├── Email Parsing (backend/utils/mail/)                │
-│  ├── Windows APIs (screenshot, debugger detection)      │
-│  └── File Operations                                    │
+│  Backend (Go - Modular Architecture)                    │
+│  ├── app.go          - Core struct & lifecycle          │
+│  ├── app_mail.go     - Email parsing (EML/MSG/PEC)      │
+│  ├── app_viewer.go   - Viewer window management         │
+│  ├── app_screenshot.go - Window capture                 │
+│  ├── app_bugreport.go  - Bug reporting system           │
+│  ├── app_settings.go   - Settings import/export         │
+│  ├── app_system.go     - Windows system utilities       │
+│  └── backend/utils/    - Shared utilities               │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -71,7 +75,13 @@ EMLy is built using the **Wails v2** framework, which combines a Go backend with
 
 ```
 EMLy/
-├── app.go                    # Main application logic
+├── app.go                    # Core App struct, lifecycle, and configuration
+├── app_mail.go               # Email reading methods (EML, MSG, PEC)
+├── app_viewer.go             # Viewer window management (image, PDF, EML)
+├── app_screenshot.go         # Screenshot capture functionality
+├── app_bugreport.go          # Bug report creation and submission
+├── app_settings.go           # Settings import/export
+├── app_system.go             # Windows system utilities (registry, encoding)
 ├── main.go                   # Application entry point
 ├── logger.go                 # Logging utilities
 ├── wails.json                # Wails configuration
@@ -117,6 +127,12 @@ EMLy/
 │   │   │   ├── wailsjs/          # Auto-generated Go bindings
 │   │   │   ├── types/            # TypeScript types
 │   │   │   └── utils/            # Utility functions
+│   │   │       └── mail/         # Email utilities (modular)
+│   │   │           ├── index.ts          # Barrel export
+│   │   │           ├── constants.ts      # IFRAME_UTIL_HTML, CONTENT_TYPES, etc.
+│   │   │           ├── data-utils.ts     # arrayBufferToBase64, createDataUrl
+│   │   │           ├── attachment-handlers.ts  # openPDFAttachment, openImageAttachment
+│   │   │           └── email-loader.ts   # loadEmailFromPath, processEmailBody
 │   │   └── messages/             # i18n translation files
 │   │       ├── en.json
 │   │       └── it.json
@@ -153,41 +169,104 @@ if strings.Contains(arg, "--view-image") {
 
 ### Application Core (`app.go`)
 
-The `App` struct is the main application controller, exposed to the frontend via Wails bindings.
+The `App` struct is the main application controller, exposed to the frontend via Wails bindings. The code is organized into multiple files for maintainability.
 
 #### Key Properties
 
 ```go
 type App struct {
-    ctx                 context.Context
+    ctx                 context.Context  // Wails application context
     StartupFilePath     string           // File opened via command line
     CurrentMailFilePath string           // Currently loaded mail file
+    openImagesMux       sync.Mutex       // Mutex for image viewer tracking
     openImages          map[string]bool  // Track open image viewers
+    openPDFsMux         sync.Mutex       // Mutex for PDF viewer tracking
     openPDFs            map[string]bool  // Track open PDF viewers
+    openEMLsMux         sync.Mutex       // Mutex for EML viewer tracking
     openEMLs            map[string]bool  // Track open EML viewers
 }
 ```
 
-#### Core Methods
+#### Backend File Organization
+
+The Go backend is split into logical files:
+
+| File | Purpose |
+|------|---------|
+| `app.go` | Core App struct, constructor, lifecycle methods (startup/shutdown), configuration |
+| `app_mail.go` | Email reading: `ReadEML`, `ReadMSG`, `ReadPEC`, `ReadMSGOSS`, `ShowOpenFileDialog` |
+| `app_viewer.go` | Viewer windows: `OpenImageWindow`, `OpenPDFWindow`, `OpenEMLWindow`, `OpenPDF`, `OpenImage`, `GetViewerData` |
+| `app_screenshot.go` | Screenshots: `TakeScreenshot`, `SaveScreenshot`, `SaveScreenshotAs` |
+| `app_bugreport.go` | Bug reports: `CreateBugReportFolder`, `SubmitBugReport`, `zipFolder` |
+| `app_settings.go` | Settings I/O: `ExportSettings`, `ImportSettings` |
+| `app_system.go` | System utilities: `CheckIsDefaultEMLHandler`, `OpenDefaultAppsSettings`, `ConvertToUTF8`, `OpenFolderInExplorer` |
+
+#### Core Methods by Category
+
+**Lifecycle & Configuration (`app.go`)**
 
 | Method | Description |
 |--------|-------------|
+| `startup(ctx)` | Wails startup callback, saves context |
+| `shutdown(ctx)` | Wails shutdown callback for cleanup |
+| `QuitApp()` | Terminates the application |
 | `GetConfig()` | Returns application configuration from `config.ini` |
+| `SaveConfig(cfg)` | Saves configuration to `config.ini` |
 | `GetStartupFile()` | Returns file path passed via command line |
 | `SetCurrentMailFilePath()` | Updates the current mail file path |
-| `ReadEML(path)` | Parses an EML file and returns email data |
-| `ReadMSG(path)` | Parses an MSG file and returns email data |
+| `GetMachineData()` | Returns system information |
+| `IsDebuggerRunning()` | Checks if a debugger is attached |
+
+**Email Reading (`app_mail.go`)**
+
+| Method | Description |
+|--------|-------------|
+| `ReadEML(path)` | Parses a standard .eml file |
+| `ReadMSG(path, useExternal)` | Parses a Microsoft .msg file |
 | `ReadPEC(path)` | Parses PEC (Italian certified email) files |
 | `ShowOpenFileDialog()` | Opens native file picker for EML/MSG files |
-| `OpenImageWindow(data, filename)` | Opens image in new viewer window |
-| `OpenPDFWindow(data, filename)` | Opens PDF in new viewer window |
-| `OpenEMLWindow(data, filename)` | Opens EML attachment in new window |
+
+**Viewer Windows (`app_viewer.go`)**
+
+| Method | Description |
+|--------|-------------|
+| `OpenImageWindow(data, filename)` | Opens image in built-in viewer |
+| `OpenPDFWindow(data, filename)` | Opens PDF in built-in viewer |
+| `OpenEMLWindow(data, filename)` | Opens EML attachment in new EMLy window |
+| `OpenImage(data, filename)` | Opens image with system default app |
+| `OpenPDF(data, filename)` | Opens PDF with system default app |
+| `GetViewerData()` | Returns viewer data for viewer mode detection |
+
+**Screenshots (`app_screenshot.go`)**
+
+| Method | Description |
+|--------|-------------|
 | `TakeScreenshot()` | Captures window screenshot as base64 PNG |
-| `SubmitBugReport(input)` | Creates bug report with screenshot and system info |
+| `SaveScreenshot()` | Saves screenshot to temp directory |
+| `SaveScreenshotAs()` | Opens save dialog for screenshot |
+
+**Bug Reports (`app_bugreport.go`)**
+
+| Method | Description |
+|--------|-------------|
+| `CreateBugReportFolder()` | Creates folder with screenshot and mail file |
+| `SubmitBugReport(input)` | Creates complete bug report with ZIP archive |
+
+**Settings (`app_settings.go`)**
+
+| Method | Description |
+|--------|-------------|
 | `ExportSettings(json)` | Exports settings to JSON file |
 | `ImportSettings()` | Imports settings from JSON file |
-| `IsDebuggerRunning()` | Checks if a debugger is attached |
-| `QuitApp()` | Terminates the application |
+
+**System Utilities (`app_system.go`)**
+
+| Method | Description |
+|--------|-------------|
+| `CheckIsDefaultEMLHandler()` | Checks if EMLy is default for .eml files |
+| `OpenDefaultAppsSettings()` | Opens Windows default apps settings |
+| `ConvertToUTF8(string)` | Converts string to valid UTF-8 |
+| `OpenFolderInExplorer(path)` | Opens folder in Windows Explorer |
 
 ### Email Parsing (`backend/utils/mail/`)
 
@@ -313,6 +392,62 @@ if (att.contentType.startsWith("image/")) {
     // Download as file
     <a href={dataUrl} download={filename}>...</a>
 }
+```
+
+### Frontend Mail Utilities (`lib/utils/mail/`)
+
+The frontend email handling code is organized into modular utility files:
+
+| File | Purpose |
+|------|---------|
+| `index.ts` | Barrel export for all mail utilities |
+| `constants.ts` | Constants: `IFRAME_UTIL_HTML`, `CONTENT_TYPES`, `PEC_FILES`, `EMAIL_EXTENSIONS` |
+| `data-utils.ts` | Data conversion: `arrayBufferToBase64`, `createDataUrl`, `looksLikeBase64`, `tryDecodeBase64` |
+| `attachment-handlers.ts` | Attachment opening: `openPDFAttachment`, `openImageAttachment`, `openEMLAttachment` |
+| `email-loader.ts` | Email loading: `loadEmailFromPath`, `openAndLoadEmail`, `processEmailBody`, `isEmailFile` |
+
+#### Key Functions
+
+**Data Utilities** (`data-utils.ts`)
+```typescript
+// Convert ArrayBuffer to base64 string
+function arrayBufferToBase64(buffer: unknown): string;
+
+// Create data URL for file downloads
+function createDataUrl(contentType: string, base64Data: string): string;
+
+// Check if string looks like base64 encoded content
+function looksLikeBase64(content: string): boolean;
+
+// Attempt to decode base64, returns null on failure
+function tryDecodeBase64(content: string): string | null;
+```
+
+**Attachment Handlers** (`attachment-handlers.ts`)
+```typescript
+// Open PDF using built-in or external viewer based on settings
+async function openPDFAttachment(base64Data: string, filename: string): Promise<AttachmentHandlerResult>;
+
+// Open image using built-in or external viewer based on settings
+async function openImageAttachment(base64Data: string, filename: string): Promise<AttachmentHandlerResult>;
+
+// Open EML attachment in new EMLy window
+async function openEMLAttachment(base64Data: string, filename: string): Promise<AttachmentHandlerResult>;
+```
+
+**Email Loader** (`email-loader.ts`)
+```typescript
+// Load email from file path, handles EML/MSG/PEC detection
+async function loadEmailFromPath(filePath: string): Promise<LoadEmailResult>;
+
+// Open file dialog and load selected email
+async function openAndLoadEmail(): Promise<LoadEmailResult>;
+
+// Process email body (decode base64, fix encoding)
+async function processEmailBody(body: string): Promise<string>;
+
+// Check if file path is a valid email file
+function isEmailFile(filePath: string): boolean;
 ```
 
 ### Settings Page (`(app)/settings/+page.svelte`)
