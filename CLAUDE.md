@@ -55,6 +55,9 @@ Email parsing lives in `backend/utils/mail/`:
 - `msg_reader.go` - Microsoft MSG (CFB format) parsing
 - `mailparser.go` - MIME multipart handling
 
+For any major change to backend functionality, add a new method to `App` and implement it in a new `app_*.go` file for organization.
+And update the DOCUMENTATION.md file in the root of the repository with a brief description of the new method and its purpose.
+
 ### Frontend Structure (SvelteKit + Svelte 5)
 
 **Routes** (file-based routing):
