@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, MailOpen, Image, FileText, File, ShieldCheck, Shield, Signature, FileCode, Loader2 } from "@lucide/svelte";
-  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage, ReadMSG, ReadPEC, OpenEMLWindow, ConvertToUTF8 } from "$lib/wailsjs/go/main/App";
+  import { ShowOpenFileDialog, ReadEML, OpenPDF, OpenImageWindow, OpenPDFWindow, OpenImage, ReadMSG, ReadPEC, OpenEMLWindow, ConvertToUTF8, SetCurrentMailFilePath } from "$lib/wailsjs/go/main/App";
   import type { internal } from "$lib/wailsjs/go/models";
   import { sidebarOpen } from "$lib/stores/app";
   import { onDestroy, onMount } from "svelte";
@@ -59,7 +59,7 @@
       }
 
       if(dev) {
-        console.log(mailState.currentEmail)
+        console.debug("emailObj:", mailState.currentEmail)
       }
       console.info("Current email changed:", mailState.currentEmail?.subject);
       if(mailState.currentEmail !== null) {
@@ -183,6 +183,8 @@
         } else {
           email = await ReadEML(result);
         }
+        // Track the current mail file path for bug reports
+        await SetCurrentMailFilePath(result);
         mailState.setParams(email);
         sidebarOpen.set(false);
 

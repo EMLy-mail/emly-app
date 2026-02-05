@@ -5,6 +5,7 @@ const storedDebug = browser ? sessionStorage.getItem("debugWindowInSettings") ==
 export const dangerZoneEnabled = writable<boolean>(storedDebug);
 export const unsavedChanges = writable<boolean>(false);
 export const sidebarOpen = writable<boolean>(true);
+export const bugReportDialogOpen = writable<boolean>(false);
 
 export type AppEvent = {
     id: string;

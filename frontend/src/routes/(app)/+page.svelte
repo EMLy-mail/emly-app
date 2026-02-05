@@ -12,7 +12,7 @@
 </script>
 
 <div class="page">
-  <section class="center" aria-label="Overview">
+  <section class="center" aria-label="Overview" id="main-content-app">
     <MailViewer />
   </section>
 </div>
@@ -35,27 +35,5 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  ::-webkit-scrollbar-corner {
-    background: transparent;
   }
 </style>
