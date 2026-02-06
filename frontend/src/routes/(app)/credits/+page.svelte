@@ -3,7 +3,7 @@
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { Separator } from "$lib/components/ui/separator";
-  import { ChevronLeft, Heart, Code, Package, Globe, Github, Mail } from "@lucide/svelte";
+  import { ChevronLeft, Heart, Code, Package, Globe, Github, Mail, BadgeInfo } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages";
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
 
@@ -94,7 +94,7 @@
     <Card.Root>
       <Card.Header class="space-y-1">
         <Card.Title class="flex items-center gap-2">
-          <Heart class="size-5 text-red-500" />
+          <BadgeInfo class="size-5" />
           {m.credits_about_title()}
         </Card.Title>
         <Card.Description>

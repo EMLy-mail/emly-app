@@ -18,6 +18,10 @@ type EMLyConfig struct {
 	SDKDecoderReleaseChannel string `ini:"SDK_DECODER_RELEASE_CHANNEL"`
 	GUISemver                string `ini:"GUI_SEMVER"`
 	GUIReleaseChannel        string `ini:"GUI_RELEASE_CHANNEL"`
+	Language                 string `ini:"LANGUAGE"`
+	UpdateCheckEnabled       string `ini:"UPDATE_CHECK_ENABLED"`
+	UpdatePath               string `ini:"UPDATE_PATH"`
+	UpdateAutoCheck          string `ini:"UPDATE_AUTO_CHECK"`
 }
 
 // LoadConfig reads the config.ini file at the given path and returns a Config struct

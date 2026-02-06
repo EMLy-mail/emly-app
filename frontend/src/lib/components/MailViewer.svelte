@@ -115,10 +115,6 @@
           mailState.currentEmail.body = processedBody;
         }
       }
-
-      if (dev) {
-        console.debug('emailObj:', mailState.currentEmail);
-      }
       console.info('Current email changed:', mailState.currentEmail?.subject);
 
       if (mailState.currentEmail !== null) {

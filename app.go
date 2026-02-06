@@ -4,9 +4,11 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"emly/backend/utils"
 
@@ -91,6 +93,36 @@ func (a *App) startup(ctx context.Context) {
 		Log("Viewer instance started")
 	} else {
 		Log("EMLy main application started")
+
+		// Automatic update check on startup (if enabled)
+		go func() {
+			// Wait 5 seconds after startup to avoid blocking the UI
+			time.Sleep(5 * time.Second)
+
+			config := a.GetConfig()
+			if config == nil {
+				log.Printf("Failed to load config for auto-update check")
+				return
+			}
+
+			// Check if auto-update is enabled
+			if config.EMLy.UpdateAutoCheck == "true" && config.EMLy.UpdateCheckEnabled == "true" {
+				log.Println("Performing automatic update check...")
+				status, err := a.CheckForUpdates()
+				if err != nil {
+					log.Printf("Auto-update check failed: %v", err)
+					return
+				}
+
+				// Emit event if update is available
+				if status.UpdateAvailable {
+					log.Printf("Update available: %s -> %s", status.CurrentVersion, status.AvailableVersion)
+					runtime.EventsEmit(ctx, "update:available", status)
+				} else {
+					log.Println("No updates available")
+				}
+			}
+		}()
 	}
 }
 

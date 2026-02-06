@@ -6,7 +6,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
   import { Switch } from "$lib/components/ui/switch";
-  import { ChevronLeft, Flame, Download, Upload } from "@lucide/svelte";
+  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle } from "@lucide/svelte";
   import type { EMLy_GUI_Settings } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { It, Us } from "svelte-flags";
@@ -25,7 +25,8 @@
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
   import { dev } from '$app/environment';
-  import { ExportSettings, ImportSettings } from "$lib/wailsjs/go/main/App";
+  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus } from "$lib/wailsjs/go/main/App";
+  import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
 
   let { data } = $props();
   let config = $derived(data.config);
@@ -214,6 +215,92 @@
       toast.error(m.settings_import_error());
     }
   }
+
+  // Update System State
+  type UpdateStatus = {
+    currentVersion: string;
+    availableVersion: string;
+    updateAvailable: boolean;
+    checking: boolean;
+    downloading: boolean;
+    downloadProgress: number;
+    ready: boolean;
+    installerPath: string;
+    errorMessage: string;
+    releaseNotes?: string;
+    lastCheckTime: string;
+  };
+
+  let updateStatus = $state<UpdateStatus>({
+    currentVersion: "Unknown",
+    availableVersion: "",
+    updateAvailable: false,
+    checking: false,
+    downloading: false,
+    downloadProgress: 0,
+    ready: false,
+    installerPath: "",
+    errorMessage: "",
+    lastCheckTime: "",
+  });
+
+  // Sync current version from config
+  $effect(() => {
+    if (config?.GUISemver) {
+      updateStatus.currentVersion = config.GUISemver;
+    }
+  });
+
+  async function checkForUpdates() {
+    try {
+      const status = await CheckForUpdates();
+      updateStatus = status;
+      
+      if (status.updateAvailable) {
+        toast.success(`Update available: ${status.availableVersion}`);
+      } else if (!status.errorMessage) {
+        toast.info("You're on the latest version");
+      } else {
+        toast.error(status.errorMessage);
+      }
+    } catch (err) {
+      console.error("Failed to check for updates:", err);
+      toast.error("Failed to check for updates");
+    }
+  }
+
+  async function downloadUpdate() {
+    try {
+      await DownloadUpdate();
+      toast.success("Update downloaded successfully");
+    } catch (err) {
+      console.error("Failed to download update:", err);
+      toast.error("Failed to download update");
+    }
+  }
+
+  async function installUpdate() {
+    try {
+      await InstallUpdate(true); // true = quit after launch
+      // App will quit, so no toast needed
+    } catch (err) {
+      console.error("Failed to install update:", err);
+      toast.error("Failed to launch installer");
+    }
+  }
+
+  // Listen for update status events
+  $effect(() => {
+    if (!browser) return;
+
+    EventsOn("update:status", (status: UpdateStatus) => {
+      updateStatus = status;
+    });
+
+    return () => {
+      EventsOff("update:status");
+    };
+  });
 </script>
 
 <div class="min-h-[calc(100vh-1rem)] from-background to-muted/30">
@@ -476,6 +563,135 @@
           <p class="text-xs text-muted-foreground mt-2">
             {m.settings_email_dark_viewer_info()}
           </p>
+        </div>
+      </Card.Content>
+    </Card.Root>
+
+    <!-- Update Section -->
+    <Card.Root>
+      <Card.Header class="space-y-1">
+        <Card.Title>Updates</Card.Title>
+        <Card.Description>Check for and install application updates from your network share</Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-4">
+        <!-- Current Version -->
+        <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
+          <div>
+            <div class="font-medium">Current Version</div>
+            <div class="text-sm text-muted-foreground">
+              {updateStatus.currentVersion} ({config?.GUIReleaseChannel || "stable"})
+            </div>
+          </div>
+          {#if updateStatus.updateAvailable}
+            <div class="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+              <AlertCircle class="size-4" />
+              Update Available
+            </div>
+          {:else if updateStatus.lastCheckTime}
+            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 class="size-4" />
+              Up to date
+            </div>
+          {/if}
+        </div>
+
+        <Separator />
+
+        <!-- Check for Updates -->
+        <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
+          <div>
+            <div class="font-medium">Check for Updates</div>
+            <div class="text-sm text-muted-foreground">
+              {#if updateStatus.lastCheckTime}
+                Last checked: {updateStatus.lastCheckTime}
+              {:else}
+                Click to check for available updates
+              {/if}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            class="cursor-pointer hover:cursor-pointer"
+            onclick={checkForUpdates}
+            disabled={updateStatus.checking || updateStatus.downloading}
+          >
+            <RefreshCw class="size-4 mr-2 {updateStatus.checking ? 'animate-spin' : ''}" />
+            {updateStatus.checking ? "Checking..." : "Check Now"}
+          </Button>
+        </div>
+
+        <!-- Download Update (shown when update available) -->
+        {#if updateStatus.updateAvailable && !updateStatus.ready}
+          <Separator />
+          <div class="flex items-center justify-between gap-4 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+            <div>
+              <div class="font-medium">Version {updateStatus.availableVersion} Available</div>
+              <div class="text-sm text-muted-foreground">
+                {#if updateStatus.downloading}
+                  Downloading... {updateStatus.downloadProgress}%
+                {:else}
+                  Click to download the update
+                {/if}
+              </div>
+              {#if updateStatus.releaseNotes}
+                <div class="text-xs text-muted-foreground mt-2">
+                  {updateStatus.releaseNotes}
+                </div>
+              {/if}
+            </div>
+            <Button
+              variant="default"
+              class="cursor-pointer hover:cursor-pointer"
+              onclick={downloadUpdate}
+              disabled={updateStatus.downloading}
+            >
+              <Download class="size-4 mr-2" />
+              {updateStatus.downloading ? `${updateStatus.downloadProgress}%` : "Download"}
+            </Button>
+          </div>
+        {/if}
+
+        <!-- Install Update (shown when download ready) -->
+        {#if updateStatus.ready}
+          <Separator />
+          <div class="flex items-center justify-between gap-4 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+            <div>
+              <div class="font-medium">Update Ready to Install</div>
+              <div class="text-sm text-muted-foreground">
+                Version {updateStatus.availableVersion} has been downloaded and verified
+              </div>
+            </div>
+            <Button
+              variant="default"
+              class="cursor-pointer hover:cursor-pointer bg-green-600 hover:bg-green-700"
+              onclick={installUpdate}
+            >
+              <CheckCircle2 class="size-4 mr-2" />
+              Install Now
+            </Button>
+          </div>
+        {/if}
+
+        <!-- Error Message -->
+        {#if updateStatus.errorMessage}
+          <div class="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+            <div class="flex items-start gap-2">
+              <AlertCircle class="size-4 text-destructive mt-0.5" />
+              <div class="text-sm text-destructive">
+                {updateStatus.errorMessage}
+              </div>
+            </div>
+          </div>
+        {/if}
+
+        <!-- Info about update path -->
+        <div class="text-xs text-muted-foreground">
+          <strong>Info:</strong> Updates are checked from your configured network share path.
+          {#if (config as any)?.UpdatePath}
+            Current path: <code class="text-xs bg-muted px-1 py-0.5 rounded">{(config as any).UpdatePath}</code>
+          {:else}
+            <span class="text-amber-600 dark:text-amber-400">No update path configured</span>
+          {/if}
         </div>
       </Card.Content>
     </Card.Root>

@@ -39,6 +39,8 @@
     WindowUnmaximise,
     WindowIsMaximised,
     Quit,
+    EventsOn,
+    EventsOff,
   } from "$lib/wailsjs/runtime/runtime";
   import { RefreshCcwDot } from "@lucide/svelte";
   import { IsDebuggerRunning, QuitApp, TakeScreenshot, SubmitBugReport, OpenFolderInExplorer } from "$lib/wailsjs/go/main/App";
@@ -160,6 +162,26 @@
       // Reset form when dialog closes
       resetBugReportForm();
     }
+  });
+
+  // Listen for automatic update notifications
+  $effect(() => {
+    if (!browser) return;
+
+    EventsOn("update:available", (status: any) => {
+      toast.info(`Update ${status.availableVersion} is available!`, {
+        description: "Go to Settings to download and install",
+        duration: 10000,
+        action: {
+          label: "Open Settings",
+          onClick: () => goto("/settings"),
+        },
+      });
+    });
+
+    return () => {
+      EventsOff("update:available");
+    };
   });
 
   async function captureScreenshot() {

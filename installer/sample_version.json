@@ -1,0 +1,14 @@
+{
+  "stableVersion": "1.4.0",
+  "betaVersion": "1.4.1-beta",
+  "stableDownload": "EMLy_Installer_1.4.0.exe",
+  "betaDownload": "EMLy_Installer_1.4.1-beta.exe",
+  "sha256Checksums": {
+    "EMLy_Installer_1.4.0.exe": "put_sha256_hash_here",
+    "EMLy_Installer_1.4.1-beta.exe": "put_sha256_hash_here"
+  },
+  "releaseNotes": {
+    "1.4.0": "Initial release with self-hosted update system",
+    "1.4.1-beta": "Beta release with bug fixes"
+  }
+}

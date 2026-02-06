@@ -45,6 +45,7 @@ EMLy is built using the **Wails v2** framework, which combines a Go backend with
 │  ├── app_bugreport.go  - Bug reporting system           │
 │  ├── app_settings.go   - Settings import/export         │
 │  ├── app_system.go     - Windows system utilities       │
+│  ├── app_update.go     - Self-hosted update system      │
 │  └── backend/utils/    - Shared utilities               │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -200,6 +201,7 @@ The Go backend is split into logical files:
 | `app_bugreport.go` | Bug reports: `CreateBugReportFolder`, `SubmitBugReport`, `zipFolder` |
 | `app_settings.go` | Settings I/O: `ExportSettings`, `ImportSettings` |
 | `app_system.go` | System utilities: `CheckIsDefaultEMLHandler`, `OpenDefaultAppsSettings`, `ConvertToUTF8`, `OpenFolderInExplorer` |
+| `app_update.go` | Update system: `CheckForUpdates`, `DownloadUpdate`, `InstallUpdate`, `GetUpdateStatus` |
 
 #### Core Methods by Category
 
@@ -694,6 +696,87 @@ Special handling for Italian Posta Elettronica Certificata (PEC):
 - Shows signed mail badge
 - Handles P7S signature files
 - Processes daticert.xml metadata
+
+### 8. Self-Hosted Update System
+
+**Corporate Network Update Management** - No third-party services required:
+
+- **Network Share Integration**: Check for updates from corporate file shares (UNC paths like `\\server\emly-updates`)
+- **Version Manifest**: JSON-based version.json controls what versions are available
+- **Dual Channel Support**: Separate stable and beta release channels
+- **Manual or Automatic**: Users can manually check, or app auto-checks on startup
+- **Download & Verify**: Downloads installers from network share with SHA256 checksum verification
+- **One-Click Install**: Auto-launches installer with UAC elevation, optionally quits app
+- **UI Integration**: Full update UI in Settings page with progress indicators
+- **Event-Driven**: Real-time status updates via Wails events
+
+#### Configuration (config.ini)
+
+```ini
+[EMLy]
+UPDATE_CHECK_ENABLED="true"      # Enable/disable update checking
+UPDATE_PATH="\\server\updates"   # Network share or file:// path
+UPDATE_AUTO_CHECK="true"         # Check on startup
+```
+
+#### Network Share Structure
+
+```
+\\server\emly-updates\
+├── version.json                      # Update manifest
+├── EMLy_Installer_1.5.0.exe          # Stable release installer
+└── EMLy_Installer_1.5.1-beta.exe     # Beta release installer
+```
+
+#### version.json Format
+
+```json
+{
+  "stableVersion": "1.5.0",
+  "betaVersion": "1.5.1-beta",
+  "stableDownload": "EMLy_Installer_1.5.0.exe",
+  "betaDownload": "EMLy_Installer_1.5.1-beta.exe",
+  "sha256Checksums": {
+    "EMLy_Installer_1.5.0.exe": "abc123...",
+    "EMLy_Installer_1.5.1-beta.exe": "def456..."
+  },
+  "releaseNotes": {
+    "1.5.0": "Bug fixes and performance improvements",
+    "1.5.1-beta": "New feature preview"
+  }
+}
+```
+
+#### Update Flow
+
+1. **Check**: App reads `version.json` from configured network path
+2. **Compare**: Compares current version with available version for active channel (stable/beta)
+3. **Notify**: If update available, shows toast notification with action button
+4. **Download**: User clicks download, installer copied from network share to temp folder
+5. **Verify**: SHA256 checksum validated against manifest
+6. **Install**: User clicks install, app launches installer with UAC, optionally quits
+
+#### Backend Methods (app_update.go)
+
+| Method | Description |
+|--------|-------------|
+| `CheckForUpdates()` | Reads manifest from network share, compares versions |
+| `DownloadUpdate()` | Copies installer to temp folder, verifies checksum |
+| `InstallUpdate(quit)` | Launches installer with UAC elevation |
+| `GetUpdateStatus()` | Returns current update system state |
+| `loadUpdateManifest(path)` | Parses version.json from network share |
+| `compareSemanticVersions(v1, v2)` | Semantic version comparison |
+| `verifyChecksum(file, hash)` | SHA256 integrity verification |
+| `resolveUpdatePath(base, file)` | Handles UNC paths and file:// URLs |
+
+#### Deployment Workflow for IT Admins
+
+1. **Build new version**: `wails build --upx`
+2. **Create installer**: Run Inno Setup with `installer/installer.iss`
+3. **Generate checksum**: `certutil -hashfile EMLy_Installer_1.5.0.exe SHA256`
+4. **Update manifest**: Edit `version.json` with new version and checksum
+5. **Deploy to share**: Copy installer and manifest to `\\server\emly-updates\`
+6. **Users notified**: Apps auto-check within 5 seconds of startup (if enabled)
 
 ---
 
