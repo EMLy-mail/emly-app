@@ -11,6 +11,7 @@ const defaults: EMLy_GUI_Settings = {
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
     enableAttachedDebuggerProtection: true,
     useDarkEmailViewer: true,
+    enableUpdateChecker: true,
 };
 
 class SettingsStore {

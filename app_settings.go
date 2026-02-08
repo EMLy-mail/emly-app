@@ -98,3 +98,33 @@ func (a *App) ImportSettings() (string, error) {
 
 	return string(data), nil
 }
+
+// SetUpdateCheckerEnabled updates the UPDATE_CHECK_ENABLED setting in config.ini
+// based on the user's preference from the GUI settings.
+//
+// Parameters:
+//   - enabled: true to enable update checking, false to disable
+//
+// Returns:
+//   - error: Error if loading or saving config fails
+func (a *App) SetUpdateCheckerEnabled(enabled bool) error {
+	// Load current config
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+
+	// Update the setting
+	if enabled {
+		config.EMLy.UpdateCheckEnabled = "true"
+	} else {
+		config.EMLy.UpdateCheckEnabled = "false"
+	}
+
+	// Save config back to disk
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+
+	return nil
+}

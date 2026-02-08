@@ -25,7 +25,7 @@
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
   import { dev } from '$app/environment';
-  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus } from "$lib/wailsjs/go/main/App";
+  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus, SetUpdateCheckerEnabled } from "$lib/wailsjs/go/main/App";
   import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
 
   let { data } = $props();
@@ -40,6 +40,7 @@
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
     enableAttachedDebuggerProtection: true,
     useDarkEmailViewer: true,
+    enableUpdateChecker: true,
   };
 
   async function setLanguage(
@@ -72,6 +73,8 @@
         s.enableAttachedDebuggerProtection ?? defaults.enableAttachedDebuggerProtection ?? true,
       useDarkEmailViewer:
         s.useDarkEmailViewer ?? defaults.useDarkEmailViewer ?? true,
+      enableUpdateChecker:
+        s.enableUpdateChecker ?? defaults.enableUpdateChecker ?? true,
     };
   }
 
@@ -82,6 +85,7 @@
       !!a.useBuiltinPDFViewer === !!b.useBuiltinPDFViewer &&
       !!a.enableAttachedDebuggerProtection === !!b.enableAttachedDebuggerProtection &&
       !!a.useDarkEmailViewer === !!b.useDarkEmailViewer &&
+      !!a.enableUpdateChecker === !!b.enableUpdateChecker &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -177,6 +181,23 @@
         toast.info("Here be dragons!", { icon: Flame });
       }
       previousDangerZoneEnabled = $dangerZoneEnabled;
+    })();
+  });
+
+  // Sync update checker setting to backend config.ini
+  let previousUpdateCheckerEnabled = form.enableUpdateChecker;
+  $effect(() => {
+    (async () => {
+      if (!browser) return;
+      if (form.enableUpdateChecker !== previousUpdateCheckerEnabled) {
+        try {
+          await SetUpdateCheckerEnabled(form.enableUpdateChecker ?? true);
+          LogDebug(`Update checker ${form.enableUpdateChecker ? 'enabled' : 'disabled'}`);
+        } catch (err) {
+          console.error('Failed to sync update checker setting:', err);
+        }
+        previousUpdateCheckerEnabled = form.enableUpdateChecker;
+      }
     })();
   });
 
@@ -568,6 +589,7 @@
     </Card.Root>
 
     <!-- Update Section -->
+    {#if form.enableUpdateChecker}
     <Card.Root>
       <Card.Header class="space-y-1">
         <Card.Title>Updates</Card.Title>
@@ -587,10 +609,15 @@
               <AlertCircle class="size-4" />
               Update Available
             </div>
+          {:else if updateStatus.errorMessage && updateStatus.lastCheckTime}
+            <div class="flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle class="size-4" />
+              Check failed
+            </div>
           {:else if updateStatus.lastCheckTime}
             <div class="flex items-center gap-2 text-sm text-muted-foreground">
               <CheckCircle2 class="size-4" />
-              Up to date
+              No updates found
             </div>
           {/if}
         </div>
@@ -695,6 +722,7 @@
         </div>
       </Card.Content>
     </Card.Root>
+    {/if}
 
     {#if $dangerZoneEnabled || dev}
       <Card.Root class="border-destructive/50 bg-destructive/15">
@@ -808,6 +836,25 @@
           </div>
           <div class="text-xs text-muted-foreground">
             <strong>{m.settings_danger_debugger_protection_info()}</strong>
+          </div>
+          <Separator />
+
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
+          >
+            <div class="space-y-1">
+              <Label class="text-sm">Enable Update Checker</Label>
+              <div class="text-sm text-muted-foreground">
+                Check for application updates from network share
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.enableUpdateChecker}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
+          <div class="text-xs text-muted-foreground">
+            <strong>Info:</strong> When enabled, the app will check for updates from your configured network share. Disable this if you manage updates manually or don't have network access.
           </div>
           <Separator />
 

@@ -9,6 +9,25 @@ interface EMLy_GUI_Settings {
     previewFileSupportedTypes?: SupportedFileTypePreview[];
     enableAttachedDebuggerProtection?: boolean;
     useDarkEmailViewer?: boolean;
+    enableUpdateChecker?: boolean;
 }
 
 type SupportedLanguages = "en" | "it";
+// Plugin System Types
+interface PluginFormatSupport {
+    extensions: string[];
+    mime_types?: string[];
+    priority: number;
+}
+
+interface PluginInfo {
+    name: string;
+    version: string;
+    author: string;
+    description: string;
+    capabilities: string[];
+    status: "unloaded" | "loading" | "active" | "error" | "disabled";
+    enabled: boolean;
+    last_error?: string;
+    supported_formats?: PluginFormatSupport[];
+}

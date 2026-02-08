@@ -24,6 +24,8 @@
     CheckCircle,
     Camera,
     Heart,
+    Info,
+    Music
   } from "@lucide/svelte";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { toast } from "svelte-sonner";
@@ -380,7 +382,7 @@
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
     />
-    <Heart
+    <Info
       size="16"
       onclick={() => {
         if (page.url.pathname !== "/credits" && page.url.pathname !== "/credits/")
@@ -389,12 +391,11 @@
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
     />
-
-    <Separator orientation="vertical" />
-    <Bug 
+    <Music
       size="16"
       onclick={() => {
-        $bugReportDialogOpen = !$bugReportDialogOpen;
+        if (page.url.pathname !== "/inspiration" && page.url.pathname !== "/inspiration/")
+          goto("/inspiration");
       }}
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
@@ -409,6 +410,19 @@
       title={m.settings_danger_reload_button() + " app"}
     >
       <RefreshCcwDot />
+    </a>
+    <!-- svelte-ignore a11y_invalid_attribute -->
+    <a
+      href="#"
+      class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+      style="text-decoration: none; height: 24px; font-size: 12px; padding: 0 8px;"
+      aria-label={m.settings_danger_reload_button()}
+      title={m.settings_danger_reload_button() + " app"}
+      onclick={() => {
+        $bugReportDialogOpen = !$bugReportDialogOpen;
+      }}
+    >
+      <Bug />
     </a>
 
   </div>
