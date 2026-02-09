@@ -403,8 +403,8 @@
   }
 
   .panel {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
   }
@@ -423,20 +423,20 @@
     height: 34px;
     padding: 0 12px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    color: inherit;
+    border: 1px solid var(--border);
+    background: var(--muted);
+    color: var(--muted-foreground);
     cursor: pointer;
     user-select: none;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.5);
   }
 
   .btn:hover {
-    background: rgba(255, 255, 255, 0.09);
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .events {
@@ -454,16 +454,16 @@
   }
 
   .email-header-content {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--card);
     padding: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
   }
 
   .email-subject {
     font-size: 18px;
     font-weight: 600;
     line-height: 1.25;
-    color: inherit;
+    color: var(--foreground);
     min-width: 0;
     overflow-wrap: break-word;
   }
@@ -496,21 +496,21 @@
 
   .email-meta-grid .label {
     text-align: right;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--muted-foreground);
     margin-right: 8px;
     font-weight: 500;
   }
 
   .email-meta-grid .value {
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--foreground);
     word-break: break-all;
     font-weight: 500;
   }
 
   .email-attachments {
     padding: 10px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border);
+    background: var(--muted);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -522,7 +522,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--muted-foreground);
     flex-shrink: 0;
   }
 
@@ -538,9 +538,9 @@
     height: 28px;
     padding: 0 10px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--border);
     background: transparent;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--foreground);
     font-size: 12px;
     cursor: pointer;
     text-decoration: none;
@@ -548,8 +548,8 @@
   }
 
   .att-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .att-btn.image {
@@ -628,10 +628,10 @@
     justify-content: center;
     height: 36px;
     padding: 0 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--muted);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    color: white;
+    color: var(--foreground);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -639,8 +639,8 @@
   }
 
   .browse-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
+    background: var(--accent);
+    border-color: var(--accent-foreground);
   }
 
   .browse-btn:disabled,
@@ -660,12 +660,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border);
     border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--muted-foreground);
   }
 
   ::-webkit-scrollbar-corner {
@@ -674,7 +674,7 @@
 
   .att-empty {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--muted-foreground);
     font-style: italic;
   }
 

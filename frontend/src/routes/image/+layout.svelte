@@ -72,7 +72,8 @@
 <style>
   :global(body) {
     margin: 0;
-    background: #000;
+    background: var(--background);
+    color: var(--foreground);
     overflow: hidden;
   }
 
@@ -81,11 +82,13 @@
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    background: var(--background);
+    color: var(--foreground);
   }
 
   .titlebar {
     height: 32px;
-    background: #000;
+    background: var(--background);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -94,13 +97,13 @@
     user-select: none;
     flex: 0 0 32px;
     z-index: 50;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
   }
 
   .title {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--muted-foreground);
   }
 
   .controls {
@@ -114,7 +117,7 @@
     height: 100%;
     border: none;
     background: transparent;
-    color: white;
+    color: var(--foreground);
     font-size: 14px;
     cursor: pointer;
     -webkit-app-region: no-drag;
@@ -124,16 +127,18 @@
   }
 
   .btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--accent);
   }
 
   .close:hover {
     background: #e81123;
+    color: white;
   }
 
   .content {
     flex: 1;
     overflow: hidden;
     position: relative;
+    background: var(--background);
   }
 </style>

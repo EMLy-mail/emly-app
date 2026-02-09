@@ -3,8 +3,7 @@
   import { page, navigating } from "$app/state";
   import { beforeNavigate, goto } from "$app/navigation";
   import { locales, localizeHref } from "$lib/paraglide/runtime";
-  import { unsavedChanges, sidebarOpen, bugReportDialogOpen } from "$lib/stores/app";
-  import "../layout.css";
+  import { unsavedChanges, sidebarOpen, bugReportDialogOpen, dangerZoneEnabled } from "$lib/stores/app";
   import { onMount } from "svelte";
   import * as m from "$lib/paraglide/messages.js";
   import type { utils } from "$lib/wailsjs/go/models";
@@ -100,6 +99,7 @@
   }
 
   onMount(async () => {
+    if(dev) dangerZoneEnabled.set(true);
     if (browser && isDebbugerProtectionOn) {
       detectDebugging();
       setInterval(detectDebugging, 1000);
@@ -391,15 +391,17 @@
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
     />
-    <Music
-      size="16"
-      onclick={() => {
-        if (page.url.pathname !== "/inspiration" && page.url.pathname !== "/inspiration/")
-          goto("/inspiration");
-      }}
-      style="cursor: pointer; opacity: 0.7;"
-      class="hover:opacity-100 transition-opacity"
-    />
+    {#if settingsStore.settings.musicInspirationEnabled}
+      <Music
+        size="16"
+        onclick={() => {
+          if (page.url.pathname !== "/inspiration" && page.url.pathname !== "/inspiration/")
+            goto("/inspiration");
+        }}
+        style="cursor: pointer; opacity: 0.7;"
+        class="hover:opacity-100 transition-opacity"
+      />
+    {/if}
 
     <a
       data-sveltekit-reload
@@ -568,8 +570,6 @@
 <style>
   :global(body) {
     margin: 0;
-    background: oklch(0 0 0);
-    color: #eaeaea;
     font-family: system-ui, sans-serif;
   }
 
@@ -578,11 +578,13 @@
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    background: var(--background);
+    color: var(--foreground);
   }
 
   .titlebar {
     height: 32px;
-    background: oklch(0 0 0);
+    background: var(--background);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -592,11 +594,12 @@
     flex: 0 0 32px;
     z-index: 50;
     position: relative;
+    border-bottom: 1px solid var(--border);
   }
 
   .footerbar {
     height: 32px;
-    background: oklch(0 0 0);
+    background: var(--background);
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -604,28 +607,28 @@
     padding: 0 12px;
     user-select: none;
     flex: 0 0 32px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--border);
   }
 
   .title {
     font-size: 13px;
     opacity: 0.9;
-    color: gray;
+    color: var(--muted-foreground);
   }
 
   .title bold {
     font-weight: 600;
-    color: white;
+    color: var(--foreground);
     opacity: 0.7;
   }
 
   .title version {
-    color: rgb(228, 221, 221);
-    opacity: 0.4;
+    color: var(--muted-foreground);
+    opacity: 0.6;
   }
 
   .title version debug {
-    color: #e11d48;
+    color: var(--destructive);
     opacity: 1;
     font-weight: 600;
   }
@@ -642,8 +645,9 @@
     position: absolute;
     top: 100%;
     left: 0;
-    background-color: #111;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 8px 12px;
     z-index: 1000;
@@ -673,16 +677,16 @@
   }
 
   .tooltip-item .label {
-    color: #9ca3af;
+    color: var(--muted-foreground);
   }
 
   .tooltip-item .value {
-    color: #f3f4f6;
+    color: var(--foreground);
     font-family: monospace;
   }
 
   .tooltip-item .channel {
-    color: #6b7280;
+    color: var(--muted-foreground);
     font-size: 10px;
   }
 
@@ -697,20 +701,20 @@
     height: 100%;
     border: none;
     background: transparent;
-    color: white;
+    color: var(--foreground);
     font-size: 14px;
     cursor: pointer;
     -webkit-app-region: no-drag;
   }
 
   .btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--accent);
   }
 
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--muted);
   }
 
   .close:hover {
@@ -721,7 +725,7 @@
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
-    background: oklch(0 0 0);
+    background: var(--background);
     overflow: hidden;
     position: relative;
   }
@@ -758,12 +762,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border);
     border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--muted-foreground);
   }
 
   ::-webkit-scrollbar-corner {
@@ -779,14 +783,14 @@
     gap: 10px;
     align-items: center;
     justify-content: center;
-    background: oklch(0 0 0);
+    background: var(--background);
   }
 
   .spinner {
     width: 32px;
     height: 32px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
@@ -807,12 +811,12 @@
   }
 
   :global(.custom-scrollbar::-webkit-scrollbar-thumb) {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border);
     border-radius: 6px;
   }
 
   :global(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--muted-foreground);
   }
 
   :global(.custom-scrollbar::-webkit-scrollbar-corner) {

@@ -1,14 +1,47 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  import { goto, preloadData } from "$app/navigation";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { Separator } from "$lib/components/ui/separator";
-  import { ChevronLeft, Heart, Code, Package, Globe, Github, Mail, BadgeInfo } from "@lucide/svelte";
+  import { ChevronLeft, Heart, Code, Package, Globe, Github, Mail, BadgeInfo, Music, PartyPopper } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages";
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
+  import { dangerZoneEnabled } from "$lib/stores/app";
+  import { settingsStore } from "$lib/stores/settings.svelte";
+  import { toast } from "svelte-sonner";
 
   let { data } = $props();
   let config = $derived(data.config);
+
+  // Easter Egg State
+  const REQUIRED_CLICKS = 10;
+  const CLICK_WINDOW_MS = 4000;
+  let recentClicks: number[] = [];
+
+  function handleEasterEggClick(_event: MouseEvent) {
+    console.log("clicked")
+    // Only proceed if danger zone is already enabled
+    if (!$dangerZoneEnabled) return;
+    
+    // If already enabled, do nothing to avoid spam
+    if (settingsStore.settings.musicInspirationEnabled) return;
+
+    const now = Date.now();
+    
+    // Clean old clicks
+    recentClicks = recentClicks.filter(t => now - t < CLICK_WINDOW_MS);
+    recentClicks.push(now);
+
+    if (recentClicks.length >= REQUIRED_CLICKS) {
+      recentClicks = [];
+      try {
+        settingsStore.update({ musicInspirationEnabled: true });
+        preloadData("/inspiration");
+      } catch (e) {
+        console.error("Failed to enable music inspiration:", e);
+      }
+    }
+  }
 
   // Open external URL in default browser
   async function openUrl(url: string) {
@@ -67,7 +100,7 @@
   ];
 </script>
 
-<div class="min-h-[calc(100vh-1rem)] from-background to-muted/30">
+<div class="min-h-[calc(100vh-1rem)] bg-gradient-to-b from-background to-muted/30">
   <div
     class="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6 sm:py-10 opacity-80"
   >
@@ -132,19 +165,29 @@
       </Card.Header>
       <Card.Content class="space-y-4">
         {#each team as member}
-          <div class="flex items-start gap-4 rounded-lg border bg-card p-4">
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div 
+            class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
+            onclick={member.username === "FOISX" ? handleEasterEggClick : undefined}
+          >
+            <!-- Selectable trigger area overlay for cleaner interaction -->
+            {#if member.username === "FOISX" && $dangerZoneEnabled && !settingsStore.settings.musicInspirationEnabled}
+               <div class="absolute inset-0 cursor-pointer z-10 opacity-0 bg-transparent"></div>
+            {/if}
+            
             <img
               src={gravatarUrls[member.email]}
               alt={member.name}
-              class="h-14 w-14 rounded-full border-2 border-primary/20"
+              class="h-14 w-14 rounded-full border-2 border-primary/20 z-0 select-none"
             />
-            <div class="flex-1">
+            <div class="flex-1 z-0">
               <div class="font-medium">{member.username} ({member.name})</div>
               <div class="text-sm text-primary/80">{member.role}</div>
               <div class="text-sm text-muted-foreground mt-1">{member.description}</div>
               <a
                 href="mailto:{member.email}"
-                class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors"
+                class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
               >
                 <Mail class="size-3" />
                 {member.email}

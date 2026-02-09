@@ -6,7 +6,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
   import { Switch } from "$lib/components/ui/switch";
-  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle } from "@lucide/svelte";
+  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle, Sun, Moon } from "@lucide/svelte";
   import type { EMLy_GUI_Settings } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { It, Us } from "svelte-flags";
@@ -40,7 +40,8 @@
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
     enableAttachedDebuggerProtection: true,
     useDarkEmailViewer: true,
-    enableUpdateChecker: true,
+    enableUpdateChecker: false,
+    theme: "dark",
   };
 
   async function setLanguage(
@@ -73,8 +74,10 @@
         s.enableAttachedDebuggerProtection ?? defaults.enableAttachedDebuggerProtection ?? true,
       useDarkEmailViewer:
         s.useDarkEmailViewer ?? defaults.useDarkEmailViewer ?? true,
-      enableUpdateChecker:
-        s.enableUpdateChecker ?? defaults.enableUpdateChecker ?? true,
+      enableUpdateChecker: runningInDevMode
+        ? false
+        : (s.enableUpdateChecker ?? defaults.enableUpdateChecker ?? true),
+      theme: s.theme || defaults.theme || "light",
     };
   }
 
@@ -86,6 +89,7 @@
       !!a.enableAttachedDebuggerProtection === !!b.enableAttachedDebuggerProtection &&
       !!a.useDarkEmailViewer === !!b.useDarkEmailViewer &&
       !!a.enableUpdateChecker === !!b.enableUpdateChecker &&
+      (a.theme ?? "light") === (b.theme ?? "light") &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -278,25 +282,25 @@
       updateStatus = status;
       
       if (status.updateAvailable) {
-        toast.success(`Update available: ${status.availableVersion}`);
+        toast.success(m.settings_toast_update_available({ version: status.availableVersion }));
       } else if (!status.errorMessage) {
-        toast.info("You're on the latest version");
+        toast.info(m.settings_toast_latest_version());
       } else {
         toast.error(status.errorMessage);
       }
     } catch (err) {
       console.error("Failed to check for updates:", err);
-      toast.error("Failed to check for updates");
+      toast.error(m.settings_toast_check_failed());
     }
   }
 
   async function downloadUpdate() {
     try {
       await DownloadUpdate();
-      toast.success("Update downloaded successfully");
+      toast.success(m.settings_toast_download_success());
     } catch (err) {
       console.error("Failed to download update:", err);
-      toast.error("Failed to download update");
+      toast.error(m.settings_toast_download_failed());
     }
   }
 
@@ -306,7 +310,7 @@
       // App will quit, so no toast needed
     } catch (err) {
       console.error("Failed to install update:", err);
-      toast.error("Failed to launch installer");
+      toast.error(m.settings_toast_install_failed());
     }
   }
 
@@ -324,7 +328,7 @@
   });
 </script>
 
-<div class="min-h-[calc(100vh-1rem)] from-background to-muted/30">
+<div class="min-h-[calc(100vh-1rem)] bg-gradient-to-b from-background to-muted/30">
   <div
     class="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6 sm:py-10 opacity-80"
   >
@@ -389,6 +393,52 @@
         <div class="text-xs text-muted-foreground mt-4">
           <strong>Info:</strong>
           {m.settings_language_info()}
+        </div>
+      </Card.Content>
+    </Card.Root>
+
+    <Card.Root>
+      <Card.Header class="space-y-1">
+        <Card.Title>{m.settings_appearance_title()}</Card.Title>
+        <Card.Description>{m.settings_appearance_description()}</Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <RadioGroup.Root
+          bind:value={form.theme}
+          class="flex flex-col gap-3"
+        >
+          <div class="flex items-center space-x-2">
+            <RadioGroup.Item
+              value="light"
+              id="theme-light"
+              class="cursor-pointer hover:cursor-pointer"
+            />
+            <Label
+              for="theme-light"
+              class="flex items-center gap-2 cursor-pointer hover:cursor-pointer"
+            >
+              <Sun class="size-4" />
+              {m.settings_theme_light()}
+            </Label>
+          </div>
+          <div class="flex items-center space-x-2">
+            <RadioGroup.Item
+              value="dark"
+              id="theme-dark"
+              class="cursor-pointer hover:cursor-pointer"
+            />
+            <Label
+              for="theme-dark"
+              class="flex items-center gap-2 cursor-pointer hover:cursor-pointer"
+            >
+              <Moon class="size-4" />
+              {m.settings_theme_dark()}
+            </Label>
+          </div>
+        </RadioGroup.Root>
+        <div class="text-xs text-muted-foreground mt-4">
+          <strong>Info:</strong>
+          {m.settings_theme_hint()}
         </div>
       </Card.Content>
     </Card.Root>
@@ -592,14 +642,14 @@
     {#if form.enableUpdateChecker}
     <Card.Root>
       <Card.Header class="space-y-1">
-        <Card.Title>Updates</Card.Title>
-        <Card.Description>Check for and install application updates from your network share</Card.Description>
+        <Card.Title>{m.settings_updates_title()}</Card.Title>
+        <Card.Description>{m.settings_updates_description()}</Card.Description>
       </Card.Header>
       <Card.Content class="space-y-4">
         <!-- Current Version -->
         <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
           <div>
-            <div class="font-medium">Current Version</div>
+            <div class="font-medium">{m.settings_updates_current_version()}</div>
             <div class="text-sm text-muted-foreground">
               {updateStatus.currentVersion} ({config?.GUIReleaseChannel || "stable"})
             </div>
@@ -607,17 +657,17 @@
           {#if updateStatus.updateAvailable}
             <div class="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
               <AlertCircle class="size-4" />
-              Update Available
+              {m.settings_updates_available()}
             </div>
           {:else if updateStatus.errorMessage && updateStatus.lastCheckTime}
             <div class="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle class="size-4" />
-              Check failed
+              {m.settings_updates_check_failed()}
             </div>
           {:else if updateStatus.lastCheckTime}
             <div class="flex items-center gap-2 text-sm text-muted-foreground">
               <CheckCircle2 class="size-4" />
-              No updates found
+              {m.settings_updates_no_updates()}
             </div>
           {/if}
         </div>
@@ -627,12 +677,12 @@
         <!-- Check for Updates -->
         <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
           <div>
-            <div class="font-medium">Check for Updates</div>
+            <div class="font-medium">{m.settings_updates_check_label()}</div>
             <div class="text-sm text-muted-foreground">
               {#if updateStatus.lastCheckTime}
-                Last checked: {updateStatus.lastCheckTime}
+                {m.settings_updates_last_checked({ time: updateStatus.lastCheckTime })}
               {:else}
-                Click to check for available updates
+                {m.settings_updates_click_check()}
               {/if}
             </div>
           </div>
@@ -643,7 +693,7 @@
             disabled={updateStatus.checking || updateStatus.downloading}
           >
             <RefreshCw class="size-4 mr-2 {updateStatus.checking ? 'animate-spin' : ''}" />
-            {updateStatus.checking ? "Checking..." : "Check Now"}
+            {updateStatus.checking ? m.settings_updates_checking() : m.settings_updates_check_now()}
           </Button>
         </div>
 
@@ -652,12 +702,12 @@
           <Separator />
           <div class="flex items-center justify-between gap-4 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
             <div>
-              <div class="font-medium">Version {updateStatus.availableVersion} Available</div>
+              <div class="font-medium">{m.settings_updates_version_available({ version: updateStatus.availableVersion })}</div>
               <div class="text-sm text-muted-foreground">
                 {#if updateStatus.downloading}
-                  Downloading... {updateStatus.downloadProgress}%
+                  {m.settings_updates_downloading({ progress: updateStatus.downloadProgress })}
                 {:else}
-                  Click to download the update
+                  {m.settings_updates_click_download()}
                 {/if}
               </div>
               {#if updateStatus.releaseNotes}
@@ -673,7 +723,7 @@
               disabled={updateStatus.downloading}
             >
               <Download class="size-4 mr-2" />
-              {updateStatus.downloading ? `${updateStatus.downloadProgress}%` : "Download"}
+              {updateStatus.downloading ? `${updateStatus.downloadProgress}%` : m.settings_updates_download_button()}
             </Button>
           </div>
         {/if}
@@ -683,9 +733,9 @@
           <Separator />
           <div class="flex items-center justify-between gap-4 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
             <div>
-              <div class="font-medium">Update Ready to Install</div>
+              <div class="font-medium">{m.settings_updates_ready_title()}</div>
               <div class="text-sm text-muted-foreground">
-                Version {updateStatus.availableVersion} has been downloaded and verified
+                {m.settings_updates_ready_ref({ version: updateStatus.availableVersion })}
               </div>
             </div>
             <Button
@@ -694,7 +744,7 @@
               onclick={installUpdate}
             >
               <CheckCircle2 class="size-4 mr-2" />
-              Install Now
+              {m.settings_updates_install_button()}
             </Button>
           </div>
         {/if}
@@ -713,11 +763,11 @@
 
         <!-- Info about update path -->
         <div class="text-xs text-muted-foreground">
-          <strong>Info:</strong> Updates are checked from your configured network share path.
+          <strong>Info:</strong> {m.settings_updates_info_message()}
           {#if (config as any)?.UpdatePath}
-            Current path: <code class="text-xs bg-muted px-1 py-0.5 rounded">{(config as any).UpdatePath}</code>
+            {m.settings_updates_current_path()} <code class="text-xs bg-muted px-1 py-0.5 rounded">{(config as any).UpdatePath}</code>
           {:else}
-            <span class="text-amber-600 dark:text-amber-400">No update path configured</span>
+            <span class="text-amber-600 dark:text-amber-400">{m.settings_updates_no_path()}</span>
           {/if}
         </div>
       </Card.Content>
@@ -843,18 +893,19 @@
             class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
           >
             <div class="space-y-1">
-              <Label class="text-sm">Enable Update Checker</Label>
+              <Label class="text-sm">{m.settings_danger_update_checker_label()}</Label>
               <div class="text-sm text-muted-foreground">
-                Check for application updates from network share
+                {m.settings_danger_update_checker_hint()}
               </div>
             </div>
             <Switch
               bind:checked={form.enableUpdateChecker}
               class="cursor-pointer hover:cursor-pointer"
+              disabled={runningInDevMode}
             />
           </div>
           <div class="text-xs text-muted-foreground">
-            <strong>Info:</strong> When enabled, the app will check for updates from your configured network share. Disable this if you manage updates manually or don't have network access.
+            {m.settings_danger_update_checker_info()}
           </div>
           <Separator />
 
@@ -871,6 +922,7 @@
       </Card.Root>
     {/if}
 
+    {#if !runningInDevMode}
     <AlertDialog.Root bind:open={dangerWarningOpen}>
       <AlertDialog.Content>
         <AlertDialog.Header>
@@ -878,7 +930,11 @@
             >{m.settings_danger_alert_title()}</AlertDialog.Title
           >
           <AlertDialog.Description>
-            {m.settings_danger_alert_description()}
+            {m.settings_danger_alert_description_part1()}
+            <br />
+            {m.settings_danger_alert_description_part2()}
+            <br />
+            {m.settings_danger_alert_description_part3()}
           </AlertDialog.Description>
         </AlertDialog.Header>
         <AlertDialog.Footer>
@@ -888,5 +944,6 @@
         </AlertDialog.Footer>
       </AlertDialog.Content>
     </AlertDialog.Root>
+    {/if}
   </div>
 </div>

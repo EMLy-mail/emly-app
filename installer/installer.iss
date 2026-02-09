@@ -1,6 +1,6 @@
 #define ApplicationName 'EMLy'
 #define ApplicationVersion GetVersionNumbersString('EMLy.exe')
-#define ApplicationVersion '1.4.1'
+#define ApplicationVersion '1.5.0'
 
 [Setup]
 AppName={#ApplicationName}
@@ -20,6 +20,8 @@ PrivilegesRequiredOverridesAllowed=dialog
 SetupIconFile=..\build\windows\icon.ico
 UninstallDisplayIcon={app}\{#ApplicationName}.exe
 AppVerName={#ApplicationName} {#ApplicationVersion}
+WizardStyle=modern dynamic includetitlebar
+
 
 [Files]
 ; Source path relative to this .iss file (assuming it is in the "installer" folder and build is in "../build")

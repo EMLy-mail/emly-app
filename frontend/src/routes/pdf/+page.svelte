@@ -233,9 +233,10 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: #1e1e1e;
+    background: var(--background);
     position: relative;
     user-select: none;
+    color: var(--foreground);
   }
 
   .loading-overlay {
@@ -247,15 +248,15 @@
     gap: 10px;
     align-items: center;
     justify-content: center;
-    background: #111;
-    color: white;
+    background: var(--background);
+    color: var(--foreground);
   }
 
   .spinner {
     width: 32px;
     height: 32px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
@@ -273,14 +274,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #111;
-    color: #ef4444;
+    background: var(--background);
+    color: var(--destructive);
   }
 
   .toolbar {
     height: 50px;
-    background: #000;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -308,7 +309,7 @@
   .separator {
     width: 1px;
     height: 18px;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--border);
     margin: 0 4px;
   }
 
@@ -320,22 +321,16 @@
     height: 32px;
     padding: 0;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid var(--border);
+    background: var(--muted);
+    color: var(--foreground);
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-  }
-
-  .separator {
-    width: 1px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .canvas-container {
@@ -345,7 +340,7 @@
     justify-content: center;
     align-items: flex-start; /* scroll from top */
     padding: 20px;
-    background: #333; /* Dark background for contrast */
+    background: var(--muted);
   }
 
   canvas {
@@ -363,12 +358,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border);
     border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--muted-foreground);
   }
 
   ::-webkit-scrollbar-corner {

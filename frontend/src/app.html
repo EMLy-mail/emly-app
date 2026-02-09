@@ -14,11 +14,11 @@
 				try {
 					const key = "emly_theme";
 					const stored = localStorage.getItem(key);
-					const theme = stored === "light" || stored === "dark" ? stored : "dark";
+					const theme = stored === "light" || stored === "dark" ? stored : "light";
 					document.documentElement.classList.toggle("dark", theme === "dark");
 				} catch {
-					// If storage is blocked, default to dark.
-					document.documentElement.classList.add("dark");
+					// If storage is blocked, default to light.
+					document.documentElement.classList.remove("dark");
 				}
 			})();
 		</script>
@@ -67,8 +67,21 @@
 	<body data-sveltekit-preload-data="hover">
 		<div id="app-loading">
 			<div class="loader-spinner"></div>
-			<div>Loading, please wait...</div>
+			<div id="loading-text">Loading...</div>
 		</div>
+		<script>
+			(() => {
+				try {
+					const settings = JSON.parse(localStorage.getItem("emly_gui_settings") || "{}");
+					const lang = settings.selectedLanguage || "en";
+					const text = lang === "it" ? "Caricamento..." : "Loading...";
+					const el = document.getElementById("loading-text");
+					if (el) el.textContent = text;
+				} catch (e) {
+					console.error("Failed to localize loading text", e);
+				}
+			})();
+		</script>
 		<div style="display: contents;">%sveltekit.body%</div>
 	</body>
 </html>

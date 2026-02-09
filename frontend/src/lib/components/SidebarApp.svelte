@@ -56,8 +56,8 @@
 <Sidebar.Root style="opacity: 0.8;">
   <Sidebar.Header>
     <div
-      class="sidebar-title items-center justify-center p-3 border-b border-white/10"
-      style="padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: center;"
+      class="sidebar-title items-center justify-center p-3 border-b border-border flex"
+      style="padding: 12px; display: flex; justify-content: center;"
     >
       <img src="/appicon.png" alt="Logo" width="64" height="64" />
       <span

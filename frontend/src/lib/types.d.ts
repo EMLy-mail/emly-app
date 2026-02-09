@@ -10,6 +10,8 @@ interface EMLy_GUI_Settings {
     enableAttachedDebuggerProtection?: boolean;
     useDarkEmailViewer?: boolean;
     enableUpdateChecker?: boolean;
+    musicInspirationEnabled?: boolean;
+    theme?: "light" | "dark";
 }
 
 type SupportedLanguages = "en" | "it";

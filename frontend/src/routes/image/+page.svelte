@@ -177,7 +177,7 @@
 <style>
   :global(body) {
     margin: 0;
-    background: #000;
+    background: var(--background);
   }
 
   .page-container {
@@ -185,15 +185,15 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #000;
-    color: white;
+    background: var(--background);
+    color: var(--foreground);
     font-family: system-ui, -apple-system, sans-serif;
   }
 
   .toolbar {
     height: 50px;
-    background: rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -221,7 +221,7 @@
   .separator {
     width: 1px;
     height: 18px;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--border);
     margin: 0 4px;
   }
 
@@ -233,21 +233,21 @@
     height: 32px;
     padding: 0;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid var(--border);
+    background: var(--muted);
+    color: var(--foreground);
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .image-area {
     flex: 1;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--muted);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -275,16 +275,16 @@
   }
 
   .loading {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--muted-foreground);
     font-size: 14px;
   }
 
   .error-message {
-    color: #f87171;
-    background: rgba(248, 113, 113, 0.1);
+    color: var(--destructive);
+    background: var(--destructive-foreground);
     padding: 12px 16px;
     border-radius: 8px;
-    border: 1px solid rgba(248, 113, 113, 0.2);
+    border: 1px solid var(--destructive);
     font-size: 14px;
   }
 </style>

@@ -6,69 +6,11 @@
   import { ChevronLeft, Music, ExternalLink } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages";
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
+  import type { SpotifyTrack } from "./+page";
 
   let { data } = $props();
   let config = $derived(data.config);
-
-  interface SpotifyTrack {
-    name: string;
-    artist: string;
-    albumArt?: string;
-    spotifyUrl: string;
-    embedUrl: string;
-  }
-
-  // Music that inspired this project
-  const inspirationTracks: SpotifyTrack[] = [
-    {
-      name: "Strays",
-      artist: "Ivycomb, Stephanafro",
-      spotifyUrl: "https://open.spotify.com/track/1aXATIo34e5ZZvFcavePpy",
-      embedUrl: "https://open.spotify.com/embed/track/1aXATIo34e5ZZvFcavePpy?utm_source=generator"
-    },
-    {
-      name: "Headlock",
-      artist: "Imogen Heap",
-      spotifyUrl: "https://open.spotify.com/track/63Pi2NAx5yCgeLhCTOrEou",
-      embedUrl: "https://open.spotify.com/embed/track/63Pi2NAx5yCgeLhCTOrEou?utm_source=generator"
-    },
-    {
-      name: "I Still Create",
-      artist: "YonKaGor",
-      spotifyUrl: "https://open.spotify.com/track/0IqTgwWU2syiSYbdBEromt",
-      embedUrl: "https://open.spotify.com/embed/track/0IqTgwWU2syiSYbdBEromt?utm_source=generator"
-    },
-    {
-      name: "Raised by Aliens",
-      artist: "ivy comb, Stephanafro",
-      spotifyUrl: "https://open.spotify.com/track/5ezyCaoc5XiVdkpRYWeyG5",
-      embedUrl: "https://open.spotify.com/embed/track/5ezyCaoc5XiVdkpRYWeyG5?utm_source=generator"
-    },
-    {
-      name: "VENOMOUS",
-      artist: "passengerprincess",
-      spotifyUrl: "https://open.spotify.com/track/4rPKifkzrhIYAsl1njwmjd",
-      embedUrl: "https://open.spotify.com/embed/track/4rPKifkzrhIYAsl1njwmjd?utm_source=generator"
-    },
-    {
-      name: "PREY",
-      artist: "passengerprincess",
-      spotifyUrl: "https://open.spotify.com/track/510m8qwFCHgzi4zsQnjLUX",
-      embedUrl: "https://open.spotify.com/embed/track/510m8qwFCHgzi4zsQnjLUX?utm_source=generator"
-    },
-    {
-      name: "Dracula",
-      artist: "Tame Impala",
-      spotifyUrl: "https://open.spotify.com/track/1NXbNEAcPvY5G1xvfN57aA",
-      embedUrl: "https://open.spotify.com/embed/track/1NXbNEAcPvY5G1xvfN57aA?utm_source=generator"
-    },
-    {
-      name: "Electric love",
-      artist: "When Snakes Sing",
-      spotifyUrl: "https://open.spotify.com/track/1nDkT2Cn13qDnFegF93UHi",
-      embedUrl: "https://open.spotify.com/embed/track/1nDkT2Cn13qDnFegF93UHi?utm_source=generator"
-    }
-  ];
+  let tracks: SpotifyTrack[] = $derived(data.tracks ?? []);
 
   // Open external URL in default browser
   async function openUrl(url: string) {
@@ -80,7 +22,7 @@
   }
 </script>
 
-<div class="min-h-[calc(100vh-1rem)] from-background to-muted/30">
+<div class="min-h-[calc(100vh-1rem)] bg-gradient-to-b from-background to-muted/30">
   <div
     class="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6 sm:px-6 sm:py-10 opacity-80"
   >
@@ -119,37 +61,25 @@
       </Card.Header>
       <Card.Content>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {#each inspirationTracks as track}
+          {#each tracks as track}
             <div class="group relative">
-              <div class="overflow-hidden rounded-lg bg-muted" style="height: 352px;">
-                <iframe
-                  src={track.embedUrl}
-                  width="100%"
-                  height="352"
-                  frameborder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  title={`${track.artist} - ${track.name}`}
-                  class="rounded-lg"
-                ></iframe>
+              <div class="overflow-hidden rounded-lg bg-muted">
+                {#if track.embedHtml}
+                  {@html track.embedHtml}
+                {:else}
+                  <iframe
+                    src={track.embedUrl}
+                    width="100%"
+                    height="352"
+                    frameborder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    title={`${track.artist} - ${track.name}`}
+                    class="rounded-lg"
+                  ></iframe>
+                {/if}
               </div>
-              <div class="mt-2 flex items-start justify-between gap-2">
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium">{track.name}</p>
-                  <p class="truncate text-xs text-muted-foreground">
-                    {track.artist}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="size-8 shrink-0 opacity-70 hover:opacity-100"
-                  onclick={() => openUrl(track.spotifyUrl)}
-                  title="Open in Spotify"
-                >
-                  <ExternalLink class="size-4" />
-                </Button>
-              </div>
+              
             </div>
           {/each}
         </div>
@@ -183,10 +113,6 @@
         <Music class="inline-block size-3 mx-1" />
         and
         <span class="text-red-500">♥</span>
-      </p>
-      <p class="mt-1">
-        GUI: {config ? `v${config.GUISemver}` : "N/A"} • 
-        SDK: {config ? `v${config.SDKDecoderSemver}` : "N/A"}
       </p>
     </div>
   </div>

@@ -5,7 +5,7 @@
 	let { onSave, onReset } = $props();
 </script>
 
-<div class="flex items-center gap-4 rounded-lg border bg-background px-4 py-3 shadow-lg w-full max-w-md">
+<div class="flex items-center gap-4 rounded-lg border bg-card px-4 py-3 shadow-lg w-full max-w-md">
 	<span class="text-sm text-muted-foreground flex-1">
 		{m.settings_unsaved_toast_message()}
 	</span>
@@ -19,9 +19,3 @@
 		</Button>
 	</div>
 </div>
-
-<style>
-	.bg-background {
-		background-color: oklch(0.205 0 0);
-	}
-</style>

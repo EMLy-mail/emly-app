@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { setupConsoleLogger } from '$lib/utils/logger-hook';
+	import "./layout.css";
 
 	let { children } = $props();
 
