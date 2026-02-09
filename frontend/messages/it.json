@@ -198,5 +198,8 @@
 	"settings_toast_install_failed": "Impossibile avviare l'installazione",
 	"settings_danger_update_checker_label": "Abilita controllo aggiornamenti",
 	"settings_danger_update_checker_hint": "Controlla aggiornamenti applicazione dalla condivisione di rete",
-	"settings_danger_update_checker_info": "Info: Quando abilitato, l'app controllerà gli aggiornamenti dal percorso di rete configurato. Disabilitalo se gestisci gli aggiornamenti manualmente o non hai accesso alla rete."
+	"settings_danger_update_checker_info": "Info: Quando abilitato, l'app controllerà gli aggiornamenti dal percorso di rete configurato. Disabilitalo se gestisci gli aggiornamenti manualmente o non hai accesso alla rete.",
+	"settings_reduce_motion_label": "Riduci Movimento",
+	"settings_reduce_motion_hint": "Disabilita le animazioni di transizione per gli elementi dell'interfaccia come la barra laterale.",
+	"settings_reduce_motion_info": "Info: Quando abilitato, le animazioni come la transizione della barra laterale verranno rimosse per un'esperienza più reattiva o per ridurre le distrazioni visive."
 }

@@ -198,5 +198,8 @@
 	"settings_toast_install_failed": "Failed to launch installer",
 	"settings_danger_update_checker_label": "Enable Update Checker",
 	"settings_danger_update_checker_hint": "Check for application updates from network share",
-	"settings_danger_update_checker_info": "Info: When enabled, the app will check for updates from your configured network share. Disable this if you manage updates manually or don't have network access."
+	"settings_danger_update_checker_info": "Info: When enabled, the app will check for updates from your configured network share. Disable this if you manage updates manually or don't have network access.",
+	"settings_reduce_motion_label": "Reduce Motion",
+	"settings_reduce_motion_hint": "Disable transition animations for interface elements like the sidebar.",
+	"settings_reduce_motion_info": "Info: When enabled, animations such as the sidebar slide transition will be removed for a snappier feel or to reduce visual distractions."
 }

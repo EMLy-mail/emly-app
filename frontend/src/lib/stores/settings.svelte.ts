@@ -15,6 +15,7 @@ const defaults: EMLy_GUI_Settings = {
     useDarkEmailViewer: true,
     enableUpdateChecker: false,
     musicInspirationEnabled: false,
+    reduceMotion: false,
     theme: "dark",
 };
 

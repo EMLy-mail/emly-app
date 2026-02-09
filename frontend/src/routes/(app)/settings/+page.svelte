@@ -41,6 +41,7 @@
     enableAttachedDebuggerProtection: true,
     useDarkEmailViewer: true,
     enableUpdateChecker: false,
+    reduceMotion: false,
     theme: "dark",
   };
 
@@ -77,6 +78,7 @@
       enableUpdateChecker: runningInDevMode
         ? false
         : (s.enableUpdateChecker ?? defaults.enableUpdateChecker ?? true),
+      reduceMotion: s.reduceMotion ?? defaults.reduceMotion ?? false,
       theme: s.theme || defaults.theme || "light",
     };
   }
@@ -89,6 +91,7 @@
       !!a.enableAttachedDebuggerProtection === !!b.enableAttachedDebuggerProtection &&
       !!a.useDarkEmailViewer === !!b.useDarkEmailViewer &&
       !!a.enableUpdateChecker === !!b.enableUpdateChecker &&
+      !!a.reduceMotion === !!b.reduceMotion &&
       (a.theme ?? "light") === (b.theme ?? "light") &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
@@ -402,7 +405,7 @@
         <Card.Title>{m.settings_appearance_title()}</Card.Title>
         <Card.Description>{m.settings_appearance_description()}</Card.Description>
       </Card.Header>
-      <Card.Content>
+      <Card.Content class="space-y-4">
         <RadioGroup.Root
           bind:value={form.theme}
           class="flex flex-col gap-3"
@@ -439,6 +442,31 @@
         <div class="text-xs text-muted-foreground mt-4">
           <strong>Info:</strong>
           {m.settings_theme_hint()}
+        </div>
+        
+
+        <Separator />
+
+        <div class="space-y-3">
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+          >
+            <div>
+              <div class="font-medium">
+                {m.settings_reduce_motion_label()}
+              </div>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_reduce_motion_hint()}
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.reduceMotion}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            {m.settings_reduce_motion_info()}
+          </p>
         </div>
       </Card.Content>
     </Card.Root>

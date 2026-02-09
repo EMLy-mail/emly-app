@@ -11,6 +11,7 @@ interface EMLy_GUI_Settings {
     useDarkEmailViewer?: boolean;
     enableUpdateChecker?: boolean;
     musicInspirationEnabled?: boolean;
+    reduceMotion?: boolean;
     theme?: "light" | "dark";
 }
 

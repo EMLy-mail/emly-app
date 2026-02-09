@@ -319,11 +319,9 @@
     </div>
   </div>
 
-  <div class="content">
-    <Sidebar.Provider>
-      {#if $sidebarOpen}
+  <div class="content" class:reduce-motion={settingsStore.settings.reduceMotion}>
+    <Sidebar.Provider open={$sidebarOpen} onOpenChange={(v) => sidebarOpen.set(v)}>
         <AppSidebar />
-      {/if}
       <main>
         <!-- <Sidebar.Trigger /> -->
         <Toaster />
@@ -750,6 +748,12 @@
     height: 100% !important;
     /* Ensure it doesn't take viewport height */
     max-height: 100% !important;
+  }
+
+  /* Disable sidebar transitions when reduce-motion is active */
+  :global(.content.reduce-motion [data-slot="sidebar-gap"]),
+  :global(.content.reduce-motion [data-slot="sidebar-container"]) {
+    transition-duration: 0s !important;
   }
 
   ::-webkit-scrollbar {
