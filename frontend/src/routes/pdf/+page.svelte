@@ -10,6 +10,7 @@
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
+  import * as m from "$lib/paraglide/messages.js";
   import * as pdfjsLib from "pdfjs-dist";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -63,9 +64,8 @@
 
         await loadPDF();
       } else {
-        toast.error("No PDF data provided");
-        error =
-          "No PDF data provided. Please open this window from the main EMLy application.";
+        toast.error(m.pdf_error_no_data());
+        error = m.pdf_error_no_data_desc();
         loading = false;
       }
     } catch (e) {
@@ -81,8 +81,7 @@
     const timeout = setTimeout(() => {
       if (loading) {
         loading = false;
-        error =
-          "Timeout loading PDF. The worker might have failed to initialize.";
+        error = m.pdf_error_timeout();
         toast.error(error);
       }
     }, 10000);
@@ -96,7 +95,7 @@
       loading = false;
     } catch (e) {
       console.error(e);
-      error = "Error parsing PDF: " + e;
+      error = m.pdf_error_parsing() + e;
       loading = false;
     } finally {
       clearTimeout(timeout);
@@ -135,7 +134,7 @@
     } catch (e: any) {
       if (e.name !== "RenderingCancelledException") {
         console.error(e);
-        toast.error("Error rendering page: " + e.message);
+        toast.error(m.pdf_error_rendering() + e.message);
       }
     }
   }
@@ -189,7 +188,7 @@
   {#if loading}
     <div class="loading-overlay">
       <div class="spinner"></div>
-      <div>Loading PDF...</div>
+      <div>{m.pdf_loading()}</div>
     </div>
   {/if}
 
@@ -200,24 +199,24 @@
   {/if}
 
   <div class="toolbar">
-    <h1 class="title" title={filename}>{filename || "Image Viewer"}</h1>
+    <h1 class="title" title={filename}>{filename || m.pdf_viewer_title()}</h1>
 
     <div class="controls">
-      <button class="btn" onclick={() => zoom(0.1)} title="Zoom In">
+      <button class="btn" onclick={() => zoom(0.1)} title={m.pdf_zoom_in()}>
         <ZoomIn size="16" />
       </button>
-      <button class="btn" onclick={() => zoom(-0.1)} title="Zoom Out">
+      <button class="btn" onclick={() => zoom(-0.1)} title={m.pdf_zoom_out()}>
         <ZoomOut size="16" />
       </button>
       <div class="separator"></div>
-      <button class="btn" onclick={() => rotate(-90)} title="Rotate Left">
+      <button class="btn" onclick={() => rotate(-90)} title={m.pdf_rotate_left()}>
         <RotateCcw size="16" />
       </button>
-      <button class="btn" onclick={() => rotate(90)} title="Rotate Right">
+      <button class="btn" onclick={() => rotate(90)} title={m.pdf_rotate_right()}>
         <RotateCw size="16" />
       </button>
       <div class="separator"></div>
-      <button class="btn" onclick={fitToWidth} title="Reset">
+      <button class="btn" onclick={fitToWidth} title={m.pdf_fit_width()}>
         <AlignHorizontalSpaceAround size="16" />
       </button>
     </div>

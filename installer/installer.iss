@@ -1,6 +1,23 @@
 #define ApplicationName 'EMLy'
 #define ApplicationVersion GetVersionNumbersString('EMLy.exe')
-#define ApplicationVersion '1.5.0'
+#define ApplicationVersion '1.5.2'
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+
+[CustomMessages]
+; English messages
+english.UpgradeDetected=A previous version of {#ApplicationName} (v%1) has been detected.
+english.UpgradeMessage=This installer will upgrade your installation to version {#ApplicationVersion}.%n%nYour settings and preferences will be preserved.%n%nDo you want to continue?
+english.FreshInstall=Welcome to {#ApplicationName} {#ApplicationVersion} Setup
+english.FreshInstallMessage=This will install {#ApplicationName} on your computer.
+
+; Italian messages
+italian.UpgradeDetected=È stata rilevata una versione precedente di {#ApplicationName} (v%1).
+italian.UpgradeMessage=Questo installer aggiornerà la tua installazione alla versione {#ApplicationVersion}.%n%nLe tue impostazioni e preferenze saranno preservate.%n%nVuoi continuare?
+italian.FreshInstall=Benvenuto nell'installazione di {#ApplicationName} {#ApplicationVersion}
+italian.FreshInstallMessage=Questo installerà {#ApplicationName} sul tuo computer.
 
 [Setup]
 AppName={#ApplicationName}
@@ -59,6 +76,65 @@ Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open"; ValueTy
 Name: "{autoprograms}\{#ApplicationName}"; Filename: "{app}\{#ApplicationName}.exe"
 
 [Code]
+var
+  PreviousVersion: String;
+  IsUpgrade: Boolean;
+
+// Check if a previous version is installed
+function GetPreviousVersion(): String;
+var
+  RegPath: String;
+  Version: String;
+begin
+  Result := '';
+  
+  // Check HKLM (system-wide installation)
+  RegPath := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#ApplicationName}_is1';
+  if RegQueryStringValue(HKLM, RegPath, 'DisplayVersion', Version) then
+  begin
+    Result := Version;
+    Exit;
+  end;
+  
+  // Check HKCU (user installation)
+  if RegQueryStringValue(HKCU, RegPath, 'DisplayVersion', Version) then
+  begin
+    Result := Version;
+    Exit;
+  end;
+end;
+
+// Initialize setup and detect upgrade
+function InitializeSetup(): Boolean;
+var
+  Message: String;
+begin
+  Result := True;
+  PreviousVersion := GetPreviousVersion();
+  IsUpgrade := (PreviousVersion <> '');
+  
+  if IsUpgrade then
+  begin
+    // Show upgrade message
+    Message := FmtMessage(CustomMessage('UpgradeDetected'), [PreviousVersion]) + #13#10#13#10 +
+               CustomMessage('UpgradeMessage');
+    
+    if MsgBox(Message, mbInformation, MB_YESNO) = IDNO then
+    begin
+      Result := False;
+    end;
+  end;
+end;
+
+// Show appropriate welcome message
+procedure InitializeWizard();
+begin
+  if not IsUpgrade then
+  begin
+    WizardForm.WelcomeLabel2.Caption := CustomMessage('FreshInstallMessage');
+  end;
+end;
+
 // Override default directory based on installation mode
 function GetDefaultDirName(Param: string): string;
 begin

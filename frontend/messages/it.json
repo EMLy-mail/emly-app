@@ -201,5 +201,19 @@
 	"settings_danger_update_checker_info": "Info: Quando abilitato, l'app controllerà gli aggiornamenti dal percorso di rete configurato. Disabilitalo se gestisci gli aggiornamenti manualmente o non hai accesso alla rete.",
 	"settings_reduce_motion_label": "Riduci Movimento",
 	"settings_reduce_motion_hint": "Disabilita le animazioni di transizione per gli elementi dell'interfaccia come la barra laterale.",
-	"settings_reduce_motion_info": "Info: Quando abilitato, le animazioni come la transizione della barra laterale verranno rimosse per un'esperienza più reattiva o per ridurre le distrazioni visive."
+	"settings_reduce_motion_info": "Info: Quando abilitato, le animazioni come la transizione della barra laterale verranno rimosse per un'esperienza più reattiva o per ridurre le distrazioni visive.",
+	"settings_window_buttons_contrast_label": "Aumenta contrasto pulsanti finestra",
+	"settings_window_buttons_contrast_hint": "Rende i pulsanti di controllo della finestra (minimizza, massimizza, chiudi) più visibili aumentando il loro contrasto.",
+	"pdf_viewer_title": "Visualizzatore PDF",
+	"pdf_loading": "Caricamento PDF...",
+	"pdf_zoom_in": "Ingrandisci",
+	"pdf_zoom_out": "Riduci",
+	"pdf_rotate_left": "Ruota a sinistra",
+	"pdf_rotate_right": "Ruota a destra",
+	"pdf_fit_width": "Adatta alla larghezza",
+	"pdf_error_no_data": "Nessun dato PDF fornito",
+	"pdf_error_no_data_desc": "Nessun dato PDF fornito. Apri questa finestra dall'applicazione principale EMLy.",
+	"pdf_error_timeout": "Timeout caricamento PDF. Il worker potrebbe non essersi inizializzato correttamente.",
+	"pdf_error_parsing": "Errore nel parsing del PDF: ",
+	"pdf_error_rendering": "Errore nel rendering della pagina: "
 }

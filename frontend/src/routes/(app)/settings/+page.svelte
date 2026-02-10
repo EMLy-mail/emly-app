@@ -43,6 +43,7 @@
     enableUpdateChecker: false,
     reduceMotion: false,
     theme: "dark",
+    increaseWindowButtonsContrast: false,
   };
 
   async function setLanguage(
@@ -80,6 +81,7 @@
         : (s.enableUpdateChecker ?? defaults.enableUpdateChecker ?? true),
       reduceMotion: s.reduceMotion ?? defaults.reduceMotion ?? false,
       theme: s.theme || defaults.theme || "light",
+      increaseWindowButtonsContrast: s.increaseWindowButtonsContrast ?? defaults.increaseWindowButtonsContrast ?? false,
     };
   }
 
@@ -93,6 +95,7 @@
       !!a.enableUpdateChecker === !!b.enableUpdateChecker &&
       !!a.reduceMotion === !!b.reduceMotion &&
       (a.theme ?? "light") === (b.theme ?? "light") &&
+      !!a.increaseWindowButtonsContrast === !!b.increaseWindowButtonsContrast &&
       JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
         JSON.stringify(b.previewFileSupportedTypes?.sort())
     );
@@ -467,6 +470,45 @@
           <p class="text-xs text-muted-foreground mt-2">
             {m.settings_reduce_motion_info()}
           </p>
+
+          <Separator />
+
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+          >
+            <div>
+              <div class="font-medium">
+                {m.settings_window_buttons_contrast_label()}
+              </div>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_window_buttons_contrast_hint()}
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.increaseWindowButtonsContrast}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
+
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+          >
+            <div>
+              <div class="font-medium">
+                {m.settings_email_dark_viewer_label()}
+              </div>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_email_dark_viewer_hint()}
+              </div>
+            </div>
+            <Switch
+              bind:checked={form.useDarkEmailViewer}
+              class="cursor-pointer hover:cursor-pointer"
+            />
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">
+            {m.settings_email_dark_viewer_info()}
+          </p>
         </div>
       </Card.Content>
     </Card.Root>
@@ -495,7 +537,7 @@
             {m.settings_export_button()}
           </Button>
         </div>
-        <Separator />
+
         <div
           class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
         >
@@ -638,29 +680,6 @@
           </div>
           <p class="text-xs text-muted-foreground mt-2">
             {m.settings_preview_pdf_builtin_info()}
-          </p>
-        </div>
-        <Separator />
-
-        <div class="space-y-3">
-          <div
-            class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-          >
-            <div>
-              <div class="font-medium">
-                {m.settings_email_dark_viewer_label()}
-              </div>
-              <div class="text-sm text-muted-foreground">
-                {m.settings_email_dark_viewer_hint()}
-              </div>
-            </div>
-            <Switch
-              bind:checked={form.useDarkEmailViewer}
-              class="cursor-pointer hover:cursor-pointer"
-            />
-          </div>
-          <p class="text-xs text-muted-foreground mt-2">
-            {m.settings_email_dark_viewer_info()}
           </p>
         </div>
       </Card.Content>

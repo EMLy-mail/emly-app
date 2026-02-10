@@ -201,5 +201,19 @@
 	"settings_danger_update_checker_info": "Info: When enabled, the app will check for updates from your configured network share. Disable this if you manage updates manually or don't have network access.",
 	"settings_reduce_motion_label": "Reduce Motion",
 	"settings_reduce_motion_hint": "Disable transition animations for interface elements like the sidebar.",
-	"settings_reduce_motion_info": "Info: When enabled, animations such as the sidebar slide transition will be removed for a snappier feel or to reduce visual distractions."
+	"settings_reduce_motion_info": "Info: When enabled, animations such as the sidebar slide transition will be removed for a snappier feel or to reduce visual distractions.",
+	"settings_window_buttons_contrast_label": "Increase window buttons contrast",
+	"settings_window_buttons_contrast_hint": "Makes the window control buttons (minimize, maximize, close) more visible by increasing their contrast.",
+	"pdf_viewer_title": "PDF Viewer",
+	"pdf_loading": "Loading PDF...",
+	"pdf_zoom_in": "Zoom In",
+	"pdf_zoom_out": "Zoom Out",
+	"pdf_rotate_left": "Rotate Left",
+	"pdf_rotate_right": "Rotate Right",
+	"pdf_fit_width": "Fit to Width",
+	"pdf_error_no_data": "No PDF data provided",
+	"pdf_error_no_data_desc": "No PDF data provided. Please open this window from the main EMLy application.",
+	"pdf_error_timeout": "Timeout loading PDF. The worker might have failed to initialize.",
+	"pdf_error_parsing": "Error parsing PDF: ",
+	"pdf_error_rendering": "Error rendering page: "
 }

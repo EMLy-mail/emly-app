@@ -46,3 +46,4 @@ extra/*.dll
 
 *.eml
 *.msg
+frontend/bun.lock

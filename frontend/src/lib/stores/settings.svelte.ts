@@ -17,6 +17,7 @@ const defaults: EMLy_GUI_Settings = {
     musicInspirationEnabled: false,
     reduceMotion: false,
     theme: "dark",
+    increaseWindowButtonsContrast: false,
 };
 
 class SettingsStore {

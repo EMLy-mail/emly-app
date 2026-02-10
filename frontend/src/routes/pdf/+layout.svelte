@@ -7,6 +7,7 @@
     Quit,
   } from "$lib/wailsjs/runtime/runtime";
   import type { LayoutProps } from "./$types";
+  import { settingsStore } from "$lib/stores/settings.svelte.js";
 
   let { data, children }: LayoutProps = $props();
 
@@ -57,7 +58,7 @@
   >
     <div class="title">EMLy PDF Viewer</div>
 
-    <div class="controls">
+    <div class="controls" class:high-contrast={settingsStore.settings.increaseWindowButtonsContrast}>
       <button class="btn" onclick={minimize}>─</button>
       <button class="btn" onclick={toggleMaximize}>
         {#if isMaximized}
@@ -118,6 +119,10 @@
     display: flex;
     height: 100%;
     opacity: 0.5;
+  }
+
+  .controls.high-contrast {
+    opacity: 1;
   }
 
   .btn {

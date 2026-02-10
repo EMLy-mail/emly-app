@@ -28,3 +28,7 @@ project.inlang/cache/
 
 # Wails
 /src/lib/wailsjs
+
+
+bun.lock
+bun.lockb

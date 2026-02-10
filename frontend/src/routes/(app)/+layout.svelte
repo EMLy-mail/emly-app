@@ -304,7 +304,7 @@
       </div>
     </div>
 
-    <div class="controls">
+    <div class="controls" class:high-contrast={settingsStore.settings.increaseWindowButtonsContrast}>
       <button class="btn" onclick={minimize}>─</button>
 
       <button class="btn" onclick={toggleMaximize}>
@@ -692,6 +692,10 @@
     display: flex;
     height: 100%;
     opacity: 0.5;
+  }
+
+  .controls.high-contrast {
+    opacity: 1;
   }
 
   .btn {
