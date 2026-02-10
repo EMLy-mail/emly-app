@@ -8,7 +8,8 @@
   import { Textarea } from "$lib/components/ui/textarea/index.js";
   import { CheckCircle, Copy, FolderOpen, Camera, Loader2 } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
-  import { TakeScreenshot, SubmitBugReport, OpenFolderInExplorer } from "$lib/wailsjs/go/main/App";
+  import { TakeScreenshot, SubmitBugReport, OpenFolderInExplorer, GetConfig } from "$lib/wailsjs/go/main/App";
+  import { browser } from "$app/environment";
 
   // Bug report form state
   let userName = $state("");
@@ -19,16 +20,27 @@
   let screenshotData = $state("");
   let isCapturing = $state(false);
 
+  // Bug report system data
+  let localStorageData = $state("");
+  let configData = $state("");
+
   // Bug report UI state
   let isSubmitting = $state(false);
   let isSuccess = $state(false);
   let resultZipPath = $state("");
+  let canSubmit: boolean = $derived(
+    bugDescription.trim().length > 0 && userName.trim().length > 0 && userEmail.trim().length > 0 && !isSubmitting && !isCapturing
+  );
 
   // Bug report dialog effects
   $effect(() => {
     if ($bugReportDialogOpen) {
       // Capture screenshot immediately when dialog opens
       captureScreenshot();
+      // Capture localStorage data
+      captureLocalStorage();
+      // Capture config.ini data
+      captureConfig();
     } else {
       // Reset form when dialog closes
       resetBugReportForm();
@@ -48,11 +60,42 @@
     }
   }
 
+  function captureLocalStorage() {
+    if (!browser) return;
+    try {
+      const data: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          data[key] = localStorage.getItem(key) || "";
+        }
+      }
+      localStorageData = JSON.stringify(data, null, 2);
+      console.log("localStorage data captured");
+    } catch (err) {
+      console.error("Failed to capture localStorage:", err);
+      localStorageData = "Error capturing localStorage";
+    }
+  }
+
+  async function captureConfig() {
+    try {
+      const config = await GetConfig();
+      configData = JSON.stringify(config, null, 2);
+      console.log("Config data captured");
+    } catch (err) {
+      console.error("Failed to capture config:", err);
+      configData = "Error capturing config";
+    }
+  }
+
   function resetBugReportForm() {
     userName = "";
     userEmail = "";
     bugDescription = "";
     screenshotData = "";
+    localStorageData = "";
+    configData = "";
     isCapturing = false;
     isSubmitting = false;
     isSuccess = false;
@@ -74,7 +117,9 @@
         name: userName,
         email: userEmail,
         description: bugDescription,
-        screenshotData: screenshotData
+        screenshotData: screenshotData,
+        localStorageData: localStorageData,
+        configData: configData
       });
 
       resultZipPath = result.zipPath;
@@ -112,7 +157,7 @@
 </script>
 
 <Dialog.Root bind:open={$bugReportDialogOpen}>
-  <Dialog.Content class="sm:max-w-[500px] w-full max-h-[80vh] overflow-y-auto custom-scrollbar">
+  <Dialog.Content class="sm:max-w-125 w-full max-h-[80vh] overflow-y-auto custom-scrollbar">
     {#if isSuccess}
       <!-- Success State -->
       <Dialog.Header>
@@ -186,7 +231,7 @@
               placeholder={m.bugreport_text_placeholder()}
               bind:value={bugDescription}
               disabled={isSubmitting}
-              class="min-h-[120px]"
+              class="min-h-30"
             />
           </div>
 
@@ -225,7 +270,7 @@
           <button type="button" class={buttonVariants({ variant: "outline" })} disabled={isSubmitting} onclick={closeBugReportDialog}>
             {m.bugreport_cancel()}
           </button>
-          <Button type="submit" disabled={isSubmitting || isCapturing}>
+          <Button type="submit" disabled={!canSubmit}>
             {#if isSubmitting}
               <Loader2 class="h-4 w-4 mr-2 animate-spin" />
               {m.bugreport_submitting()}

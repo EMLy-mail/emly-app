@@ -5,7 +5,7 @@
 
 # Existing Features
 - [ ] Add seperated "Updater" binary, that will start on User login (via Scheduled Task), with a silent install mode.
-- [ ] Attach localStorage, config file to the "Bug Reporter" ZIP file, to investigate the issue with the user enviroment.
+- [x] Attach localStorage, config file to the "Bug Reporter" ZIP file, to investigate the issue with the user enviroment.
 - [ ] Auto-send the "Bug Reporter" ZIP file to the support team, to investigate the issue with the user enviroment.
 
 # Bugs

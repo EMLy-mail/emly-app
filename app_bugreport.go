@@ -38,6 +38,10 @@ type BugReportInput struct {
 	Description string `json:"description"`
 	// ScreenshotData is the base64-encoded PNG screenshot (captured before dialog opens)
 	ScreenshotData string `json:"screenshotData"`
+	// LocalStorageData is the JSON-encoded localStorage data
+	LocalStorageData string `json:"localStorageData"`
+	// ConfigData is the JSON-encoded config.ini data
+	ConfigData string `json:"configData"`
 }
 
 // SubmitBugReportResult contains the result of submitting a bug report.
@@ -120,10 +124,12 @@ func (a *App) CreateBugReportFolder() (*BugReportResult, error) {
 //   - User-provided description (report.txt)
 //   - Screenshot (captured before dialog opens)
 //   - Currently loaded mail file (if any)
+//   - localStorage data (localStorage.json)
+//   - Config.ini data (config.json)
 //   - System information (hostname, OS version, hardware ID)
 //
 // Parameters:
-//   - input: User-provided bug report details including pre-captured screenshot
+//   - input: User-provided bug report details including pre-captured screenshot, localStorage, and config data
 //
 // Returns:
 //   - *SubmitBugReportResult: Paths to the zip file and folder
@@ -165,6 +171,22 @@ func (a *App) SubmitBugReport(input BugReportInput) (*SubmitBugReportResult, err
 			if err := os.WriteFile(mailFilePath, mailData, 0644); err != nil {
 				Log("Failed to copy mail file for bug report:", err)
 			}
+		}
+	}
+
+	// Save localStorage data if provided
+	if input.LocalStorageData != "" {
+		localStoragePath := filepath.Join(bugReportFolder, "localStorage.json")
+		if err := os.WriteFile(localStoragePath, []byte(input.LocalStorageData), 0644); err != nil {
+			Log("Failed to save localStorage data:", err)
+		}
+	}
+
+	// Save config data if provided
+	if input.ConfigData != "" {
+		configPath := filepath.Join(bugReportFolder, "config.json")
+		if err := os.WriteFile(configPath, []byte(input.ConfigData), 0644); err != nil {
+			Log("Failed to save config data:", err)
 		}
 	}
 
