@@ -7,6 +7,7 @@
     ZoomIn,
     ZoomOut,
     AlignHorizontalSpaceAround,
+    Download
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
@@ -84,6 +85,17 @@
     fitToScreen();
   }
 
+  function downloadImage() {
+    if (!imageData || !filename) return;
+
+    const link = document.createElement("a");
+    link.href = `data:image/png;base64,${imageData}`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function handleWheel(e: WheelEvent) {
     e.preventDefault();
     const delta = -e.deltaY * 0.001;
@@ -116,6 +128,10 @@
     <h1 class="title" title={filename}>{filename || "Image Viewer"}</h1>
 
     <div class="controls">
+       <button class="btn" onclick={() => downloadImage()} title="Download">
+        <Download size="16" />
+      </button>
+      <div class="separator"></div>
       <button class="btn" onclick={() => zoom(0.1)} title="Zoom In">
         <ZoomIn size="16" />
       </button>

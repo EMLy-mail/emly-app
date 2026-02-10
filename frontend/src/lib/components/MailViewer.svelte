@@ -9,6 +9,7 @@
     Signature,
     FileCode,
     Loader2,
+    Download,
   } from '@lucide/svelte';
   import { sidebarOpen } from '$lib/stores/app';
   import { onDestroy, onMount } from 'svelte';
@@ -35,6 +36,7 @@
     isEmailFile,
   } from '$lib/utils/mail';
   import { settingsStore } from '$lib/stores/settings.svelte';
+  import { Separator } from "$lib/components/ui/separator";
 
   // ============================================================================
   // State
@@ -57,6 +59,21 @@
 
   function onClear() {
     mailState.clear();
+  }
+
+  function onDownloadAttachments() {
+    if (!mailState.currentEmail || !mailState.currentEmail.attachments) return;
+
+    mailState.currentEmail.attachments.forEach((att) => {
+      const base64 = arrayBufferToBase64(att.data);
+      const dataUrl = createDataUrl(att.contentType, base64);
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = att.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
   }
 
   async function onOpenMail() {
@@ -224,6 +241,16 @@
               {mailState.currentEmail.subject || m.mail_subject_no_subject()}
             </div>
             <div class="controls">
+              <button
+                class="btn"
+                onclick={onDownloadAttachments}
+                aria-label={m.mail_download_btn_label()}
+                title={m.mail_download_btn_title()}
+                disabled={isLoading}
+              >
+                <Download size="15" />
+                {m.mail_download_btn_text()}
+              </button>
               <button
                 class="btn"
                 onclick={onOpenMail}

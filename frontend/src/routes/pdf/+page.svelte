@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import type { PageData } from "./$types";
   import {
     RotateCcw,
@@ -7,6 +7,7 @@
     ZoomIn,
     ZoomOut,
     AlignHorizontalSpaceAround,
+    Download
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
@@ -106,7 +107,13 @@
     if (!pdfDoc || !canvasRef) return;
 
     if (renderTask) {
-      await renderTask.promise.catch(() => {}); // Cancel previous render if any (though we wait usually)
+      // Cancel previous render if any and await its cleanup
+      renderTask.cancel();
+      try {
+        await renderTask.promise;
+      } catch (e) {
+        // Expected cancellation error
+      }
     }
 
     try {
@@ -130,7 +137,9 @@
       };
 
       // Cast to any to avoid type mismatch with PDF.js definitions
-      await page.render(renderContext as any).promise;
+      const task = page.render(renderContext as any);
+      renderTask = task;
+      await task.promise;
     } catch (e: any) {
       if (e.name !== "RenderingCancelledException") {
         console.error(e);
@@ -155,11 +164,15 @@
 
   $effect(() => {
     // Re-render when scale or rotation changes
-    // Access them here to ensure dependency tracking since renderPage is async
-    const _deps = [scale, rotation];
+    // Access them here to ensure dependency tracking since renderPage is untracked
+    // We also track pageNum to ensure we re-render if it changes via other means, 
+    // although navigation functions usually call renderPage manually.
+    const _deps = [scale, rotation, pageNum];
 
     if (pdfDoc) {
-      renderPage(pageNum);
+      // Untrack renderPage because it reads and writes to renderTask,
+      // which would otherwise cause an infinite loop.
+      untrack(() => renderPage(pageNum));
     }
   });
 
@@ -182,6 +195,24 @@
     pageNum--;
     renderPage(pageNum);
   }
+
+  function downloadPDF() {
+    if (!pdfData) return;
+    try {
+      // @ts-ignore
+      const blob = new Blob([pdfData], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "document.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error("Failed to download PDF: " + e);
+    }
+  }
 </script>
 
 <div class="viewer-container">
@@ -202,6 +233,10 @@
     <h1 class="title" title={filename}>{filename || m.pdf_viewer_title()}</h1>
 
     <div class="controls">
+      <button class="btn" onclick={() => downloadPDF()} title={m.mail_download_btn_title()}>
+        <Download size="16" />
+      </button>
+      <div class="separator"></div>
       <button class="btn" onclick={() => zoom(0.1)} title={m.pdf_zoom_in()}>
         <ZoomIn size="16" />
       </button>

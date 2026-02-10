@@ -26,10 +26,10 @@
 	"settings_preview_page_description": "Modifica le impostazioni relative alla pagina di anteprima",
 	"settings_preview_builtin_label": "Usa anteprima integrata per le immagini",
 	"settings_preview_builtin_hint": "Usa il visualizzatore di immagini integrato di EMLy per i tipi di file immagini supportati.",
-	"settings_preview_builtin_info": "Info: Se disabilitato, i file immagine verranno trattati come download anziché essere visualizzati all'interno dell'app.",
+	"settings_preview_builtin_info": "Info: Se disabilitato, i file immagine verranno aperti tramite l'app di default attuale anziché essere visualizzati all'interno dell'app.",
 	"settings_preview_pdf_builtin_label": "Usa visualizzatore integrato per PDF",
 	"settings_preview_pdf_builtin_hint": "Usa il visualizzatore integrato di EMLy per i file PDF.",
-	"settings_preview_pdf_builtin_info": "Info: Se disabilitato, i file PDF verranno trattati come download invece di essere visualizzati nell'app.",
+	"settings_preview_pdf_builtin_info": "Info: Se disabilitato, i file PDF verranno aperti tramite l'app di default attuale invece di essere visualizzati nell'app.",
 	"settings_msg_converter_title": "Gestione MSG",
 	"settings_msg_converter_description": "Configura come vengono elaborati i file MSG.",
 	"settings_msg_converter_label": "Usa convertitore MSG in EML",
@@ -79,7 +79,7 @@
 	"mail_error_image": "Impossibile aprire il file immagine.",
 	"settings_toast_language_changed": "Lingua cambiata con successo!",
 	"settings_toast_language_change_failed": "Impossibile cambiare lingua.",
-	"mail_open_btn_text": "Apri file EML/MSG",
+	"mail_open_btn_text": "Apri file",
 	"mail_close_btn_text": "Chiudi",
 	"settings_danger_reset_dialog_description_part1": "Questa azione non può essere annullata.",
 	"settings_danger_reset_dialog_description_part2": "Questo eliminerà permanentemente le tue impostazioni attuali e riporterà l'app allo stato predefinito.",
@@ -215,5 +215,9 @@
 	"pdf_error_no_data_desc": "Nessun dato PDF fornito. Apri questa finestra dall'applicazione principale EMLy.",
 	"pdf_error_timeout": "Timeout caricamento PDF. Il worker potrebbe non essersi inizializzato correttamente.",
 	"pdf_error_parsing": "Errore nel parsing del PDF: ",
-	"pdf_error_rendering": "Errore nel rendering della pagina: "
+	"pdf_error_rendering": "Errore nel rendering della pagina: ",
+	"mail_download_btn_label": "Scarica",
+	"mail_download_btn_title": "Scarica",
+	"mail_download_btn_text": "Scarica"
+
 }
