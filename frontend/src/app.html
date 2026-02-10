@@ -14,7 +14,7 @@
 				try {
 					const key = "emly_theme";
 					const stored = localStorage.getItem(key);
-					const theme = stored === "light" || stored === "dark" ? stored : "light";
+					const theme = stored === "light" || stored === "dark" ? stored : "dark";
 					document.documentElement.classList.toggle("dark", theme === "dark");
 				} catch {
 					// If storage is blocked, default to light.

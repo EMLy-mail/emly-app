@@ -57,6 +57,9 @@ class SettingsStore {
             this.settings.theme = storedTheme;
         }
         
+        // Sync useDarkEmailViewer with theme
+        this.settings.useDarkEmailViewer = this.settings.theme === "dark";
+        
         // Apply the theme
         applyTheme(this.settings.theme);
 

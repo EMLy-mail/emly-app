@@ -211,6 +211,16 @@
     })();
   });
 
+  // Sync theme with email viewer dark mode
+  let previousTheme = $state<string | undefined>(undefined);
+  $effect(() => {
+    if (!browser) return;
+    if (previousTheme !== undefined && form.theme !== previousTheme) {
+      form.useDarkEmailViewer = form.theme === "dark";
+    }
+    previousTheme = form.theme;
+  });
+
   async function exportSettings() {
     try {
       const settingsJSON = JSON.stringify(form, null, 2);
