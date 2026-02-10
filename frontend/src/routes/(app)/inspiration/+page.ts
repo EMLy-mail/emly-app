@@ -59,6 +59,16 @@ const inspirationTracks: SpotifyTrack[] = [
         artist: "When Snakes Sing",
         spotifyUrl: "https://open.spotify.com/track/1nDkT2Cn13qDnFegF93UHi",
         embedUrl: "https://open.spotify.com/embed/track/1nDkT2Cn13qDnFegF93UHi?utm_source=generator"
+    }, {
+        name: "Keep It Tucked",
+        artist: "ThxSoMch",
+        spotifyUrl: "https://open.spotify.com/track/1EdQCb51lC8usq47IMhADP",
+        embedUrl: "https://open.spotify.com/embed/track/1EdQCb51lC8usq47IMhADP?utm_source=generator"
+    }, {
+        name: "Deadly Valentine",
+        artist: "Charlotte Gainsbourg",
+        spotifyUrl: "https://open.spotify.com/track/0pfTlQJBOV4LUmF8qqrVy5",
+        embedUrl: "https://open.spotify.com/embed/track/0pfTlQJBOV4LUmF8qqrVy5?utm_source=generator"
     }
 ];
 
@@ -71,7 +81,7 @@ async function fetchEmbedHtml(track: SpotifyTrack, fetch: typeof globalThis.fetc
             return { ...track, embedHtml: data.html };
         }
     } catch (e) {
-        console.error(`Failed to fetch oEmbed for ${track.name}:`, e);
+        console.error(`Failed to fetch oEmbed for ${track.spotifyUrl}:`, e);
     }
     return track;
 }
