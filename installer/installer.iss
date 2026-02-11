@@ -80,6 +80,20 @@ var
   PreviousVersion: String;
   IsUpgrade: Boolean;
 
+// Check if a command line parameter exists
+function CmdLineParamExists(const Param: string): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), Param) = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
 // Check if a previous version is installed
 function GetPreviousVersion(): String;
 var
@@ -115,13 +129,17 @@ begin
   
   if IsUpgrade then
   begin
-    // Show upgrade message
-    Message := FmtMessage(CustomMessage('UpgradeDetected'), [PreviousVersion]) + #13#10#13#10 +
-               CustomMessage('UpgradeMessage');
-    
-    if MsgBox(Message, mbInformation, MB_YESNO) = IDNO then
+    // Check for /FORCEUPGRADE parameter to skip confirmation
+    if not CmdLineParamExists('/FORCEUPGRADE') then
     begin
-      Result := False;
+      // Show upgrade message
+      Message := FmtMessage(CustomMessage('UpgradeDetected'), [PreviousVersion]) + #13#10#13#10 +
+                 CustomMessage('UpgradeMessage');
+      
+      if MsgBox(Message, mbInformation, MB_YESNO) = IDNO then
+      begin
+        Result := False;
+      end;
     end;
   end;
 end;
