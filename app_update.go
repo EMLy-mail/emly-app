@@ -410,6 +410,238 @@ func shellExecuteAsAdmin(exePath string) error {
 	return nil
 }
 
+// launchDetachedInstaller launches the installer as a completely detached process
+// using CreateProcess with DETACHED_PROCESS and CREATE_NEW_PROCESS_GROUP flags.
+// This allows the installer to continue running and close EMLy without errors.
+//
+// Parameters:
+//   - exePath: Full path to the installer executable
+//   - args: Array of command-line arguments to pass to the installer
+//
+// Returns:
+//   - error: Error if process creation fails
+func launchDetachedInstaller(exePath string, args []string) error {
+	// Build command line: executable path + arguments
+	cmdLine := fmt.Sprintf(`"%s"`, exePath)
+	if len(args) > 0 {
+		cmdLine += " " + strings.Join(args, " ")
+	}
+
+	log.Printf("Launching detached installer: %s", cmdLine)
+
+	// Convert to UTF16 for Windows API
+	cmdLinePtr := syscall.StringToUTF16Ptr(cmdLine)
+
+	// Setup process startup info
+	var si syscall.StartupInfo
+	var pi syscall.ProcessInformation
+
+	si.Cb = uint32(unsafe.Sizeof(si))
+	si.Flags = syscall.STARTF_USESHOWWINDOW
+	si.ShowWindow = syscall.SW_HIDE // Hide installer window (silent mode)
+
+	// Process creation flags:
+	// CREATE_NEW_PROCESS_GROUP: Creates process in new process group
+	// DETACHED_PROCESS: Process has no console, completely detached from parent
+	const (
+		CREATE_NEW_PROCESS_GROUP = 0x00000200
+		DETACHED_PROCESS         = 0x00000008
+	)
+	flags := uint32(CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
+
+	// Create the detached process
+	err := syscall.CreateProcess(
+		nil,        // Application name (nil = use command line)
+		cmdLinePtr, // Command line
+		nil,        // Process security attributes
+		nil,        // Thread security attributes
+		false,      // Inherit handles
+		flags,      // Creation flags
+		nil,        // Environment (nil = inherit)
+		nil,        // Current directory (nil = inherit)
+		&si,        // Startup info
+		&pi,        // Process information (output)
+	)
+
+	if err != nil {
+		log.Printf("CreateProcess failed: %v", err)
+		return fmt.Errorf("failed to create detached process: %w", err)
+	}
+
+	// Close process and thread handles immediately
+	// We don't need to wait for the process - it's fully detached
+	syscall.CloseHandle(pi.Process)
+	syscall.CloseHandle(pi.Thread)
+
+	log.Printf("Detached installer process launched successfully (PID: %d)", pi.ProcessId)
+
+	return nil
+}
+
+// InstallUpdateSilent downloads the update (if needed) and launches the installer
+// in completely silent mode with a detached process. The installer will run with
+// these arguments: /VERYSILENT /ALLUSERS /SUPPRESSMSGBOXES /NORESTART /FORCEUPGRADE
+//
+// This method automatically quits EMLy after launching the installer, allowing the
+// installer to close the application and complete the upgrade without user interaction.
+//
+// Returns:
+//   - error: Error if download or launch fails
+func (a *App) InstallUpdateSilent() error {
+	log.Println("Starting silent update installation...")
+
+	// If installer not ready, attempt to download first
+	if !updateStatus.Ready || updateStatus.InstallerPath == "" {
+		log.Println("Installer not ready, downloading update first...")
+
+		_, err := a.DownloadUpdate()
+		if err != nil {
+			errMsg := fmt.Sprintf("Failed to download update: %v", err)
+			log.Println(errMsg)
+			updateStatus.ErrorMessage = errMsg
+			return fmt.Errorf("download failed: %w", err)
+		}
+
+		// Wait briefly for download to complete
+		log.Println("Download initiated, waiting for completion...")
+		for i := 0; i < 60; i++ { // Wait up to 60 seconds
+			time.Sleep(1 * time.Second)
+			if updateStatus.Ready {
+				break
+			}
+			if updateStatus.ErrorMessage != "" {
+				return fmt.Errorf("download error: %s", updateStatus.ErrorMessage)
+			}
+		}
+
+		if !updateStatus.Ready {
+			return fmt.Errorf("download timeout - update not ready after 60 seconds")
+		}
+	}
+
+	installerPath := updateStatus.InstallerPath
+
+	// Verify installer exists
+	if _, err := os.Stat(installerPath); os.IsNotExist(err) {
+		updateStatus.ErrorMessage = "Installer file not found"
+		updateStatus.Ready = false
+		log.Printf("Installer not found: %s", installerPath)
+		return fmt.Errorf("installer not found: %s", installerPath)
+	}
+
+	log.Printf("Installer ready at: %s", installerPath)
+
+	// Prepare silent installation arguments
+	args := []string{
+		"/VERYSILENT",           // No UI, completely silent
+		"/ALLUSERS",             // Install for all users (requires admin)
+		"/SUPPRESSMSGBOXES",     // Suppress all message boxes
+		"/NORESTART",            // Don't restart system
+		"/FORCEUPGRADE",         // Skip upgrade confirmation dialog
+		`/LOG="C:\install.log"`, // Create installation log
+	}
+
+	log.Printf("Launching installer with args: %v", args)
+
+	// Launch detached installer
+	if err := launchDetachedInstaller(installerPath, args); err != nil {
+		errMsg := fmt.Sprintf("Failed to launch installer: %v", err)
+		log.Println(errMsg)
+		updateStatus.ErrorMessage = errMsg
+		return fmt.Errorf("failed to launch installer: %w", err)
+	}
+
+	log.Println("Detached installer launched successfully, quitting EMLy...")
+
+	// Quit application to allow installer to replace files
+	time.Sleep(500 * time.Millisecond) // Brief delay to ensure installer starts
+	runtime.Quit(a.ctx)
+
+	return nil
+}
+
+// InstallUpdateSilentFromPath downloads an installer from a custom SMB/network path
+// and launches it in silent mode with a detached process. Use this when you know the
+// exact installer path (e.g., \\server\updates\EMLy_Installer.exe) without needing
+// to check the version.json manifest.
+//
+// Parameters:
+//   - smbPath: Full UNC path or local path to the installer (e.g., \\server\share\EMLy.exe)
+//
+// Returns:
+//   - error: Error if download or launch fails
+func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
+	log.Printf("Starting silent installation from custom path: %s", smbPath)
+
+	// Verify source installer exists and is accessible
+	if _, err := os.Stat(smbPath); os.IsNotExist(err) {
+		errMsg := fmt.Sprintf("Installer not found at: %s", smbPath)
+		log.Println(errMsg)
+		return fmt.Errorf("%s", errMsg)
+	}
+
+	// Create temporary directory for installer
+	tempDir := os.TempDir()
+	installerFilename := filepath.Base(smbPath)
+	tempInstallerPath := filepath.Join(tempDir, installerFilename)
+
+	log.Printf("Copying installer to temp location: %s", tempInstallerPath)
+
+	// Copy installer from SMB path to local temp
+	sourceFile, err := os.Open(smbPath)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to open source installer: %v", err)
+		log.Println(errMsg)
+		return fmt.Errorf("failed to open installer: %w", err)
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(tempInstallerPath)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to create temp installer: %v", err)
+		log.Println(errMsg)
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer destFile.Close()
+
+	// Copy file
+	bytesWritten, err := io.Copy(destFile, sourceFile)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to copy installer: %v", err)
+		log.Println(errMsg)
+		return fmt.Errorf("failed to copy installer: %w", err)
+	}
+
+	log.Printf("Installer copied successfully (%d bytes)", bytesWritten)
+
+	// Prepare silent installation arguments
+	args := []string{
+		"/VERYSILENT",           // No UI, completely silent
+		"/ALLUSERS",             // Install for all users (requires admin)
+		"/SUPPRESSMSGBOXES",     // Suppress all message boxes
+		"/NORESTART",            // Don't restart system
+		"/FORCEUPGRADE",         // Skip upgrade confirmation dialog
+		`/LOG="C:\install.log"`, // Create installation log
+	}
+
+	log.Printf("Launching installer with args: %v", args)
+
+	// Launch detached installer
+	if err := launchDetachedInstaller(tempInstallerPath, args); err != nil {
+		errMsg := fmt.Sprintf("Failed to launch installer: %v", err)
+		log.Println(errMsg)
+		return fmt.Errorf("failed to launch installer: %w", err)
+	}
+
+	log.Println("Detached installer launched successfully, quitting EMLy...")
+
+	// Quit application to allow installer to replace files
+	time.Sleep(500 * time.Millisecond) // Brief delay to ensure installer starts
+	runtime.Quit(a.ctx)
+
+	return nil
+}
+
 // =============================================================================
 // Status Methods
 // =============================================================================
