@@ -33,6 +33,7 @@ export {
   getEmailFileType,
   isEmailFile,
   loadEmailFromPath,
+  loadEmailFromPathLegacy,
   openAndLoadEmail,
   processEmailBody,
   type LoadEmailResult,
