@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { statusColors, statusLabels, formatDate } from '$lib/utils';
-	import { Search, ChevronLeft, ChevronRight, Filter, Paperclip } from 'lucide-svelte';
+	import { Search, ChevronLeft, ChevronRight, Filter, Paperclip, RefreshCcw } from 'lucide-svelte';
 
 	let { data } = $props();
 
@@ -32,6 +32,14 @@
 		searchInput = '';
 		statusFilter = '';
 		goto('/');
+	}
+
+	async function refreshReports() {
+		try {
+			await invalidateAll();
+		} catch (err) {
+			console.error('Failed to refresh reports:', err);
+		}
 	}
 </script>
 
@@ -64,6 +72,13 @@
 			class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
 		>
 			<Filter class="h-4 w-4" />
+			Filter
+		</button>
+		<button
+			onclick={refreshReports}
+			class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+		>
+			<RefreshCcw class="h-4 w-4" />
 			Filter
 		</button>
 		{#if data.filters.search || data.filters.status}
