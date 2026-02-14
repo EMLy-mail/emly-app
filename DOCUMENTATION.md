@@ -252,7 +252,8 @@ The Go backend is split into logical files:
 | Method | Description |
 |--------|-------------|
 | `CreateBugReportFolder()` | Creates folder with screenshot and mail file |
-| `SubmitBugReport(input)` | Creates complete bug report with ZIP archive |
+| `SubmitBugReport(input)` | Creates complete bug report with ZIP archive, attempts server upload |
+| `UploadBugReport(folderPath, input)` | Uploads bug report files to configured API server via multipart POST |
 
 **Settings (`app_settings.go`)**
 
@@ -672,7 +673,26 @@ Complete bug reporting system:
 3. Includes current mail file if loaded
 4. Gathers system information
 5. Creates ZIP archive in temp folder
-6. Shows path and allows opening folder
+6. Attempts to upload to the bug report API server (if configured)
+7. Falls back to local ZIP if server is unreachable
+8. Shows server confirmation with report ID, or local path with upload warning
+
+#### Bug Report API Server
+
+A separate API server (`server/` directory) receives bug reports:
+- **Stack**: Bun.js + ElysiaJS + MySQL 8
+- **Deployment**: Docker Compose (`docker compose up -d` from `server/`)
+- **Auth**: Static API key for clients (`X-API-Key`), static admin key (`X-Admin-Key`)
+- **Rate limiting**: HWID-based, configurable (default 5 reports per 24h)
+- **Endpoints**: `POST /api/bug-reports` (client), `GET/DELETE /api/admin/bug-reports` (admin)
+
+#### Configuration (config.ini)
+
+```ini
+[EMLy]
+BUGREPORT_API_URL="https://your-server.example.com"
+BUGREPORT_API_KEY="your-api-key"
+```
 
 ### 5. Settings Management
 

@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-emly_bugreports}
+      MYSQL_USER: ${MYSQL_USER:-emly}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-emly}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-emly_bugreports}
+      API_KEY: ${API_KEY}
+      ADMIN_KEY: ${ADMIN_KEY}
+      PORT: 3000
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-5}
+      RATE_LIMIT_WINDOW_HOURS: ${RATE_LIMIT_WINDOW_HOURS:-24}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

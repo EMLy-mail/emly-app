@@ -218,6 +218,8 @@
 	"pdf_error_rendering": "Errore nel rendering della pagina: ",
 	"mail_download_btn_label": "Scarica",
 	"mail_download_btn_title": "Scarica",
-	"mail_download_btn_text": "Scarica"
-
+	"mail_download_btn_text": "Scarica",
+	"bugreport_uploaded_success": "La tua segnalazione è stata caricata con successo! ID segnalazione: #{reportId}",
+	"bugreport_upload_failed": "Impossibile caricare sul server. La segnalazione è stata salvata localmente.",
+	"bugreport_uploaded_title": "Segnalazione Bug Caricata"
 }

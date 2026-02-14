@@ -5,8 +5,13 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -50,6 +55,12 @@ type SubmitBugReportResult struct {
 	ZipPath string `json:"zipPath"`
 	// FolderPath is the path to the bug report folder
 	FolderPath string `json:"folderPath"`
+	// Uploaded indicates whether the report was successfully uploaded to the server
+	Uploaded bool `json:"uploaded"`
+	// ReportID is the server-assigned report ID (0 if not uploaded)
+	ReportID int64 `json:"reportId"`
+	// UploadError contains the error message if upload failed (empty on success)
+	UploadError string `json:"uploadError"`
 }
 
 // =============================================================================
@@ -233,10 +244,161 @@ External IP: %s
 		return nil, fmt.Errorf("failed to create zip file: %w", err)
 	}
 
-	return &SubmitBugReportResult{
+	result := &SubmitBugReportResult{
 		ZipPath:    zipPath,
 		FolderPath: bugReportFolder,
-	}, nil
+	}
+
+	// Attempt to upload to the bug report API server
+	reportID, uploadErr := a.UploadBugReport(bugReportFolder, input)
+	if uploadErr != nil {
+		Log("Bug report upload failed (falling back to local zip):", uploadErr)
+		result.UploadError = uploadErr.Error()
+	} else {
+		result.Uploaded = true
+		result.ReportID = reportID
+	}
+
+	return result, nil
+}
+
+// UploadBugReport uploads the bug report files from the temp folder to the
+// configured API server. Returns the server-assigned report ID on success.
+//
+// Parameters:
+//   - folderPath: Path to the bug report folder containing the files
+//   - input: Original bug report input with user details
+//
+// Returns:
+//   - int64: Server-assigned report ID
+//   - error: Error if upload fails or API is not configured
+func (a *App) UploadBugReport(folderPath string, input BugReportInput) (int64, error) {
+	// Load config to get API URL and key
+	cfgPath := utils.DefaultConfigPath()
+	cfg, err := utils.LoadConfig(cfgPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	apiURL := cfg.EMLy.BugReportAPIURL
+	apiKey := cfg.EMLy.BugReportAPIKey
+
+	if apiURL == "" {
+		return 0, fmt.Errorf("bug report API URL not configured")
+	}
+	if apiKey == "" {
+		return 0, fmt.Errorf("bug report API key not configured")
+	}
+
+	// Build multipart form
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add text fields
+	writer.WriteField("name", input.Name)
+	writer.WriteField("email", input.Email)
+	writer.WriteField("description", input.Description)
+
+	// Add machine identification fields
+	machineInfo, err := utils.GetMachineInfo()
+	if err == nil && machineInfo != nil {
+		writer.WriteField("hwid", machineInfo.HWID)
+		writer.WriteField("hostname", machineInfo.Hostname)
+
+		// Add system_info as JSON string
+		sysInfoJSON, jsonErr := json.Marshal(machineInfo)
+		if jsonErr == nil {
+			writer.WriteField("system_info", string(sysInfoJSON))
+		}
+	}
+
+	// Add current OS username
+	if currentUser, userErr := os.UserHomeDir(); userErr == nil {
+		writer.WriteField("os_user", filepath.Base(currentUser))
+	}
+
+	// Add files from the folder
+	fileRoles := map[string]string{
+		"screenshot": "screenshot",
+		"mail_file":  "mail_file",
+		"localStorage.json": "localstorage",
+		"config.json":       "config",
+	}
+
+	entries, _ := os.ReadDir(folderPath)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		filename := entry.Name()
+
+		// Determine file role
+		var role string
+		for pattern, r := range fileRoles {
+			if filename == pattern {
+				role = r
+				break
+			}
+		}
+		// Match screenshot and mail files by prefix/extension
+		if role == "" {
+			if filepath.Ext(filename) == ".png" {
+				role = "screenshot"
+			} else if filepath.Ext(filename) == ".eml" || filepath.Ext(filename) == ".msg" {
+				role = "mail_file"
+			}
+		}
+		if role == "" {
+			continue // skip report.txt and system_info.txt (sent as fields)
+		}
+
+		filePath := filepath.Join(folderPath, filename)
+		fileData, readErr := os.ReadFile(filePath)
+		if readErr != nil {
+			continue
+		}
+
+		part, partErr := writer.CreateFormFile(role, filename)
+		if partErr != nil {
+			continue
+		}
+		part.Write(fileData)
+	}
+
+	writer.Close()
+
+	// Send HTTP request
+	endpoint := apiURL + "/api/bug-reports"
+	req, err := http.NewRequest("POST", endpoint, &buf)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("X-API-Key", apiKey)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusCreated {
+		return 0, fmt.Errorf("server returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse response
+	var response struct {
+		Success  bool  `json:"success"`
+		ReportID int64 `json:"report_id"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return 0, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return response.ReportID, nil
 }
 
 // =============================================================================

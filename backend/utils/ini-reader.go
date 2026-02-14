@@ -22,6 +22,8 @@ type EMLyConfig struct {
 	UpdateCheckEnabled       string `ini:"UPDATE_CHECK_ENABLED"`
 	UpdatePath               string `ini:"UPDATE_PATH"`
 	UpdateAutoCheck          string `ini:"UPDATE_AUTO_CHECK"`
+	BugReportAPIURL          string `ini:"BUGREPORT_API_URL"`
+	BugReportAPIKey          string `ini:"BUGREPORT_API_KEY"`
 }
 
 // LoadConfig reads the config.ini file at the given path and returns a Config struct

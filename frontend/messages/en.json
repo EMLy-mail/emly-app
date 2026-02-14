@@ -218,5 +218,8 @@
 	"pdf_error_no_data_desc": "No PDF data provided. Please open this window from the main EMLy application.",
 	"pdf_error_timeout": "Timeout loading PDF. The worker might have failed to initialize.",
 	"pdf_error_parsing": "Error parsing PDF: ",
-	"pdf_error_rendering": "Error rendering page: "
+	"pdf_error_rendering": "Error rendering page: ",
+	"bugreport_uploaded_success": "Your bug report has been uploaded successfully! Report ID: #{reportId}",
+	"bugreport_upload_failed": "Could not upload to server. Your report has been saved locally instead.",
+	"bugreport_uploaded_title": "Bug Report Uploaded"
 }
