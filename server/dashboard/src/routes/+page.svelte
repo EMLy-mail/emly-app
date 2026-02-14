@@ -46,7 +46,7 @@
 <div class="space-y-4">
 	<!-- Filters -->
 	<div class="flex flex-wrap items-center gap-3">
-		<div class="relative flex-1 min-w-[200px] max-w-sm">
+		<div class="relative flex-1 min-w-50 max-w-sm">
 			<Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 			<input
 				type="text"
@@ -79,7 +79,7 @@
 			class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
 		>
 			<RefreshCcw class="h-4 w-4" />
-			Filter
+			Refresh
 		</button>
 		{#if data.filters.search || data.filters.status}
 			<button
