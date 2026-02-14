@@ -686,6 +686,22 @@ A separate API server (`server/` directory) receives bug reports:
 - **Rate limiting**: HWID-based, configurable (default 5 reports per 24h)
 - **Endpoints**: `POST /api/bug-reports` (client), `GET/DELETE /api/admin/bug-reports` (admin)
 
+#### Bug Report Dashboard
+
+A web dashboard (`dashboard/` directory) for browsing, triaging, and downloading bug reports:
+- **Stack**: SvelteKit (Svelte 5) + TailwindCSS v4 + Drizzle ORM + Bun.js
+- **Deployment**: Docker service in `server/docker-compose.yml`, port 3001
+- **Database**: Connects directly to the same MySQL database via Drizzle ORM (read/write)
+- **Features**:
+  - Paginated reports list with status filter and search (hostname, user, name, email)
+  - Report detail view with metadata, description, system info (collapsible JSON), and file list
+  - Status management (new → in_review → resolved → closed)
+  - Inline screenshot preview for attached screenshots
+  - Individual file download and bulk ZIP download (all files + report metadata)
+  - Report deletion with confirmation dialog
+  - Dark mode UI matching EMLy's aesthetic
+- **Development**: `cd dashboard && bun install && bun dev` (localhost:3001)
+
 #### Configuration (config.ini)
 
 ```ini
