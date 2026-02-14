@@ -22,8 +22,6 @@ services:
 
   api:
     build: .
-    ports:
-      - "${PORT:-3000}:3000"
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
@@ -35,6 +33,7 @@ services:
       PORT: 3000
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-5}
       RATE_LIMIT_WINDOW_HOURS: ${RATE_LIMIT_WINDOW_HOURS:-24}
+    restart: on-failure
     depends_on:
       mysql:
         condition: service_healthy
@@ -44,8 +43,6 @@ services:
 
   dashboard:
     build: ./dashboard
-    ports:
-      - "${DASHBOARD_PORT:-3001}:3000"
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
@@ -55,6 +52,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    
     networks:
       emly:
         ipv4_address: 172.16.32.4
