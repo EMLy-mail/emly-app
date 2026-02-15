@@ -1,61 +1,121 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
-	import { Bug, LayoutDashboard } from 'lucide-svelte';
+	import { enhance } from '$app/forms';
+	import { Bug, LayoutDashboard, Users, LogOut } from 'lucide-svelte';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { Separator } from '$lib/components/ui/separator';
 
 	let { children, data } = $props();
 </script>
 
-<div class="flex h-screen overflow-hidden">
-	<!-- Sidebar -->
-	<aside class="flex w-56 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-		<div class="flex items-center gap-2 border-b border-sidebar-border px-4 py-4">
-			<Bug class="h-6 w-6 text-primary" />
-			<span class="text-lg font-semibold">EMLy Dashboard</span>
-		</div>
-		<nav class="flex-1 px-2 py-3">
-			<a
-				href="/"
-				class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors {$page.url
-					.pathname === '/'
-					? 'bg-accent text-accent-foreground'
-					: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}"
-			>
-				<LayoutDashboard class="h-4 w-4" />
-				Reports
-			</a>
-		</nav>
-		<div class="border-t border-sidebar-border px-4 py-3 text-xs text-muted-foreground">
-			EMLy Bug Reports
-		</div>
-	</aside>
-
-	<!-- Main content -->
-	<div class="flex flex-1 flex-col overflow-hidden">
-		<!-- Top bar -->
-		<header
-			class="flex h-14 items-center justify-between border-b border-border bg-card px-6"
-		>
-			<h1 class="text-lg font-semibold">
-				{#if $page.url.pathname === '/'}
-					Bug Reports
-				{:else if $page.url.pathname.startsWith('/reports/')}
-					Report Detail
-				{:else}
-					Dashboard
-				{/if}
-			</h1>
-			{#if data.newCount > 0}
-				<div class="flex items-center gap-2 rounded-md bg-blue-500/10 px-3 py-1.5 text-sm text-blue-400">
-					<span class="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
-					{data.newCount} new {data.newCount === 1 ? 'report' : 'reports'}
+{#if !data.user}
+	{@render children()}
+{:else}
+	<Sidebar.Provider>
+		<Sidebar.Root>
+			<Sidebar.Header>
+				<div class="flex items-center justify-center border-b border-border p-3" style="padding: 12px; display: flex; justify-content: center;">
+					<Bug class="h-6 w-6 text-primary" />
+					<span class="mt-2 pl-3 text-lg font-bold">EMLy Dashboard</span>
 				</div>
-			{/if}
-		</header>
-
-		<!-- Page content -->
-		<main class="flex-1 overflow-auto p-6">
-			{@render children()}
-		</main>
-	</div>
-</div>
+			</Sidebar.Header>
+			<Sidebar.Content>
+				<Sidebar.Group>
+					<Sidebar.GroupLabel>Menu</Sidebar.GroupLabel>
+					<Sidebar.GroupContent>
+						<Sidebar.Menu>
+							<Sidebar.MenuItem>
+								<Sidebar.MenuButton isActive={$page.url.pathname === '/'}>
+									{#snippet child({ props })}
+										<a href="/" {...props}>
+											<LayoutDashboard />
+											<span>Reports</span>
+										</a>
+									{/snippet}
+								</Sidebar.MenuButton>
+							</Sidebar.MenuItem>
+							{#if data.user.role === 'admin'}
+								<Sidebar.MenuItem>
+									<Sidebar.MenuButton isActive={$page.url.pathname === '/users'}>
+										{#snippet child({ props })}
+											<a href="/users" {...props}>
+												<Users />
+												<span>Users</span>
+											</a>
+										{/snippet}
+									</Sidebar.MenuButton>
+								</Sidebar.MenuItem>
+							{/if}
+						</Sidebar.Menu>
+					</Sidebar.GroupContent>
+				</Sidebar.Group>
+			</Sidebar.Content>
+			<Sidebar.Footer>
+				<Sidebar.Menu>
+					<Sidebar.MenuItem>
+						<Sidebar.MenuButton
+							size="lg"
+							class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+						>
+							{#snippet child({ props })}
+								<div {...props}>
+									<div class="grid flex-1 text-left text-sm leading-tight">
+										<span class="pb-1 truncate font-semibold">{data.user.displayname || data.user.username}</span>
+										<span
+											class="w-fit inline-flex rounded-full border px-2 py-0.5 text-xs font-medium truncate {data.user.role ===
+											'admin'
+												? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+												: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'}"
+										>
+											{data.user.role}
+										</span>
+									</div>
+									<form method="POST" action="/logout" use:enhance>
+										<button type="submit" title="Sign out">
+											<LogOut class="ml-auto size-4" />
+										</button>
+									</form>
+								</div>
+							{/snippet}
+						</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
+				</Sidebar.Menu>
+			</Sidebar.Footer>
+		</Sidebar.Root>
+		<Sidebar.Inset>
+			<header
+				class="flex h-16 shrink-0 items-center justify-between border-b px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
+			>
+				<div class="flex flex-1 items-center gap-2 px-4">
+					<Sidebar.Trigger class="-ml-1" />
+					<Separator orientation="vertical" class="mr-2 h-4" />
+					<h1 class="text-lg font-semibold">
+						{#if $page.url.pathname === '/'}
+							Bug Reports
+						{:else if $page.url.pathname.startsWith('/reports/')}
+							Report Detail
+						{:else if $page.url.pathname === '/users'}
+							User Management
+						{:else}
+							Dashboard
+						{/if}
+					</h1>
+				</div>
+				<div class="flex items-center gap-2 px-4">
+					{#if data.newCount > 0}
+						<div
+							class="ml-4 flex items-center gap-2 rounded-md bg-blue-500/10 px-3 py-1.5 text-sm text-blue-400"
+						>
+							<span class="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
+							{data.newCount} new {data.newCount === 1 ? 'report' : 'reports'}
+						</div>
+					{/if}
+				</div>
+			</header>
+			<div class="flex flex-1 flex-col gap-4 p-4 pt-0 mt-2">
+				{@render children()}
+			</div>
+		</Sidebar.Inset>
+	</Sidebar.Provider>
+{/if}

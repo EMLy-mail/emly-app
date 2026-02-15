@@ -1,5 +1,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
+import { randomUUID } from "crypto";
+import { hash } from "@node-rs/argon2";
 import { getPool } from "./connection";
 
 export async function runMigrations(): Promise<void> {
@@ -31,6 +33,24 @@ export async function runMigrations(): Promise<void> {
     } catch {
       // Column/index already exists — safe to ignore
     }
+  }
+
+  // Seed default admin user if user table is empty
+  const [rows] = await pool.execute("SELECT COUNT(*) as count FROM `user`");
+  const userCount = (rows as Array<{ count: number }>)[0].count;
+  if (userCount === 0) {
+    const passwordHash = await hash("admin", {
+      memoryCost: 19456,
+      timeCost: 2,
+      outputLen: 32,
+      parallelism: 1
+    });
+    const id = randomUUID();
+    await pool.execute(
+      "INSERT INTO `user` (`id`, `username`, `password_hash`, `role`) VALUES (?, ?, ?, ?)",
+      [id, "admin", passwordHash, "admin"]
+    );
+    console.log("Default admin user created (username: admin, password: admin)");
   }
 
   console.log("Database migrations completed");

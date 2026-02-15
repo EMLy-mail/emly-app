@@ -700,6 +700,12 @@ A web dashboard (`dashboard/` directory) for browsing, triaging, and downloading
   - Individual file download and bulk ZIP download (all files + report metadata)
   - Report deletion with confirmation dialog
   - Dark mode UI matching EMLy's aesthetic
+- **Authentication**: Session-based auth with Lucia v3 + Drizzle ORM adapter
+  - Default admin account: username `admin`, password `admin` (seeded on first migration)
+  - Password hashing with argon2 via `@node-rs/argon2`
+  - Session cookies with automatic refresh
+  - Role-based access: `admin` and `user` roles
+- **User Management**: Admin-only `/users` page for creating/deleting dashboard users
 - **Development**: `cd dashboard && bun install && bun dev` (localhost:3001)
 
 #### Configuration (config.ini)
