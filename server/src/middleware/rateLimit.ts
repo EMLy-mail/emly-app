@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { getPool } from "../db/connection";
 import { config } from "../config";
+import { Log } from "../logger";
 
 const excludedHwids = new Set<string>([
   // Add HWIDs here for development testing
@@ -54,6 +55,7 @@ export const hwidRateLimit = new Elysia({ name: "hwid-rate-limit" }).derive(
     if (entry.count >= config.rateLimit.max) {
       const retryAfterMs = windowMs - elapsed;
       const retryAfterMin = Math.ceil(retryAfterMs / 60000);
+      Log("RATELIMIT", `Rate limit hit hwid=${hwid} count=${entry.count}`);
       return error(429, {
         success: false,
         message: `Rate limit exceeded. Try again in ${retryAfterMin} minutes.`,

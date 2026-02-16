@@ -81,6 +81,7 @@ EMLy/
 ├── app_viewer.go             # Viewer window management (image, PDF, EML)
 ├── app_screenshot.go         # Screenshot capture functionality
 ├── app_bugreport.go          # Bug report creation and submission
+├── app_heartbeat.go          # Bug report API heartbeat check
 ├── app_settings.go           # Settings import/export
 ├── app_system.go             # Windows system utilities (registry, encoding)
 ├── main.go                   # Application entry point
@@ -199,6 +200,7 @@ The Go backend is split into logical files:
 | `app_viewer.go` | Viewer windows: `OpenImageWindow`, `OpenPDFWindow`, `OpenEMLWindow`, `OpenPDF`, `OpenImage`, `GetViewerData` |
 | `app_screenshot.go` | Screenshots: `TakeScreenshot`, `SaveScreenshot`, `SaveScreenshotAs` |
 | `app_bugreport.go` | Bug reports: `CreateBugReportFolder`, `SubmitBugReport`, `zipFolder` |
+| `app_heartbeat.go` | API heartbeat: `CheckBugReportAPI` |
 | `app_settings.go` | Settings I/O: `ExportSettings`, `ImportSettings` |
 | `app_system.go` | System utilities: `CheckIsDefaultEMLHandler`, `OpenDefaultAppsSettings`, `ConvertToUTF8`, `OpenFolderInExplorer` |
 | `app_update.go` | Update system: `CheckForUpdates`, `DownloadUpdate`, `InstallUpdate`, `GetUpdateStatus` |
@@ -254,6 +256,7 @@ The Go backend is split into logical files:
 | `CreateBugReportFolder()` | Creates folder with screenshot and mail file |
 | `SubmitBugReport(input)` | Creates complete bug report with ZIP archive, attempts server upload |
 | `UploadBugReport(folderPath, input)` | Uploads bug report files to configured API server via multipart POST |
+| `CheckBugReportAPI()` | Checks if the bug report API is reachable via /health endpoint (3s timeout) |
 
 **Settings (`app_settings.go`)**
 
@@ -673,9 +676,14 @@ Complete bug reporting system:
 3. Includes current mail file if loaded
 4. Gathers system information
 5. Creates ZIP archive in temp folder
-6. Attempts to upload to the bug report API server (if configured)
-7. Falls back to local ZIP if server is unreachable
-8. Shows server confirmation with report ID, or local path with upload warning
+6. Checks if the bug report API is online via heartbeat (`CheckBugReportAPI`)
+7. If online, attempts to upload to the bug report API server
+8. Falls back to local ZIP if server is offline or upload fails
+9. Shows server confirmation with report ID, or local path with upload warning
+
+#### Heartbeat Check (`app_heartbeat.go`)
+
+Before uploading a bug report, the app sends a GET request to `{BUGREPORT_API_URL}/health` with a 3-second timeout. If the API doesn't respond with status 200, the upload is skipped entirely and only the local ZIP is created. The `CheckBugReportAPI()` method is also exposed to the frontend for UI status checks.
 
 #### Bug Report API Server
 
@@ -684,6 +692,7 @@ A separate API server (`server/` directory) receives bug reports:
 - **Deployment**: Docker Compose (`docker compose up -d` from `server/`)
 - **Auth**: Static API key for clients (`X-API-Key`), static admin key (`X-Admin-Key`)
 - **Rate limiting**: HWID-based, configurable (default 5 reports per 24h)
+- **Logging**: Structured file logging to `logs/api.log` with format `[date] - [time] - [source] - message`
 - **Endpoints**: `POST /api/bug-reports` (client), `GET/DELETE /api/admin/bug-reports` (admin)
 
 #### Bug Report Dashboard

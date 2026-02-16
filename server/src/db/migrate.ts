@@ -3,6 +3,7 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 import { hash } from "@node-rs/argon2";
 import { getPool } from "./connection";
+import { Log } from "../logger";
 
 export async function runMigrations(): Promise<void> {
   const pool = getPool();
@@ -51,8 +52,8 @@ export async function runMigrations(): Promise<void> {
       "INSERT INTO `user` (`id`, `username`, `password_hash`, `role`) VALUES (?, ?, ?, ?)",
       [id, "admin", passwordHash, "admin"]
     );
-    console.log("Default admin user created (username: admin, password: admin)");
+    Log("MIGRATE", "Default admin user created (username: admin, password: admin)");
   }
 
-  console.log("Database migrations completed");
+  Log("MIGRATE", "Database migrations completed");
 }

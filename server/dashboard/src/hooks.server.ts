@@ -1,7 +1,18 @@
 import type { Handle } from '@sveltejs/kit';
 import { lucia } from '$lib/server/auth';
+import { initLogger, Log } from '$lib/server/logger';
+
+// Initialize dashboard logger
+initLogger();
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const ip =
+		event.request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+		event.request.headers.get('x-real-ip') ||
+		event.getClientAddress?.() ||
+		'unknown';
+	Log('HTTP', `${event.request.method} ${event.url.pathname} from ${ip}`);
+
 	const sessionId = event.cookies.get(lucia.sessionCookieName);
 
 	if (!sessionId) {
@@ -21,6 +32,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (!session) {
+		Log('AUTH', `Invalid session from ip=${ip}`);
 		const sessionCookie = lucia.createBlankSessionCookie();
 		event.cookies.set(sessionCookie.name, sessionCookie.value, {
 			path: '.',
@@ -30,6 +42,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// If user is disabled, invalidate their session and clear cookie
 	if (session && user && !user.enabled) {
+		Log('AUTH', `Disabled user rejected: username=${user.username} ip=${ip}`);
 		await lucia.invalidateSession(session.id);
 		const sessionCookie = lucia.createBlankSessionCookie();
 		event.cookies.set(sessionCookie.name, sessionCookie.value, {

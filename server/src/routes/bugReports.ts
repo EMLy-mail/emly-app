@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { apiKeyGuard } from "../middleware/auth";
 import { hwidRateLimit } from "../middleware/rateLimit";
 import { createBugReport, addFile } from "../services/bugReportService";
+import { Log } from "../logger";
 import type { FileRole } from "../types";
 
 const FILE_ROLES: { field: string; role: FileRole; mime: string }[] = [
@@ -19,6 +20,14 @@ export const bugReportRoutes = new Elysia({ prefix: "/api/bug-reports" })
     async ({ body, request, set }) => {
       const { name, email, description, hwid, hostname, os_user, system_info } = body;
 
+      // Get submitter IP from headers or connection
+      const submitterIp =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip") ||
+        "unknown";
+
+      Log("BUGREPORT", `Received from name=${name} hwid=${hwid || "none"} ip=${submitterIp}`);
+
       // Parse system_info — may arrive as a JSON string or already-parsed object
       let systemInfo: Record<string, unknown> | null = null;
       if (system_info) {
@@ -32,12 +41,6 @@ export const bugReportRoutes = new Elysia({ prefix: "/api/bug-reports" })
           systemInfo = system_info as Record<string, unknown>;
         }
       }
-
-      // Get submitter IP from headers or connection
-      const submitterIp =
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        request.headers.get("x-real-ip") ||
-        "unknown";
 
       // Create the bug report
       const reportId = await createBugReport({
@@ -56,6 +59,7 @@ export const bugReportRoutes = new Elysia({ prefix: "/api/bug-reports" })
         const file = body[field as keyof typeof body];
         if (file && file instanceof File) {
           const buffer = Buffer.from(await file.arrayBuffer());
+          Log("BUGREPORT", `File uploaded: role=${role} size=${buffer.length} bytes`);
           await addFile({
             report_id: reportId,
             file_role: role,
@@ -66,6 +70,8 @@ export const bugReportRoutes = new Elysia({ prefix: "/api/bug-reports" })
           });
         }
       }
+
+      Log("BUGREPORT", `Created successfully with id=${reportId}`);
 
       set.status = 201;
       return {

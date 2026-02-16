@@ -7,6 +7,7 @@ import {
   deleteBugReport,
   updateBugReportStatus,
 } from "../services/bugReportService";
+import { Log } from "../logger";
 import type { BugReportStatus } from "../types";
 
 export const adminRoutes = new Elysia({ prefix: "/api/admin" })
@@ -18,6 +19,7 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
       const pageSize = Math.min(parseInt(query.pageSize || "20"), 100);
       const status = query.status as BugReportStatus | undefined;
 
+      Log("ADMIN", `List bug reports page=${page} pageSize=${pageSize} status=${status || "all"}`);
       return await listBugReports({ page, pageSize, status });
     },
     {
@@ -39,6 +41,7 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
   .get(
     "/bug-reports/:id",
     async ({ params, error }) => {
+      Log("ADMIN", `Get bug report id=${params.id}`);
       const result = await getBugReport(parseInt(params.id));
       if (!result) return error(404, { success: false, message: "Report not found" });
       return result;
@@ -51,6 +54,7 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
   .patch(
     "/bug-reports/:id/status",
     async ({ params, body, error }) => {
+      Log("ADMIN", `Update status id=${params.id} status=${body.status}`);
       const updated = await updateBugReportStatus(
         parseInt(params.id),
         body.status
@@ -92,6 +96,7 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
   .delete(
     "/bug-reports/:id",
     async ({ params, error }) => {
+      Log("ADMIN", `Delete bug report id=${params.id}`);
       const deleted = await deleteBugReport(parseInt(params.id));
       if (!deleted)
         return error(404, { success: false, message: "Report not found" });

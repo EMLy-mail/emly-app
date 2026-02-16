@@ -33,6 +33,8 @@ services:
       PORT: 3000
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-5}
       RATE_LIMIT_WINDOW_HOURS: ${RATE_LIMIT_WINDOW_HOURS:-24}
+    volumes:
+      - ./logs/api:/app/logs
     restart: on-failure
     depends_on:
       mysql:
@@ -49,10 +51,11 @@ services:
       MYSQL_USER: ${MYSQL_USER:-emly}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-emly_bugreports}
+    volumes:
+      - ./logs/dashboard:/app/logs
     depends_on:
       mysql:
         condition: service_healthy
-    
     networks:
       emly:
         ipv4_address: 172.16.32.4

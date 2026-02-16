@@ -249,14 +249,19 @@ External IP: %s
 		FolderPath: bugReportFolder,
 	}
 
-	// Attempt to upload to the bug report API server
-	reportID, uploadErr := a.UploadBugReport(bugReportFolder, input)
-	if uploadErr != nil {
-		Log("Bug report upload failed (falling back to local zip):", uploadErr)
-		result.UploadError = uploadErr.Error()
+	// Attempt to upload to the bug report API server (only if reachable)
+	if !a.CheckBugReportAPI() {
+		Log("Bug report API is offline, skipping upload")
+		result.UploadError = "Bug report API is offline"
 	} else {
-		result.Uploaded = true
-		result.ReportID = reportID
+		reportID, uploadErr := a.UploadBugReport(bugReportFolder, input)
+		if uploadErr != nil {
+			Log("Bug report upload failed (falling back to local zip):", uploadErr)
+			result.UploadError = uploadErr.Error()
+		} else {
+			result.Uploaded = true
+			result.ReportID = reportID
+		}
 	}
 
 	return result, nil
