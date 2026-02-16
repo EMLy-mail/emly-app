@@ -10,3 +10,11 @@
 
 # Bugs
 - [ ] Missing i18n for Toast notifications (to investigate)
+
+
+# Security
+- [ ] Fix HIGH-1
+- [ ] Fix HIGH-2
+- [ ] Fix MED-3
+- [ ] Fix MED-4
+- [ ] Fix MED-7
