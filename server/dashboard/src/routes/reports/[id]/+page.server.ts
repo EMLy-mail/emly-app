@@ -4,7 +4,7 @@ import { bugReports, bugReportFiles } from '$lib/schema';
 import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const id = Number(params.id);
 	if (isNaN(id)) throw error(400, 'Invalid report ID');
 
@@ -39,6 +39,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		files: files.map((f) => ({
 			...f,
 			created_at: f.created_at.toISOString()
-		}))
+		})),
+		currentUserId: locals.user?.id ?? ''
 	};
 };

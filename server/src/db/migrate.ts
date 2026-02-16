@@ -25,6 +25,7 @@ export async function runMigrations(): Promise<void> {
     `ALTER TABLE bug_reports ADD COLUMN IF NOT EXISTS os_user VARCHAR(255) NOT NULL DEFAULT '' AFTER hostname`,
     `ALTER TABLE bug_reports ADD INDEX IF NOT EXISTS idx_hostname (hostname)`,
     `ALTER TABLE bug_reports ADD INDEX IF NOT EXISTS idx_os_user (os_user)`,
+    `ALTER TABLE user ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT TRUE AFTER role`,
   ];
 
   for (const migration of alterMigrations) {

@@ -47,6 +47,10 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid username or password' });
 		}
 
+		if (!user.enabled) {
+			return fail(403, { message: 'Account is disabled' });
+		}
+
 		const session = await lucia.createSession(user.id, {});
 		const sessionCookie = lucia.createSessionCookie(session.id);
 		cookies.set(sessionCookie.name, sessionCookie.value, {

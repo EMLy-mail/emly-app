@@ -48,6 +48,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			username: userTable.username,
 			displayname: userTable.displayname,
 			role: userTable.role,
+			enabled: userTable.enabled,
 			createdAt: userTable.createdAt
 		})
 		.from(userTable)
@@ -177,6 +178,46 @@ export const actions: Actions = {
 		const passwordHash = await hashPassword(newPassword);
 
 		await db.update(userTable).set({ passwordHash }).where(eq(userTable.id, userId));
+
+		return { success: true };
+	},
+
+	toggleEnabled: async ({ request, locals }) => {
+		if (!locals.user || locals.user.role !== 'admin') {
+			return fail(403, { message: 'Unauthorized' });
+		}
+
+		const formData = await request.formData();
+		const userId = formData.get('userId');
+
+		if (typeof userId !== 'string') {
+			return fail(400, { message: 'Invalid input' });
+		}
+
+		// Cannot disable yourself
+		if (userId === locals.user.id) {
+			return fail(400, { message: 'Cannot disable your own account' });
+		}
+
+		// Cannot disable other admins
+		const [targetUser] = await db
+			.select({ role: userTable.role, enabled: userTable.enabled })
+			.from(userTable)
+			.where(eq(userTable.id, userId))
+			.limit(1);
+
+		if (!targetUser) {
+			return fail(404, { message: 'User not found' });
+		}
+
+		if (targetUser.role === 'admin') {
+			return fail(400, { message: 'Cannot disable an admin user' });
+		}
+
+		await db
+			.update(userTable)
+			.set({ enabled: !targetUser.enabled })
+			.where(eq(userTable.id, userId));
 
 		return { success: true };
 	},

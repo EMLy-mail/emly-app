@@ -7,6 +7,7 @@ import {
 	mysqlEnum,
 	timestamp,
 	datetime,
+	boolean,
 	customType
 } from 'drizzle-orm/mysql-core';
 
@@ -56,6 +57,7 @@ export const userTable = mysqlTable('user', {
 	displayname: varchar('displayname', { length: 255 }).notNull().default(''),
 	passwordHash: varchar('password_hash', { length: 255 }).notNull(),
 	role: mysqlEnum('role', ['admin', 'user']).notNull().default('user'),
+	enabled: boolean('enabled').notNull().default(true),
 	createdAt: timestamp('created_at').notNull().defaultNow()
 });
 

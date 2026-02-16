@@ -28,6 +28,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
+	// If user is disabled, invalidate their session and clear cookie
+	if (session && user && !user.enabled) {
+		await lucia.invalidateSession(session.id);
+		const sessionCookie = lucia.createBlankSessionCookie();
+		event.cookies.set(sessionCookie.name, sessionCookie.value, {
+			path: '.',
+			...sessionCookie.attributes
+		});
+		event.locals.user = null;
+		event.locals.session = null;
+		return resolve(event);
+	}
+
 	event.locals.user = user;
 	event.locals.session = session;
 	return resolve(event);

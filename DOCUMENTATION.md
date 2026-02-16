@@ -962,6 +962,30 @@ In dev mode (`wails dev`):
 
 ---
 
+## Dashboard Features
+
+### ZIP File Upload
+
+The dashboard supports uploading `.zip` files created by EMLy's `SubmitBugReport` feature when the API upload fails. Accessible via the "Upload ZIP" button on the reports list page, it parses `report.txt` (name, email, description), `system_info.txt` (hostname, OS, HWID, IP), and imports all attached files (screenshots, mail files, localStorage, config) into the database as a new bug report.
+
+**API Endpoint**: `POST /api/reports/upload` - Accepts multipart form data with a `.zip` file.
+
+### User Enable/Disable
+
+Admins can temporarily disable user accounts without deleting them. Disabled users cannot log in and active sessions are invalidated. The `user` table has an `enabled` BOOLEAN column (default TRUE). Toggle is available in the Users management page. Restrictions: admins cannot disable themselves or other admin users.
+
+### Active Users / Presence Tracking
+
+Real-time presence tracking using Server-Sent Events (SSE). Connected users are tracked in-memory with heartbeat updates every 15 seconds. The layout header shows avatar indicators for other active users with tooltips showing what they're viewing. The report detail page shows who else is currently viewing the same report.
+
+**Endpoints**:
+- `GET /api/presence` - SSE stream for real-time presence updates
+- `POST /api/presence/heartbeat` - Client heartbeat with current page/report info
+
+**Client Store**: `$lib/stores/presence.svelte.ts` - Svelte 5 reactive store managing SSE connection and heartbeats.
+
+---
+
 ## License & Credits
 
 EMLy is developed by FOISX @ 3gIT.

@@ -2,11 +2,28 @@
 	import '../app.css';
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
+	import { onMount, onDestroy } from 'svelte';
 	import { Bug, LayoutDashboard, Users, LogOut } from 'lucide-svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Separator } from '$lib/components/ui/separator';
+	import { presence } from '$lib/stores/presence.svelte';
 
 	let { children, data } = $props();
+
+	const otherActiveUsers = $derived(
+		presence.activeUsers.filter((u) => u.userId !== data.user?.id)
+	);
+
+	onMount(() => {
+		if (data.user) {
+			presence.connect();
+		}
+	});
+
+	onDestroy(() => {
+		presence.disconnect();
+	});
 </script>
 
 {#if !data.user}
@@ -103,6 +120,37 @@
 					</h1>
 				</div>
 				<div class="flex items-center gap-2 px-4">
+					{#if otherActiveUsers.length > 0}
+						<div class="flex items-center gap-1.5">
+							{#each otherActiveUsers.slice(0, 5) as activeUser}
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<div class="relative flex h-7 w-7 items-center justify-center rounded-full bg-green-500/20 text-xs font-medium text-green-400 border border-green-500/30">
+											{(activeUser.displayname || activeUser.username).charAt(0).toUpperCase()}
+											<span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-background"></span>
+										</div>
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										<p class="font-medium">{activeUser.displayname || activeUser.username}</p>
+										<p class="text-xs text-muted-foreground">
+											{#if activeUser.reportId}
+												Viewing Report #{activeUser.reportId}
+											{:else if activeUser.currentPath === '/users'}
+												User Management
+											{:else if activeUser.currentPath === '/'}
+												Reports List
+											{:else}
+												{activeUser.currentPath}
+											{/if}
+										</p>
+									</Tooltip.Content>
+								</Tooltip.Root>
+							{/each}
+							{#if otherActiveUsers.length > 5}
+								<span class="text-xs text-muted-foreground">+{otherActiveUsers.length - 5}</span>
+							{/if}
+						</div>
+					{/if}
 					{#if data.newCount > 0}
 						<div
 							class="ml-4 flex items-center gap-2 rounded-md bg-blue-500/10 px-3 py-1.5 text-sm text-blue-400"

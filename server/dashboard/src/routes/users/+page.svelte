@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { formatDate } from '$lib/utils';
-	import { Trash2, UserPlus, Pencil, KeyRound, Check, X } from 'lucide-svelte';
+	import { Trash2, UserPlus, Pencil, KeyRound, Check, X, ShieldOff, ShieldCheck } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -102,6 +102,7 @@
 					<th class="px-4 py-3 text-left font-medium text-muted-foreground">Username</th>
 					<th class="px-4 py-3 text-left font-medium text-muted-foreground">Display Name</th>
 					<th class="px-4 py-3 text-left font-medium text-muted-foreground">Role</th>
+					<th class="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
 					<th class="px-4 py-3 text-left font-medium text-muted-foreground">Created</th>
 					<th class="px-4 py-3 text-left font-medium text-muted-foreground">Actions</th>
 				</tr>
@@ -121,6 +122,15 @@
 								{user.role}
 							</span>
 						</td>
+						<td class="px-4 py-3">
+							<span
+								class="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium {user.enabled
+									? 'bg-green-500/20 text-green-400 border-green-500/30'
+									: 'bg-red-500/20 text-red-400 border-red-500/30'}"
+							>
+								{user.enabled ? 'Enabled' : 'Disabled'}
+							</span>
+						</td>
 						<td class="px-4 py-3 text-muted-foreground">
 							{user.createdAt ? formatDate(user.createdAt) : '—'}
 						</td>
@@ -129,6 +139,26 @@
 								<span class="text-xs text-muted-foreground">Current user</span>
 							{:else}
 								<div class="flex items-center gap-1">
+									{#if user.role !== 'admin'}
+										<form method="POST" action="?/toggleEnabled" use:enhance>
+											<input type="hidden" name="userId" value={user.id} />
+											<Button
+												type="submit"
+												variant="ghost"
+												size="icon"
+												class="h-8 w-8 {user.enabled
+													? 'text-orange-400 hover:text-orange-500 hover:bg-orange-500/10'
+													: 'text-green-400 hover:text-green-500 hover:bg-green-500/10'}"
+												title={user.enabled ? 'Disable User' : 'Enable User'}
+											>
+												{#if user.enabled}
+													<ShieldOff class="h-4 w-4" />
+												{:else}
+													<ShieldCheck class="h-4 w-4" />
+												{/if}
+											</Button>
+										</form>
+									{/if}
 									<Button
 										variant="ghost"
 										size="icon"
@@ -164,7 +194,7 @@
 					</tr>
 				{:else}
 					<tr>
-						<td colspan="5" class="px-4 py-12 text-center text-muted-foreground">
+						<td colspan="6" class="px-4 py-12 text-center text-muted-foreground">
 							No users found.
 						</td>
 					</tr>

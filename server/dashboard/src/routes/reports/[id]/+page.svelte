@@ -10,19 +10,26 @@
 		Monitor,
 		Settings,
 		Database,
-		Mail
+		Mail,
+		Eye
 	} from 'lucide-svelte';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Button } from '$lib/components/ui/button';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { presence } from '$lib/stores/presence.svelte';
 
 	let { data } = $props();
 	let showDeleteDialog = $state(false);
 	let statusUpdating = $state(false);
 	let deleting = $state(false);
+
+	const otherViewers = $derived(
+		presence.getViewersForReport(data.report.id).filter((u) => u.userId !== data.currentUserId)
+	);
 
 	const roleIcons: Record<string, typeof FileText> = {
 		screenshot: Image,
@@ -90,6 +97,24 @@
 					</Card.Description>
 				</div>
 				<div class="flex items-center gap-2">
+					{#if otherViewers.length > 0}
+						<div class="flex items-center gap-1.5 mr-2">
+							<Eye class="h-4 w-4 text-muted-foreground" />
+							{#each otherViewers as viewer}
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<div class="relative flex h-6 w-6 items-center justify-center rounded-full bg-green-500/20 text-xs font-medium text-green-400 border border-green-500/30">
+											{(viewer.displayname || viewer.username).charAt(0).toUpperCase()}
+											<span class="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500 border border-background"></span>
+										</div>
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										{viewer.displayname || viewer.username} is viewing this report
+									</Tooltip.Content>
+								</Tooltip.Root>
+							{/each}
+						</div>
+					{/if}
 					<!-- Status selector -->
 					<Select.Root
 						type="single"

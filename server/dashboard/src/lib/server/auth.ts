@@ -16,7 +16,8 @@ export const lucia = new Lucia(adapter, {
 		return {
 			username: attributes.username,
 			role: attributes.role,
-			displayname: attributes.displayname
+			displayname: attributes.displayname,
+			enabled: attributes.enabled
 		};
 	}
 });
@@ -32,5 +33,6 @@ interface DatabaseUserAttributes {
 	username: string;
 	role: 'admin' | 'user';
 	displayname: string;
+	enabled: boolean;
 }
 // End of file
