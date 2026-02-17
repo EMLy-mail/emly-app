@@ -73,6 +73,47 @@ func (a *App) ReadMSGOSS(filePath string) (*internal.EmailData, error) {
 	return internal.ReadMsgFile(filePath)
 }
 
+// DetectEmailFormat inspects the file's binary content to determine its format,
+// regardless of the file extension. Returns "eml", "msg", or "unknown".
+//
+// Parameters:
+//   - filePath: Absolute path to the file to inspect
+//
+// Returns:
+//   - string: Detected format ("eml", "msg", or "unknown")
+//   - error: Any file I/O errors
+func (a *App) DetectEmailFormat(filePath string) (string, error) {
+	format, err := internal.DetectEmailFormat(filePath)
+	return string(format), err
+}
+
+// ReadAuto automatically detects the email file format from its binary content
+// and delegates to the appropriate reader (ReadEML/ReadPEC for EML, ReadMSG for MSG).
+//
+// Parameters:
+//   - filePath: Absolute path to the email file
+//
+// Returns:
+//   - *internal.EmailData: Parsed email data
+//   - error: Any parsing or detection errors
+func (a *App) ReadAuto(filePath string) (*internal.EmailData, error) {
+	format, err := internal.DetectEmailFormat(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	switch format {
+	case internal.FormatMSG:
+		return internal.ReadMsgFile(filePath)
+	default: // FormatEML or FormatUnknown – try PEC first, fall back to plain EML
+		data, err := internal.ReadPecInnerEml(filePath)
+		if err != nil {
+			return internal.ReadEmlFile(filePath)
+		}
+		return data, nil
+	}
+}
+
 // ShowOpenFileDialog displays the system file picker dialog filtered for email files.
 // This allows users to browse and select .eml or .msg files to open.
 //

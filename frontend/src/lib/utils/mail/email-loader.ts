@@ -6,6 +6,8 @@ import {
   ReadEML,
   ReadMSG,
   ReadPEC,
+  ReadAuto,
+  DetectEmailFormat,
   ShowOpenFileDialog,
   SetCurrentMailFilePath,
   ConvertToUTF8,
@@ -23,7 +25,8 @@ export interface LoadEmailResult {
 }
 
 /**
- * Determines the email file type from the path
+ * Determines the email file type from the path extension (best-effort hint).
+ * Use DetectEmailFormat (backend) for reliable format detection.
  */
 export function getEmailFileType(filePath: string): 'eml' | 'msg' | null {
   const lowerPath = filePath.toLowerCase();
@@ -33,18 +36,57 @@ export function getEmailFileType(filePath: string): 'eml' | 'msg' | null {
 }
 
 /**
- * Checks if a file path is a valid email file
+ * Checks if a file path looks like an email file by extension.
+ * Returns true also for unknown extensions so the backend can attempt parsing.
  */
 export function isEmailFile(filePath: string): boolean {
-  return getEmailFileType(filePath) !== null;
+  return filePath.trim().length > 0;
 }
 
 /**
- * Loads an email from a file path
+ * Loads an email from a file path.
+ * Uses ReadAuto so the backend detects the format from the file's binary
+ * content, regardless of extension. Falls back to the legacy per-format
+ * readers only when the caller explicitly requests them.
+ *
  * @param filePath - Path to the email file
  * @returns LoadEmailResult with the email data or error
  */
 export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResult> {
+  if (!filePath?.trim()) {
+    return { success: false, error: 'No file path provided.' };
+  }
+
+  try {
+    // ReadAuto detects the format (EML/PEC/MSG) by magic bytes and dispatches
+    // to the appropriate reader. This works for any extension, including
+    // unconventional ones like winmail.dat or no extension at all.
+    const email = await ReadAuto(filePath);
+
+    // Process body if needed (decode base64)
+    if (email?.body) {
+      const trimmed = email.body.trim();
+      if (looksLikeBase64(trimmed)) {
+        const decoded = tryDecodeBase64(trimmed);
+        if (decoded) {
+          email.body = decoded;
+        }
+      }
+    }
+
+    return { success: true, email, filePath };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Failed to load email:', error);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Loads an email using the explicit per-format readers (legacy path).
+ * Prefer loadEmailFromPath for new code.
+ */
+export async function loadEmailFromPathLegacy(filePath: string): Promise<LoadEmailResult> {
   const fileType = getEmailFileType(filePath);
 
   if (!fileType) {
@@ -60,7 +102,6 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
     if (fileType === 'msg') {
       email = await ReadMSG(filePath, true);
     } else {
-      // Try PEC first, fall back to regular EML
       try {
         email = await ReadPEC(filePath);
       } catch {
@@ -68,7 +109,6 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
       }
     }
 
-    // Process body if needed (decode base64)
     if (email?.body) {
       const trimmed = email.body.trim();
       if (looksLikeBase64(trimmed)) {
@@ -79,18 +119,11 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
       }
     }
 
-    return {
-      success: true,
-      email,
-      filePath,
-    };
+    return { success: true, email, filePath };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Failed to load email:', error);
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    return { success: false, error: errorMessage };
   }
 }
 

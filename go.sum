@@ -1,3 +1,4 @@
+github.com/Strum355/go-difflib v1.1.0/go.mod h1:r1cVg1JkGsTWkaR7At56v7hfuMgiUL8meTLwxFzOmvE=
 github.com/bep/debounce v1.2.1 h1:v67fRdBA9UQu2NhLFXrSg0Brw7CexQekrBwDMM8bzeY=
 github.com/bep/debounce v1.2.1/go.mod h1:H8yggRPQKLUhUoqrJC1bO2xNya7vanpDl7xR3ISbCJ0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -47,6 +48,7 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
+github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -65,6 +67,13 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/teamwork/test v0.0.0-20190410143529-8897d82f8d46/go.mod h1:TIbx7tx6WHBjQeLRM4eWQZBL7kmBZ7/KI4x4v7Y5YmA=
+github.com/teamwork/test v0.0.0-20200108114543-02621bae84ad h1:25sEr0awm0ZPancg5W5H5VvN7PWsJloUBpii10a9isw=
+github.com/teamwork/test v0.0.0-20200108114543-02621bae84ad/go.mod h1:TIbx7tx6WHBjQeLRM4eWQZBL7kmBZ7/KI4x4v7Y5YmA=
+github.com/teamwork/tnef v0.0.0-20200108124832-7deabccfdb32 h1:j15wq0XPAY/HR/0+dtwUrIrF2ZTKbk7QIES2p4dAG+k=
+github.com/teamwork/tnef v0.0.0-20200108124832-7deabccfdb32/go.mod h1:v7dFaQrF/4+curx7UTH9rqTkHTgXqghfI3thANW150o=
+github.com/teamwork/utils v1.0.0 h1:30WqhSbZ9nFhaJSx9HH+yFLiQvL64nqAOyyl5IxoYlY=
+github.com/teamwork/utils v1.0.0/go.mod h1:3Fn0qxFeRNpvsg/9T1+btOOOKkd1qG2nPYKKcOmNpcs=
 github.com/tkrajina/go-reflector v0.5.8 h1:yPADHrwmUbMq4RGEyaOUpz2H90sRsETNVpjzo3DLVQQ=
 github.com/tkrajina/go-reflector v0.5.8/go.mod h1:ECbqLgccecY5kPmPmXg1MrHW585yMcDkVl6IvJe64T4=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=

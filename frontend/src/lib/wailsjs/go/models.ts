@@ -242,6 +242,44 @@ export namespace internal {
 
 export namespace main {
 	
+	export class BugReportInput {
+	    name: string;
+	    email: string;
+	    description: string;
+	    screenshotData: string;
+	    localStorageData: string;
+	    configData: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BugReportInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.email = source["email"];
+	        this.description = source["description"];
+	        this.screenshotData = source["screenshotData"];
+	        this.localStorageData = source["localStorageData"];
+	        this.configData = source["configData"];
+	    }
+	}
+	export class BugReportResult {
+	    folderPath: string;
+	    screenshotPath: string;
+	    mailFilePath: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BugReportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.folderPath = source["folderPath"];
+	        this.screenshotPath = source["screenshotPath"];
+	        this.mailFilePath = source["mailFilePath"];
+	    }
+	}
 	export class ImageViewerData {
 	    data: string;
 	    filename: string;
@@ -268,6 +306,70 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.data = source["data"];
 	        this.filename = source["filename"];
+	    }
+	}
+	export class ScreenshotResult {
+	    data: string;
+	    width: number;
+	    height: number;
+	    filename: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScreenshotResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.data = source["data"];
+	        this.width = source["width"];
+	        this.height = source["height"];
+	        this.filename = source["filename"];
+	    }
+	}
+	export class SubmitBugReportResult {
+	    zipPath: string;
+	    folderPath: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SubmitBugReportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.zipPath = source["zipPath"];
+	        this.folderPath = source["folderPath"];
+	    }
+	}
+	export class UpdateStatus {
+	    currentVersion: string;
+	    availableVersion: string;
+	    updateAvailable: boolean;
+	    checking: boolean;
+	    downloading: boolean;
+	    downloadProgress: number;
+	    ready: boolean;
+	    installerPath: string;
+	    errorMessage: string;
+	    releaseNotes?: string;
+	    lastCheckTime: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.availableVersion = source["availableVersion"];
+	        this.updateAvailable = source["updateAvailable"];
+	        this.checking = source["checking"];
+	        this.downloading = source["downloading"];
+	        this.downloadProgress = source["downloadProgress"];
+	        this.ready = source["ready"];
+	        this.installerPath = source["installerPath"];
+	        this.errorMessage = source["errorMessage"];
+	        this.releaseNotes = source["releaseNotes"];
+	        this.lastCheckTime = source["lastCheckTime"];
 	    }
 	}
 	export class ViewerData {
@@ -717,6 +819,10 @@ export namespace utils {
 	    SDKDecoderReleaseChannel: string;
 	    GUISemver: string;
 	    GUIReleaseChannel: string;
+	    Language: string;
+	    UpdateCheckEnabled: string;
+	    UpdatePath: string;
+	    UpdateAutoCheck: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new EMLyConfig(source);
@@ -728,6 +834,10 @@ export namespace utils {
 	        this.SDKDecoderReleaseChannel = source["SDKDecoderReleaseChannel"];
 	        this.GUISemver = source["GUISemver"];
 	        this.GUIReleaseChannel = source["GUIReleaseChannel"];
+	        this.Language = source["Language"];
+	        this.UpdateCheckEnabled = source["UpdateCheckEnabled"];
+	        this.UpdatePath = source["UpdatePath"];
+	        this.UpdateAutoCheck = source["UpdateAutoCheck"];
 	    }
 	}
 	export class Config {

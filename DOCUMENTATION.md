@@ -81,6 +81,7 @@ EMLy/
 ├── app_viewer.go             # Viewer window management (image, PDF, EML)
 ├── app_screenshot.go         # Screenshot capture functionality
 ├── app_bugreport.go          # Bug report creation and submission
+├── app_heartbeat.go          # Bug report API heartbeat check
 ├── app_settings.go           # Settings import/export
 ├── app_system.go             # Windows system utilities (registry, encoding)
 ├── main.go                   # Application entry point
@@ -199,6 +200,7 @@ The Go backend is split into logical files:
 | `app_viewer.go` | Viewer windows: `OpenImageWindow`, `OpenPDFWindow`, `OpenEMLWindow`, `OpenPDF`, `OpenImage`, `GetViewerData` |
 | `app_screenshot.go` | Screenshots: `TakeScreenshot`, `SaveScreenshot`, `SaveScreenshotAs` |
 | `app_bugreport.go` | Bug reports: `CreateBugReportFolder`, `SubmitBugReport`, `zipFolder` |
+| `app_heartbeat.go` | API heartbeat: `CheckBugReportAPI` |
 | `app_settings.go` | Settings I/O: `ExportSettings`, `ImportSettings` |
 | `app_system.go` | System utilities: `CheckIsDefaultEMLHandler`, `OpenDefaultAppsSettings`, `ConvertToUTF8`, `OpenFolderInExplorer` |
 | `app_update.go` | Update system: `CheckForUpdates`, `DownloadUpdate`, `InstallUpdate`, `GetUpdateStatus` |
@@ -252,7 +254,9 @@ The Go backend is split into logical files:
 | Method | Description |
 |--------|-------------|
 | `CreateBugReportFolder()` | Creates folder with screenshot and mail file |
-| `SubmitBugReport(input)` | Creates complete bug report with ZIP archive |
+| `SubmitBugReport(input)` | Creates complete bug report with ZIP archive, attempts server upload |
+| `UploadBugReport(folderPath, input)` | Uploads bug report files to configured API server via multipart POST |
+| `CheckBugReportAPI()` | Checks if the bug report API is reachable via /health endpoint (3s timeout) |
 
 **Settings (`app_settings.go`)**
 
@@ -672,7 +676,54 @@ Complete bug reporting system:
 3. Includes current mail file if loaded
 4. Gathers system information
 5. Creates ZIP archive in temp folder
-6. Shows path and allows opening folder
+6. Checks if the bug report API is online via heartbeat (`CheckBugReportAPI`)
+7. If online, attempts to upload to the bug report API server
+8. Falls back to local ZIP if server is offline or upload fails
+9. Shows server confirmation with report ID, or local path with upload warning
+
+#### Heartbeat Check (`app_heartbeat.go`)
+
+Before uploading a bug report, the app sends a GET request to `{BUGREPORT_API_URL}/health` with a 3-second timeout. If the API doesn't respond with status 200, the upload is skipped entirely and only the local ZIP is created. The `CheckBugReportAPI()` method is also exposed to the frontend for UI status checks.
+
+#### Bug Report API Server
+
+A separate API server (`server/` directory) receives bug reports:
+- **Stack**: Bun.js + ElysiaJS + MySQL 8
+- **Deployment**: Docker Compose (`docker compose up -d` from `server/`)
+- **Auth**: Static API key for clients (`X-API-Key`), static admin key (`X-Admin-Key`)
+- **Rate limiting**: HWID-based, configurable (default 5 reports per 24h)
+- **Logging**: Structured file logging to `logs/api.log` with format `[date] - [time] - [source] - message`
+- **Endpoints**: `POST /api/bug-reports` (client), `GET/DELETE /api/admin/bug-reports` (admin)
+
+#### Bug Report Dashboard
+
+A web dashboard (`dashboard/` directory) for browsing, triaging, and downloading bug reports:
+- **Stack**: SvelteKit (Svelte 5) + TailwindCSS v4 + Drizzle ORM + Bun.js
+- **Deployment**: Docker service in `server/docker-compose.yml`, port 3001
+- **Database**: Connects directly to the same MySQL database via Drizzle ORM (read/write)
+- **Features**:
+  - Paginated reports list with status filter and search (hostname, user, name, email)
+  - Report detail view with metadata, description, system info (collapsible JSON), and file list
+  - Status management (new → in_review → resolved → closed)
+  - Inline screenshot preview for attached screenshots
+  - Individual file download and bulk ZIP download (all files + report metadata)
+  - Report deletion with confirmation dialog
+  - Dark mode UI matching EMLy's aesthetic
+- **Authentication**: Session-based auth with Lucia v3 + Drizzle ORM adapter
+  - Default admin account: username `admin`, password `admin` (seeded on first migration)
+  - Password hashing with argon2 via `@node-rs/argon2`
+  - Session cookies with automatic refresh
+  - Role-based access: `admin` and `user` roles
+- **User Management**: Admin-only `/users` page for creating/deleting dashboard users
+- **Development**: `cd dashboard && bun install && bun dev` (localhost:3001)
+
+#### Configuration (config.ini)
+
+```ini
+[EMLy]
+BUGREPORT_API_URL="https://your-server.example.com"
+BUGREPORT_API_KEY="your-api-key"
+```
 
 ### 5. Settings Management
 
@@ -917,6 +968,30 @@ In dev mode (`wails dev`):
 - Debugger protection can terminate app if debugger detected
 - Danger Zone hidden by default
 - Access Danger Zone by clicking settings link 10 times within 4 seconds
+
+---
+
+## Dashboard Features
+
+### ZIP File Upload
+
+The dashboard supports uploading `.zip` files created by EMLy's `SubmitBugReport` feature when the API upload fails. Accessible via the "Upload ZIP" button on the reports list page, it parses `report.txt` (name, email, description), `system_info.txt` (hostname, OS, HWID, IP), and imports all attached files (screenshots, mail files, localStorage, config) into the database as a new bug report.
+
+**API Endpoint**: `POST /api/reports/upload` - Accepts multipart form data with a `.zip` file.
+
+### User Enable/Disable
+
+Admins can temporarily disable user accounts without deleting them. Disabled users cannot log in and active sessions are invalidated. The `user` table has an `enabled` BOOLEAN column (default TRUE). Toggle is available in the Users management page. Restrictions: admins cannot disable themselves or other admin users.
+
+### Active Users / Presence Tracking
+
+Real-time presence tracking using Server-Sent Events (SSE). Connected users are tracked in-memory with heartbeat updates every 15 seconds. The layout header shows avatar indicators for other active users with tooltips showing what they're viewing. The report detail page shows who else is currently viewing the same report.
+
+**Endpoints**:
+- `GET /api/presence` - SSE stream for real-time presence updates
+- `POST /api/presence/heartbeat` - Client heartbeat with current page/report info
+
+**Client Store**: `$lib/stores/presence.svelte.ts` - Svelte 5 reactive store managing SSE connection and heartbeats.
 
 ---
 

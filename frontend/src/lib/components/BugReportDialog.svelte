@@ -6,16 +6,24 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
   import { Textarea } from "$lib/components/ui/textarea/index.js";
-  import { CheckCircle, Copy, FolderOpen, Camera, Loader2 } from "@lucide/svelte";
+  import { CheckCircle, Copy, FolderOpen, Camera, Loader2, CloudUpload, AlertTriangle } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
   import { TakeScreenshot, SubmitBugReport, OpenFolderInExplorer, GetConfig } from "$lib/wailsjs/go/main/App";
   import { browser } from "$app/environment";
+  import { dev } from "$app/environment";
 
   // Bug report form state
   let userName = $state("");
   let userEmail = $state("");
   let bugDescription = $state("");
-
+  // Auto-fill form in dev mode
+  $effect(() => {
+    if (dev && $bugReportDialogOpen && !userName) {
+      userName = "Test User";
+      userEmail = "test@example.com";
+      bugDescription = "This is a test bug report submitted from development mode.";
+    }
+  });
   // Bug report screenshot state
   let screenshotData = $state("");
   let isCapturing = $state(false);
@@ -28,6 +36,9 @@
   let isSubmitting = $state(false);
   let isSuccess = $state(false);
   let resultZipPath = $state("");
+  let uploadedToServer = $state(false);
+  let serverReportId = $state(0);
+  let uploadError = $state("");
   let canSubmit: boolean = $derived(
     bugDescription.trim().length > 0 && userName.trim().length > 0 && userEmail.trim().length > 0 && !isSubmitting && !isCapturing
   );
@@ -100,6 +111,9 @@
     isSubmitting = false;
     isSuccess = false;
     resultZipPath = "";
+    uploadedToServer = false;
+    serverReportId = 0;
+    uploadError = "";
   }
 
   async function handleBugReportSubmit(event: Event) {
@@ -123,8 +137,11 @@
       });
 
       resultZipPath = result.zipPath;
+      uploadedToServer = result.uploaded;
+      serverReportId = result.reportId;
+      uploadError = result.uploadError;
       isSuccess = true;
-      console.log("Bug report created:", result.zipPath);
+      console.log("Bug report created:", result.zipPath, "uploaded:", result.uploaded);
     } catch (err) {
       console.error("Failed to create bug report:", err);
       toast.error(m.bugreport_error());
@@ -162,15 +179,31 @@
       <!-- Success State -->
       <Dialog.Header>
         <Dialog.Title class="flex items-center gap-2">
-          <CheckCircle class="h-5 w-5 text-green-500" />
-          {m.bugreport_success_title()}
+          {#if uploadedToServer}
+            <CloudUpload class="h-5 w-5 text-green-500" />
+            {m.bugreport_uploaded_title()}
+          {:else}
+            <CheckCircle class="h-5 w-5 text-green-500" />
+            {m.bugreport_success_title()}
+          {/if}
         </Dialog.Title>
         <Dialog.Description>
-          {m.bugreport_success_message()}
+          {#if uploadedToServer}
+            {m.bugreport_uploaded_success({ reportId: String(serverReportId) })}
+          {:else}
+            {m.bugreport_success_message()}
+          {/if}
         </Dialog.Description>
       </Dialog.Header>
 
       <div class="grid gap-4 py-4">
+        {#if uploadError}
+          <div class="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md p-3">
+            <AlertTriangle class="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+            <p class="text-sm text-yellow-600 dark:text-yellow-400">{m.bugreport_upload_failed()}</p>
+          </div>
+        {/if}
+
         <div class="bg-muted rounded-md p-3">
           <code class="text-xs break-all select-all">{resultZipPath}</code>
         </div>

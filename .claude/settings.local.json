@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.gnu.org)",
+      "Bash(go run:*)",
+      "Bash(go build:*)",
+      "Bash(go doc:*)",
+      "Bash(go test:*)",
+      "WebFetch(domain:lucia-auth.com)",
+      "WebFetch(domain:v3.lucia-auth.com)",
+      "Bash(bun install:*)",
+      "Bash(bunx svelte-kit sync:*)",
+      "Bash(bun run check:*)"
+    ]
+  }
+}
