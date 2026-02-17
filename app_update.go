@@ -81,15 +81,11 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 	updateStatus.LastCheckTime = time.Now().Format("2006-01-02 15:04:05")
 	runtime.EventsEmit(a.ctx, "update:status", updateStatus)
 
-	defer func() {
-		updateStatus.Checking = false
-		runtime.EventsEmit(a.ctx, "update:status", updateStatus)
-	}()
-
 	// Get current version from config
 	config := a.GetConfig()
 	if config == nil {
 		updateStatus.ErrorMessage = "Failed to load configuration"
+		updateStatus.Checking = false
 		return updateStatus, fmt.Errorf("failed to load config")
 	}
 
@@ -99,6 +95,7 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 	// Check if updates are enabled
 	if config.EMLy.UpdateCheckEnabled != "true" {
 		updateStatus.ErrorMessage = "Update checking is disabled"
+		updateStatus.Checking = false
 		return updateStatus, fmt.Errorf("update checking is disabled in config")
 	}
 
@@ -106,6 +103,7 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 	updatePath := strings.TrimSpace(config.EMLy.UpdatePath)
 	if updatePath == "" {
 		updateStatus.ErrorMessage = "Update path not configured"
+		updateStatus.Checking = false
 		return updateStatus, fmt.Errorf("UPDATE_PATH is empty in config.ini")
 	}
 
@@ -113,6 +111,7 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 	manifest, err := a.loadUpdateManifest(updatePath)
 	if err != nil {
 		updateStatus.ErrorMessage = fmt.Sprintf("Failed to load manifest: %v", err)
+		updateStatus.Checking = false
 		return updateStatus, err
 	}
 
@@ -150,6 +149,7 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 			updateStatus.CurrentVersion, currentChannel)
 	}
 
+	updateStatus.Checking = false
 	return updateStatus, nil
 }
 
