@@ -195,10 +195,14 @@
   });
 
   // Sync update checker setting to backend config.ini
-  let previousUpdateCheckerEnabled = form.enableUpdateChecker;
+  let previousUpdateCheckerEnabled = $state<boolean | undefined>(undefined);
   $effect(() => {
     (async () => {
       if (!browser) return;
+      if (previousUpdateCheckerEnabled === undefined) {
+        previousUpdateCheckerEnabled = form.enableUpdateChecker;
+        return;
+      }
       if (form.enableUpdateChecker !== previousUpdateCheckerEnabled) {
         try {
           await SetUpdateCheckerEnabled(form.enableUpdateChecker ?? true);
@@ -354,7 +358,7 @@
   });
 </script>
 
-<div class="min-h-[calc(100vh-1rem)] bg-gradient-to-b from-background to-muted/30">
+<div class="min-h-[calc(100vh-1rem)] bg-linear-to-b from-background to-muted/30">
   <div
     class="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6 sm:py-10 opacity-80"
   >
@@ -868,39 +872,29 @@
             class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
           >
             <div class="space-y-1">
-              <Label class="text-sm">{m.settings_danger_reload_ui_label()}</Label>
+              <Label class="text-sm">{m.settings_danger_reload_all_label()}</Label>
               <div class="text-sm text-muted-foreground">
                 {m.settings_danger_reload_hint()}
               </div>
             </div>
 
-            <a
-              data-sveltekit-reload
-              href="/"
-              class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
-              style="text-decoration: none;"
-            >
-              {m.settings_danger_reload_button_ui()}
-            </a>
-          </div>
-
-          <div
-            class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
-          >
-            <div class="space-y-1">
-              <Label class="text-sm">{m.settings_danger_reload_app_label()}</Label>
-              <div class="text-sm text-muted-foreground">
-                {m.settings_danger_reload_hint()}
-              </div>
+            <div class="flex items-center gap-2">
+              <a
+                data-sveltekit-reload
+                href="/"
+                class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+                style="text-decoration: none;"
+              >
+                {m.settings_danger_reload_button_ui()}
+              </a>
+              <Button
+                class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+                onclick={restartEntireApp}
+                style="text-decoration: none;"
+              >
+                {m.settings_danger_reload_button_app()}
+              </Button>
             </div>
-
-            <Button
-            class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
-            onclick={restartEntireApp}
-            style="text-decoration: none;"
-          >
-            {m.settings_danger_reload_button_app()}
-          </Button>
           </div>
           
           <Separator />
