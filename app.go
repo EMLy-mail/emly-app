@@ -4,8 +4,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -139,6 +141,31 @@ func (a *App) QuitApp() {
 	runtime.Quit(a.ctx)
 	// Exit with code 133 (133 + 5 = 138, SIGTRAP-like exit)
 	os.Exit(133)
+}
+
+// RestartApp performs a full application restart, including the Go backend.
+// It schedules a new process via PowerShell with a short delay to ensure the
+// single-instance lock is released before the new instance starts, then exits.
+func (a *App) RestartApp() error {
+	exe, err := os.Executable()
+	if err != nil {
+		Log("RestartApp: failed to get executable path:", err)
+		return err
+	}
+
+	// Escape single quotes in the path for PowerShell string literal
+	safePath := strings.ReplaceAll(exe, "'", "''")
+	script := fmt.Sprintf(`Start-Sleep -Seconds 1; Start-Process '%s'`, safePath)
+
+	cmd := exec.Command("powershell", "-WindowStyle", "Hidden", "-Command", script)
+	if err := cmd.Start(); err != nil {
+		Log("RestartApp: failed to schedule restart:", err)
+		return err
+	}
+
+	Log("RestartApp: scheduled restart, quitting current instance...")
+	runtime.Quit(a.ctx)
+	return nil
 }
 
 // =============================================================================

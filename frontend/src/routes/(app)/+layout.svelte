@@ -298,8 +298,8 @@
       href="/"
       class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
       style="text-decoration: none; margin-left: auto; height: 24px; font-size: 12px; padding: 0 8px;"
-      aria-label={m.settings_danger_reload_button()}
-      title={m.settings_danger_reload_button() + " app"}
+      aria-label={m.settings_danger_reload_button_ui()}
+      title={m.settings_danger_reload_button_ui()}
     >
       <RefreshCcwDot />
     </a>
@@ -308,8 +308,8 @@
       href="#"
       class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
       style="text-decoration: none; height: 24px; font-size: 12px; padding: 0 8px;"
-      aria-label={m.settings_danger_reload_button()}
-      title={m.settings_danger_reload_button() + " app"}
+      aria-label={m.settings_danger_reload_button_ui()}
+      title={m.settings_danger_reload_button_ui() }
       onclick={() => {
         $bugReportDialogOpen = !$bugReportDialogOpen;
       }}

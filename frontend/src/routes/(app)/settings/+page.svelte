@@ -6,7 +6,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
   import { Switch } from "$lib/components/ui/switch";
-  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle, Sun, Moon } from "@lucide/svelte";
+  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle, Sun, Moon, RefreshCcw } from "@lucide/svelte";
   import type { EMLy_GUI_Settings } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { It, Us } from "svelte-flags";
@@ -25,7 +25,7 @@
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
   import { dev } from '$app/environment';
-  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus, SetUpdateCheckerEnabled } from "$lib/wailsjs/go/main/App";
+  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus, SetUpdateCheckerEnabled, RestartApp } from "$lib/wailsjs/go/main/App";
   import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
 
   let { data } = $props();
@@ -255,6 +255,16 @@
       console.error("Failed to import settings:", err);
       toast.error(m.settings_import_error());
     }
+  }
+
+  async function restartEntireApp() {
+    try {
+      await RestartApp();
+    } catch(e) {
+      toast.error("Error while trying to reload the app");
+      console.error(e);
+    }
+    
   }
 
   // Update System State
@@ -858,7 +868,7 @@
             class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
           >
             <div class="space-y-1">
-              <Label class="text-sm">{m.settings_danger_reload_label()}</Label>
+              <Label class="text-sm">{m.settings_danger_reload_ui_label()}</Label>
               <div class="text-sm text-muted-foreground">
                 {m.settings_danger_reload_hint()}
               </div>
@@ -870,9 +880,29 @@
               class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
               style="text-decoration: none;"
             >
-              {m.settings_danger_reload_button()}
+              {m.settings_danger_reload_button_ui()}
             </a>
           </div>
+
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+          >
+            <div class="space-y-1">
+              <Label class="text-sm">{m.settings_danger_reload_app_label()}</Label>
+              <div class="text-sm text-muted-foreground">
+                {m.settings_danger_reload_hint()}
+              </div>
+            </div>
+
+            <Button
+            class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+            onclick={restartEntireApp}
+            style="text-decoration: none;"
+          >
+            {m.settings_danger_reload_button_app()}
+          </Button>
+          </div>
+          
           <Separator />
 
           <div
