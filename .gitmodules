@@ -1,0 +1,3 @@
+[submodule "server"]
+	path = server
+	url = https://github.com/EMLy-mail/bug-report-api
