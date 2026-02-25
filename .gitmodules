@@ -1,3 +1,6 @@
 [submodule "server"]
 	path = server
 	url = https://github.com/EMLy-mail/bug-report-api
+[submodule "dashboard"]
+	path = dashboard
+	url = https://github.com/EMLy-mail/dashboard
