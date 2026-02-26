@@ -1,0 +1,66 @@
+name: Build EMLy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install InnoSetup
+        run: choco install innosetup -y
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Build EMLy
+        run: wails build
+
+      - name: Compile installer
+        run: iscc installer\installer.iss
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EMLy-windows-amd64
+          path: build/bin/EMLy.exe
+          if-no-files-found: error
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EMLy-installer
+          path: installer\Output\EMLy_Installer_*.exe
+          if-no-files-found: error
+

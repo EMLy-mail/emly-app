@@ -173,7 +173,7 @@
             WindowShow();
           } else if (result.error) {
             console.error('Failed to load email:', result.error);
-            toast.error('Failed to load email file');
+            toast.error(m.mail_error_opening());
           }
 
           isLoading = false;
@@ -211,7 +211,7 @@
   }
 </script>
 
-<div class="panel fill" aria-label="Events">
+<div class="panel fill" aria-label={m.mail_panel_label()}>
   {#if isLoading}
     <div class="loading-overlay">
       <Loader2 class="spinner" size="48" />
@@ -382,7 +382,7 @@
         <div class="email-body-wrapper" class:light-theme={settingsStore.settings.useDarkEmailViewer === false}>
           <iframe
             srcdoc={mailState.currentEmail.body + iframeUtilHtml}
-            title="Email Body"
+            title={m.mail_email_body_title()}
             class="email-iframe"
             sandbox="allow-same-origin allow-scripts"
             onwheel={handleWheel}

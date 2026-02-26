@@ -70,7 +70,7 @@
         loading = false;
       }
     } catch (e) {
-      error = "Failed to load PDF: " + e;
+      error = m.pdf_error_loading() + e;
       loading = false;
     }
   });
@@ -210,7 +210,7 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      toast.error("Failed to download PDF: " + e);
+      toast.error(m.pdf_error_downloading() + e);
     }
   }
 </script>

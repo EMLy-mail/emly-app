@@ -106,7 +106,7 @@
       </Card.Header>
       <Card.Content>
         <div class="flex items-center gap-4 mb-4">
-          <img src="/appicon.png" alt="EMLy Logo" width="64" height="64" class="rounded-lg" />
+          <img src="/appicon.png" alt={m.credits_logo_alt()} width="64" height="64" class="rounded-lg" />
           <div>
             <h3 class="font-semibold text-lg">EMLy</h3>
             <p class="text-sm text-muted-foreground">{m.credits_app_tagline()}</p>

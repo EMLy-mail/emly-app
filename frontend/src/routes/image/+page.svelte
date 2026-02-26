@@ -11,6 +11,7 @@
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
+  import * as m from "$lib/paraglide/messages.js";
 
   let { data }: { data: PageData } = $props();
 
@@ -37,14 +38,14 @@
         imageData = result.data;
         filename = result.filename;
         // Adjust title
-        document.title = filename + " - EMLy Image Viewer";
+        document.title = filename + " - EMLy " + m.image_viewer_title();
         sidebarOpen.set(false);
       } else {
-        toast.error("No image data provided");
-        error = "No image data provided";
+        toast.error(m.image_error_no_data());
+        error = m.image_error_no_data();
       }
     } catch (e) {
-      error = "Failed to load image: " + e;
+      error = m.image_error_loading() + e;
     } finally {
       loading = false;
     }
@@ -125,28 +126,28 @@
 <div class="page-container">
   <!-- Toolbar -->
   <div class="toolbar">
-    <h1 class="title" title={filename}>{filename || "Image Viewer"}</h1>
+    <h1 class="title" title={filename}>{filename || m.image_viewer_title()}</h1>
 
     <div class="controls">
-       <button class="btn" onclick={() => downloadImage()} title="Download">
+       <button class="btn" onclick={() => downloadImage()} title={m.mail_download_btn_title()}>
         <Download size="16" />
       </button>
       <div class="separator"></div>
-      <button class="btn" onclick={() => zoom(0.1)} title="Zoom In">
+      <button class="btn" onclick={() => zoom(0.1)} title={m.pdf_zoom_in()}>
         <ZoomIn size="16" />
       </button>
-      <button class="btn" onclick={() => zoom(-0.1)} title="Zoom Out">
+      <button class="btn" onclick={() => zoom(-0.1)} title={m.pdf_zoom_out()}>
         <ZoomOut size="16" />
       </button>
       <div class="separator"></div>
-      <button class="btn" onclick={() => rotate(-90)} title="Rotate Left">
+      <button class="btn" onclick={() => rotate(-90)} title={m.pdf_rotate_left()}>
         <RotateCcw size="16" />
       </button>
-      <button class="btn" onclick={() => rotate(90)} title="Rotate Right">
+      <button class="btn" onclick={() => rotate(90)} title={m.pdf_rotate_right()}>
         <RotateCw size="16" />
       </button>
       <div class="separator"></div>
-      <button class="btn" onclick={reset} title="Reset">
+      <button class="btn" onclick={reset} title={m.image_reset_btn()}>
         <AlignHorizontalSpaceAround size="16" />
       </button>
     </div>
@@ -163,10 +164,10 @@
     onmouseup={handleMouseUp}
     onmouseleave={handleMouseUp}
     role="region"
-    aria-label="Image View"
+    aria-label={m.image_viewer_area_label()}
   >
     {#if loading}
-      <div class="loading">Loading...</div>
+      <div class="loading">{m.layout_loading_text()}</div>
     {:else if error}
       <div class="error-message">
         {error}

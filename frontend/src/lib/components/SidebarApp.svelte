@@ -59,7 +59,7 @@
       class="sidebar-title items-center justify-center p-3 border-b border-border flex"
       style="padding: 12px; display: flex; justify-content: center;"
     >
-      <img src="/appicon.png" alt="Logo" width="64" height="64" />
+      <img src="/appicon.png" alt={m.sidebar_logo_alt()} width="64" height="64" />
       <span
         class="font-bold text-lg mt-2 pl-3"
         style="font-family: system-ui, sans-serif;">EMLy by 3gIT</span
@@ -68,7 +68,7 @@
   </Sidebar.Header>
   <Sidebar.Content>
     <Sidebar.Group>
-      <Sidebar.GroupLabel>Menu</Sidebar.GroupLabel>
+      <Sidebar.GroupLabel>{m.sidebar_menu_label()}</Sidebar.GroupLabel>
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           {#each items as item (item.id)}

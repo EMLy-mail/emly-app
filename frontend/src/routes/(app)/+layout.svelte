@@ -138,11 +138,11 @@
     if (!browser) return;
 
     EventsOn("update:available", (status: any) => {
-      toast.info(`Update ${status.availableVersion} is available!`, {
-        description: "Go to Settings to download and install",
+      toast.info(m.layout_update_toast_title({ version: status.availableVersion }), {
+        description: m.layout_update_toast_description(),
         duration: 10000,
         action: {
-          label: "Open Settings",
+          label: m.layout_update_toast_action(),
           onClick: () => goto("/settings"),
         },
       });

@@ -120,7 +120,7 @@
     event.preventDefault();
 
     if (!bugDescription.trim()) {
-      toast.error("Please provide a bug description.");
+      toast.error(m.bugreport_error_no_description());
       return;
     }
 
@@ -277,7 +277,7 @@
             {#if isCapturing}
               <div class="flex items-center gap-2 text-muted-foreground text-sm">
                 <Loader2 class="h-4 w-4 animate-spin" />
-                Capturing...
+                {m.bugreport_capturing()}
               </div>
             {:else if screenshotData}
               <div class="border rounded-md overflow-hidden">
@@ -289,7 +289,7 @@
               </div>
             {:else}
               <div class="text-muted-foreground text-sm">
-                No screenshot available
+                {m.bugreport_no_screenshot()}
               </div>
             {/if}
           </div>

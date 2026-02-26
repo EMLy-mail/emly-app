@@ -1,6 +1,7 @@
 <script lang="ts">
   import MailViewer from "$lib/components/MailViewer.svelte";
   import { mailState } from "$lib/stores/mail-state.svelte";
+  import * as m from "$lib/paraglide/messages.js";
 
   let { data } = $props();
 
@@ -12,7 +13,7 @@
 </script>
 
 <div class="page">
-  <section class="center" aria-label="Overview" id="main-content-app">
+  <section class="center" aria-label={m.page_overview_label()} id="main-content-app">
     <MailViewer />
   </section>
 </div>

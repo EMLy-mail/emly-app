@@ -188,7 +188,7 @@
     (async () => {
       if ($dangerZoneEnabled && !previousDangerZoneEnabled) {
         dangerWarningOpen = true;
-        toast.info("Here be dragons!", { icon: Flame });
+        toast.info(m.settings_danger_here_be_dragons(), { icon: Flame });
       }
       previousDangerZoneEnabled = $dangerZoneEnabled;
     })();
@@ -265,7 +265,7 @@
     try {
       await RestartApp();
     } catch(e) {
-      toast.error("Error while trying to reload the app");
+      toast.error(m.settings_danger_reload_app_error());
       console.error(e);
     }
     
@@ -421,7 +421,7 @@
           </div>
         </RadioGroup.Root>
         <div class="text-xs text-muted-foreground mt-4">
-          <strong>Info:</strong>
+          <strong>{m.settings_info_label()}</strong>
           {m.settings_language_info()}
         </div>
       </Card.Content>
@@ -467,7 +467,7 @@
           </div>
         </RadioGroup.Root>
         <div class="text-xs text-muted-foreground mt-4">
-          <strong>Info:</strong>
+          <strong>{m.settings_info_label()}</strong>
           {m.settings_theme_hint()}
         </div>
         
@@ -834,7 +834,7 @@
 
         <!-- Info about update path -->
         <div class="text-xs text-muted-foreground">
-          <strong>Info:</strong> {m.settings_updates_info_message()}
+          <strong>{m.settings_info_label()}</strong> {m.settings_updates_info_message()}
           {#if (config as any)?.UpdatePath}
             {m.settings_updates_current_path()} <code class="text-xs bg-muted px-1 py-0.5 rounded">{(config as any).UpdatePath}</code>
           {:else}
@@ -994,11 +994,11 @@
           <div class="text-xs text-muted-foreground">
             GUI: {config
               ? `${config.GUISemver} (${config.GUIReleaseChannel})`
-              : "N/A"}
+              : m.settings_not_available()}
             <br />
             SDK: {config
               ? `${config.SDKDecoderSemver} (${config.SDKDecoderReleaseChannel})`
-              : "N/A"}
+              : m.settings_not_available()}
           </div>
         </Card.Content>
       </Card.Root>
