@@ -45,7 +45,7 @@ jobs:
         run: bun install
 
       - name: Build EMLy
-        run: wails build
+        run: wails build --devtools
 
       - name: Compile installer
         run: iscc installer\installer.iss

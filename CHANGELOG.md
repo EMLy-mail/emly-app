@@ -1,5 +1,10 @@
 # Changelog EMLy
 
+## 1.6.1 (2026-02-26)
+1) Sistemato un bug del sistema di aggiornamento, dove, in alcuni casi, non veniva scaricata la nuova versione, anche se disponibile. (Il sistema di aggiornamento è ancora in fase di test, ma questo fix dovrebbe migliorare l'affidabilità del processo)
+2) Sistemate alcune traduzioni mancanti.
+3) Cambiata la path di installazione predefinita.
+
 ## 1.6.0 (2026-02-17)
 1) Implementazione in sviluppo del sistema di aggiornamento automatico e manuale, con supporto per canali di rilascio (stable/beta) e gestione delle versioni. (Ancora non attivo di default, in fase di test)
 
