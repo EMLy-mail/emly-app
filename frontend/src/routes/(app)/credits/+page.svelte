@@ -8,40 +8,9 @@
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
   import { dangerZoneEnabled } from "$lib/stores/app";
   import { settingsStore } from "$lib/stores/settings.svelte";
-  import { toast } from "svelte-sonner";
 
   let { data } = $props();
   let config = $derived(data.config);
-
-  // Easter Egg State
-  const REQUIRED_CLICKS = 10;
-  const CLICK_WINDOW_MS = 4000;
-  let recentClicks: number[] = [];
-
-  function handleEasterEggClick(_event: MouseEvent) {
-    console.log("clicked")
-    // Only proceed if danger zone is already enabled
-    if (!$dangerZoneEnabled) return;
-    
-    // If already enabled, do nothing to avoid spam
-    if (settingsStore.settings.musicInspirationEnabled) return;
-
-    const now = Date.now();
-    
-    // Clean old clicks
-    recentClicks = recentClicks.filter(t => now - t < CLICK_WINDOW_MS);
-    recentClicks.push(now);
-
-    if (recentClicks.length >= REQUIRED_CLICKS) {
-      recentClicks = [];
-      try {
-        settingsStore.update({ musicInspirationEnabled: true });
-        preloadData("/inspiration");
-      } catch (e) {
-        console.error("Failed to enable music inspiration:", e);
-      }
-    }
-  }
 
   // Open external URL in default browser
   async function openUrl(url: string) {
@@ -100,7 +69,7 @@
   ];
 </script>
 
-<div class="min-h-[calc(100vh-1rem)] bg-gradient-to-b from-background to-muted/30">
+<div class="min-h-[calc(100vh-1rem)] bg-linear-to-b from-background to-muted/30">
   <div
     class="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6 sm:py-10 opacity-80"
   >
@@ -169,12 +138,7 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div 
             class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
-            onclick={member.username === "FOISX" ? handleEasterEggClick : undefined}
           >
-            <!-- Selectable trigger area overlay for cleaner interaction -->
-            {#if member.username === "FOISX" && $dangerZoneEnabled && !settingsStore.settings.musicInspirationEnabled}
-               <div class="absolute inset-0 cursor-pointer z-10 opacity-0 bg-transparent"></div>
-            {/if}
             
             <img
               src={gravatarUrls[member.email]}

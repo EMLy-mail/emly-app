@@ -888,9 +888,10 @@
                 {m.settings_danger_reload_button_ui()}
               </a>
               <Button
-                class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+                class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50`}
                 onclick={restartEntireApp}
                 style="text-decoration: none;"
+                disabled={runningInDevMode}
               >
                 {m.settings_danger_reload_button_app()}
               </Button>

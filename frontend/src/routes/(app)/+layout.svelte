@@ -281,17 +281,6 @@
       style="cursor: pointer; opacity: 0.7;"
       class="hover:opacity-100 transition-opacity"
     />
-    {#if settingsStore.settings.musicInspirationEnabled}
-      <Music
-        size="16"
-        onclick={() => {
-          if (page.url.pathname !== "/inspiration" && page.url.pathname !== "/inspiration/")
-            goto("/inspiration");
-        }}
-        style="cursor: pointer; opacity: 0.7;"
-        class="hover:opacity-100 transition-opacity"
-      />
-    {/if}
 
     <a
       data-sveltekit-reload

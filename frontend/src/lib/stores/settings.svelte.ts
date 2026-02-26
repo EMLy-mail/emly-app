@@ -14,7 +14,6 @@ const defaults: EMLy_GUI_Settings = {
     enableAttachedDebuggerProtection: true,
     useDarkEmailViewer: true,
     enableUpdateChecker: false,
-    musicInspirationEnabled: false,
     reduceMotion: false,
     theme: "dark",
     increaseWindowButtonsContrast: false,
@@ -38,14 +37,6 @@ class SettingsStore {
             } catch (e) {
                 console.error("Failed to load settings", e);
             }
-        }
-
-        // Migration: Check for legacy musicInspirationEnabled key
-        const legacyMusic = getFromLocalStorage("musicInspirationEnabled");
-        if (legacyMusic !== null) {
-            this.settings.musicInspirationEnabled = legacyMusic === "true";
-            localStorage.removeItem("musicInspirationEnabled");
-            this.save(); // Save immediately to persist the migration
         }
         
         // Sync theme from localStorage key used in app.html
