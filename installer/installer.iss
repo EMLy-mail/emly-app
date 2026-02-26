@@ -91,6 +91,10 @@ var
   IsLegacyMigration: Boolean;  // True when old path differs from C:\3gIT\EMLy
   OldInstallInHKLM: Boolean;   // True when the old install was system-wide (admin)
 
+const
+  RegKey = 'Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{#ApplicationName}_is1';
+  NewPath = 'C:\\3gIT\\EMLy';
+
 // Strips a trailing backslash for consistent path comparison.
 function NormalizePath(const Path: String): String;
 begin
@@ -118,9 +122,6 @@ end;
 // (old user-mode AppData install). Populates OldInstallDir,
 // OldUninstallString, OldInstallInHKLM, and IsLegacyMigration.
 function GetPreviousVersion(): String;
-const
-  RegKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#ApplicationName}_is1';
-  NewPath = 'C:\3gIT\EMLy';
 begin
   Result := '';
   OldInstallDir := '';
