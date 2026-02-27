@@ -6,11 +6,13 @@
   import { Label } from "$lib/components/ui/label";
   import { Separator } from "$lib/components/ui/separator";
   import { Switch } from "$lib/components/ui/switch";
-  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle, Sun, Moon, RefreshCcw } from "@lucide/svelte";
+  import { ChevronLeft, Flame, Download, Upload, RefreshCw, CheckCircle2, AlertCircle, Sun, Moon, RefreshCcw, Save } from "@lucide/svelte";
+  import { Input } from "$lib/components/ui/input";
   import type { EMLy_GUI_Settings } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { It, Us } from "svelte-flags";
   import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
+  import * as Select from "$lib/components/ui/select/index.js";
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "$lib/components/ui/button/index.js";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
@@ -25,11 +27,11 @@
   import { setLocale } from "$lib/paraglide/runtime";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
   import { dev } from '$app/environment';
-  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus, SetUpdateCheckerEnabled, RestartApp } from "$lib/wailsjs/go/main/App";
+  import { ExportSettings, ImportSettings, CheckForUpdates, DownloadUpdate, InstallUpdate, GetUpdateStatus, SetUpdateCheckerEnabled, RestartApp, ReloadConfig, SetUpdatePath } from "$lib/wailsjs/go/main/App";
   import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
 
   let { data } = $props();
-  let config = $derived(data.config);
+  let config = $state(data.config);
 
   let runningInDevMode: boolean = dev || false;
 
@@ -63,6 +65,27 @@
   let form = $state<EMLy_GUI_Settings>(normalizeSettings(settingsStore.settings));
   let lastSaved = $state<EMLy_GUI_Settings>(normalizeSettings(settingsStore.settings));
   let dangerWarningOpen = $state(false);
+  $inspect("dangerWarningOpen", dangerWarningOpen);
+
+  // Update path state
+  const UPDATE_PATH_OPTIONS = {
+    "DC-RM2": "\\\\dc-rm2\\logo\\update",
+    "DC-CB":  "\\\\dc-cb\\logo\\update",
+    "Other":  "",
+  } as const;
+  type UpdatePathOption = keyof typeof UPDATE_PATH_OPTIONS;
+
+  let updatePathSelection = $state<UpdatePathOption>("DC-RM2");
+  let customUpdatePath = $state("");
+  let savingUpdatePath = $state(false);
+  let reloadingConfig = $state(false);
+
+  const UPDATE_PATH_LABELS: Record<UpdatePathOption, string> = {
+    "DC-RM2": `DC-RM2 (${UPDATE_PATH_OPTIONS["DC-RM2"]})`,
+    "DC-CB":  `DC-CB (${UPDATE_PATH_OPTIONS["DC-CB"]})`,
+    "Other":  "Altro (percorso personalizzato)",
+  };
+  let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
 
   function normalizeSettings(s: EMLy_GUI_Settings): EMLy_GUI_Settings {
     return {
@@ -268,7 +291,42 @@
       toast.error(m.settings_danger_reload_app_error());
       console.error(e);
     }
-    
+  }
+
+  async function reloadConfig() {
+    reloadingConfig = true;
+    try {
+      const freshConfig = await ReloadConfig();
+      config = freshConfig.EMLy;
+      toast.success("Config ricaricato da config.ini");
+    } catch (err) {
+      console.error("Failed to reload config:", err);
+      toast.error("Errore durante il ricaricamento del config");
+    } finally {
+      reloadingConfig = false;
+    }
+  }
+
+  async function saveUpdatePath() {
+    const path = updatePathSelection === "Other"
+      ? customUpdatePath.trim()
+      : UPDATE_PATH_OPTIONS[updatePathSelection];
+    if (!path) {
+      toast.error("Inserire un percorso valido");
+      return;
+    }
+    savingUpdatePath = true;
+    try {
+      await SetUpdatePath(path);
+      const freshConfig = await ReloadConfig();
+      config = freshConfig.EMLy;
+      toast.success(`Percorso aggiornamento salvato: ${path}`);
+    } catch (err) {
+      console.error("Failed to set update path:", err);
+      toast.error("Errore durante il salvataggio del percorso");
+    } finally {
+      savingUpdatePath = false;
+    }
   }
 
   // Update System State
@@ -898,6 +956,80 @@
             </div>
           </div>
           
+          <Separator />
+
+          <!-- Reload config from disk -->
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+          >
+            <div class="space-y-1">
+              <Label class="text-sm">Ricarica configurazione</Label>
+              <div class="text-sm text-muted-foreground">
+                Ricarica il file <code class="text-xs bg-muted px-1 py-0.5 rounded">config.ini</code> dal disco senza riavviare l'app.
+              </div>
+            </div>
+            <Button
+              variant="destructive"
+              class="cursor-pointer hover:cursor-pointer"
+              onclick={reloadConfig}
+              disabled={reloadingConfig}
+            >
+              <RefreshCcw class="size-4 mr-2 {reloadingConfig ? 'animate-spin' : ''}" />
+              Ricarica config
+            </Button>
+          </div>
+
+          <Separator />
+
+          <!-- Update location selector -->
+          <div class="rounded-lg border border-destructive/30 bg-card p-4 space-y-3">
+            <div class="space-y-1">
+              <Label class="text-sm">Percorso aggiornamenti</Label>
+              <div class="text-sm text-muted-foreground">
+                Seleziona il server da cui scaricare gli aggiornamenti. Viene salvato in <code class="text-xs bg-muted px-1 py-0.5 rounded">config.ini</code>.
+              </div>
+            </div>
+            <div class="flex items-end gap-2">
+              <div class="flex flex-col gap-1.5 flex-1">
+                <Label class="text-xs text-muted-foreground">Server</Label>
+                <Select.Root type="single" bind:value={updatePathSelection}>
+                  <Select.Trigger class="w-full cursor-pointer hover:cursor-pointer">
+                    {updatePathLabel}
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="DC-RM2" label={UPDATE_PATH_LABELS["DC-RM2"]} />
+                    <Select.Item value="DC-CB"  label={UPDATE_PATH_LABELS["DC-CB"]} />
+                    <Select.Item value="Other"  label={UPDATE_PATH_LABELS["Other"]} />
+                  </Select.Content>
+                </Select.Root>
+              </div>
+              <Button
+                variant="destructive"
+                class="cursor-pointer hover:cursor-pointer"
+                onclick={saveUpdatePath}
+                disabled={savingUpdatePath || (updatePathSelection === 'Other' && !customUpdatePath.trim())}
+              >
+                <Save class="size-4 mr-2" />
+                Salva
+              </Button>
+            </div>
+            {#if updatePathSelection === "Other"}
+              <div class="flex flex-col gap-1.5">
+                <Label class="text-xs text-muted-foreground">Percorso UNC (es. \\server\cartella\update)</Label>
+                <Input
+                  bind:value={customUpdatePath}
+                  placeholder={"\\\\server\\cartella\\update"}
+                  class="font-mono text-sm"
+                />
+              </div>
+            {/if}
+            {#if (config as any)?.UpdatePath}
+              <div class="text-xs text-muted-foreground">
+                Percorso attuale: <code class="text-xs bg-muted px-1 py-0.5 rounded">{(config as any).UpdatePath}</code>
+              </div>
+            {/if}
+          </div>
+
           <Separator />
 
           <div

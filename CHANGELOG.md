@@ -3,6 +3,9 @@
 ## 1.6.2 (2026-02-27)
 1) Aggiunto il supporto al MIME "message/rfc822" per visualizzare correttamente le mail con allegati mail (mail annidate).
 2) Aggiunto il supporto ai raw Quoted-Printable, per gestire correttamente le mail con codifica non standard.
+3) Migliorato il sistema di segnalazione bug: il report ora include informazioni estese sulla macchina (IP interno, dominio Active Directory, configurazione EMLy).
+4) Aggiunta la possibilità di ricaricare il file config.ini dal disco senza riavviare l'app (Danger Zone nelle impostazioni).
+5) Aggiunta la selezione del percorso aggiornamenti (DC-RM2, DC-CB, o percorso personalizzato) direttamente dalle impostazioni.
 
 ## 1.6.1 (2026-02-26)
 1) Sistemato un bug del sistema di aggiornamento, dove, in alcuni casi, non veniva scaricata la nuova versione, anche se disponibile. (Il sistema di aggiornamento è ancora in fase di test, ma questo fix dovrebbe migliorare l'affidabilità del processo)

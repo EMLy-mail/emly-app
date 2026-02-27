@@ -12,7 +12,11 @@
       "WebFetch(domain:v3.lucia-auth.com)",
       "Bash(bun install:*)",
       "Bash(bunx svelte-kit sync:*)",
-      "Bash(bun run check:*)"
+      "Bash(bun run check:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(bunx shadcn-svelte@latest:*)",
+      "Bash(printf y\\\\nn\\\\n:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

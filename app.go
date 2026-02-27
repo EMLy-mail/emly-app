@@ -184,6 +184,14 @@ func (a *App) GetConfig() *utils.Config {
 	return cfg
 }
 
+func (a *App) ReloadEMLyConfig() (utils.EMLyConfig, error) {
+	cfg, err := a.ReloadConfig()
+	if cfg == nil {
+		return utils.EMLyConfig{}, fmt.Errorf("failed to load config: %w", err)
+	}
+	return cfg.EMLy, nil
+}
+
 // SaveConfig persists the provided configuration to config.ini.
 // Returns an error if saving fails.
 func (a *App) SaveConfig(cfg *utils.Config) error {

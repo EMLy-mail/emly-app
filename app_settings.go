@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"emly/backend/utils"
+
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -97,6 +99,40 @@ func (a *App) ImportSettings() (string, error) {
 	}
 
 	return string(data), nil
+}
+
+// ReloadConfig re-reads config.ini from disk and returns the current configuration.
+// Useful to reflect any manual edits to config.ini without restarting the app.
+//
+// Returns:
+//   - *utils.Config: The freshly loaded configuration
+//   - error: Error if loading config fails
+func (a *App) ReloadConfig() (*utils.Config, error) {
+	cfgPath := utils.DefaultConfigPath()
+	cfg, err := utils.LoadConfig(cfgPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload config: %w", err)
+	}
+	return cfg, nil
+}
+
+// SetUpdatePath updates the UPDATE_PATH setting in config.ini with the provided path.
+//
+// Parameters:
+//   - path: The UNC or local path to the update directory (e.g. \\server\share\update)
+//
+// Returns:
+//   - error: Error if loading or saving config fails
+func (a *App) SetUpdatePath(path string) error {
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.UpdatePath = path
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
 }
 
 // SetUpdateCheckerEnabled updates the UPDATE_CHECK_ENABLED setting in config.ini

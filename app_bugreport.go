@@ -220,7 +220,7 @@ Generated: %s
 	}
 
 	// Get and save machine/system information
-	machineInfo, err := utils.GetMachineInfo()
+	machineInfo, err := utils.GetExtendedMachineInfo()
 	if err == nil && machineInfo != nil {
 		sysInfoContent := fmt.Sprintf(`System Information
 ==================
@@ -230,7 +230,19 @@ OS: %s
 Version: %s
 Hardware ID: %s
 External IP: %s
-`, machineInfo.Hostname, machineInfo.OS, machineInfo.Version, machineInfo.HWID, machineInfo.ExternalIP)
+Internal IP: %s
+AD Domain: %s
+
+EMLy Configuration
+==================
+SDK Version: %s
+GUI Version: %s
+Language: %s
+Update Check Enabled: %s
+`, machineInfo.Hostname, machineInfo.OS, machineInfo.Version, machineInfo.HWID, machineInfo.ExternalIP,
+			machineInfo.InternalIP, machineInfo.ADDomain,
+			machineInfo.EMLyConfig.SDKDecoderSemver, machineInfo.EMLyConfig.GUISemver,
+			machineInfo.EMLyConfig.Language, machineInfo.EMLyConfig.UpdateCheckEnabled)
 
 		sysInfoPath := filepath.Join(bugReportFolder, "system_info.txt")
 		if err := os.WriteFile(sysInfoPath, []byte(sysInfoContent), 0644); err != nil {
@@ -305,10 +317,12 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput) (int64, e
 	writer.WriteField("description", input.Description)
 
 	// Add machine identification fields
-	machineInfo, err := utils.GetMachineInfo()
+	machineInfo, err := utils.GetExtendedMachineInfo()
 	if err == nil && machineInfo != nil {
 		writer.WriteField("hwid", machineInfo.HWID)
 		writer.WriteField("hostname", machineInfo.Hostname)
+		writer.WriteField("internal_ip", machineInfo.InternalIP)
+		writer.WriteField("ad_domain", machineInfo.ADDomain)
 
 		// Add system_info as JSON string
 		sysInfoJSON, jsonErr := json.Marshal(machineInfo)

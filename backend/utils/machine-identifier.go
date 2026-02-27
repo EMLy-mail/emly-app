@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -22,6 +23,13 @@ type MachineInfo struct {
 	CPU        ghw.CPUInfo    `json:"CPU"`
 	RAM        ghw.MemoryInfo `json:"RAM"`
 	GPU        ghw.GPUInfo    `json:"GPU"`
+}
+
+type ExtendedMachineInfo struct {
+	MachineInfo
+	InternalIP string     `json:"InternalIP"`
+	ADDomain   string     `json:"ADDomain"`
+	EMLyConfig EMLyConfig `json:"EMLyConfig"`
 }
 
 func GetMachineInfo() (*MachineInfo, error) {
@@ -168,4 +176,82 @@ func getRAMInfo() (*ghw.MemoryInfo, error) {
 		return nil, fmt.Errorf("failed to get RAM info: %w", err)
 	}
 	return memory, nil
+}
+
+func getInternalIP() (string, error) {
+	// This is a simplified method to get the internal IP by checking the network interfaces
+	// For a more robust solution, consider using a library like "github.com/vishvananda/netlink"
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", fmt.Errorf("failed to get network interfaces: %w", err)
+	}
+	for _, iface := range ifaces {
+		// ignore down or loopback interfaces
+		if (iface.Flags&net.FlagUp) == 0 || (iface.Flags&net.FlagLoopback) != 0 {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, a := range addrs {
+			var ip net.IP
+			switch v := a.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil {
+				continue
+			}
+			ip = ip.To4()
+			if ip == nil {
+				continue
+			}
+			return ip.String(), nil
+		}
+	}
+	return "", fmt.Errorf("no internal IP found")
+}
+
+func getADDomain() (string, error) {
+	// This is a Windows-specific implementation to get the Active Directory domain
+	if runtime.GOOS != "windows" {
+		return "", fmt.Errorf("AD domain retrieval not implemented for %s", runtime.GOOS)
+	}
+	out, err := exec.Command("powershell", "-Command", "(Get-WmiObject Win32_ComputerSystem).Domain").Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get AD domain: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func GetExtendedMachineInfo() (*ExtendedMachineInfo, error) {
+	baseInfo, err := GetMachineInfo()
+	if err != nil {
+		return nil, err
+	}
+	internalIP, err := getInternalIP()
+	if err != nil {
+		internalIP = "Unavailable"
+	}
+	adDomain, err := getADDomain()
+	if err != nil {
+		adDomain = "Unavailable"
+	}
+	cfgPath := DefaultConfigPath()
+	rawConfig, err := LoadConfig(cfgPath)
+	var emlyConfig EMLyConfig
+	if err == nil {
+		emlyConfig = rawConfig.EMLy
+	} else {
+		emlyConfig = EMLyConfig{} // Return empty config if there's an error
+	}
+	return &ExtendedMachineInfo{
+		MachineInfo: *baseInfo,
+		InternalIP:  internalIP,
+		ADDomain:    adDomain,
+		EMLyConfig:  emlyConfig,
+	}, nil
 }

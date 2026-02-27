@@ -3,6 +3,9 @@ import { browser } from "$app/environment";
 
 const storedDebug = browser ? sessionStorage.getItem("debugWindowInSettings") === "true" : false;
 export const dangerZoneEnabled = writable<boolean>(storedDebug);
+// Pulses true for one tick when the easter egg unlocks la Danger Zone.
+// Non viene persistito in sessionStorage: serve solo a far aprire il dialog di avviso.
+export const dangerZoneJustUnlocked = writable<boolean>(false);
 export const unsavedChanges = writable<boolean>(false);
 export const sidebarOpen = writable<boolean>(true);
 export const bugReportDialogOpen = writable<boolean>(false);
