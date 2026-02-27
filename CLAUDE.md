@@ -114,3 +114,4 @@ Email bodies render in sandboxed iframes with links disabled for security.
 - Bun package manager for frontend (not npm/yarn)
 - Frontend assets embedded in binary via `//go:embed all:frontend/build`
 - Custom frameless window with manual titlebar implementation
+- **Versioning**: whenever any file inside `backend/` is modified, bump the patch version of `SDK_DECODER_SEMVER` in `config.ini` (e.g. `1.4.2` → `1.4.3`)
