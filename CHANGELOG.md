@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+## 1.6.2 (2026-02-27)
+1) Aggiunto il supporto al MIME "message/rfc822" per visualizzare correttamente le mail con allegati mail (mail annidate).
+2) Aggiunto il supporto ai raw Quoted-Printable, per gestire correttamente le mail con codifica non standard.
+
 ## 1.6.1 (2026-02-26)
 1) Sistemato un bug del sistema di aggiornamento, dove, in alcuni casi, non veniva scaricata la nuova versione, anche se disponibile. (Il sistema di aggiornamento è ancora in fase di test, ma questo fix dovrebbe migliorare l'affidabilità del processo)
 2) Sistemate alcune traduzioni mancanti.
