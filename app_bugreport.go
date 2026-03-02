@@ -145,7 +145,7 @@ func (a *App) CreateBugReportFolder() (*BugReportResult, error) {
 // Returns:
 //   - *SubmitBugReportResult: Paths to the zip file and folder
 //   - error: Error if any file operation fails
-func (a *App) SubmitBugReport(input BugReportInput) (*SubmitBugReportResult, error) {
+func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugReportResult, error) {
 	// Create unique folder name with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	folderName := fmt.Sprintf("emly_bugreport_%s", timestamp)
@@ -266,7 +266,7 @@ Update Check Enabled: %s
 		Log("Bug report API is offline, skipping upload")
 		result.UploadError = "Bug report API is offline"
 	} else {
-		reportID, uploadErr := a.UploadBugReport(bugReportFolder, input)
+		reportID, uploadErr := a.UploadBugReport(bugReportFolder, input, currEnv)
 		if uploadErr != nil {
 			Log("Bug report upload failed (falling back to local zip):", uploadErr)
 			result.UploadError = uploadErr.Error()
@@ -289,7 +289,7 @@ Update Check Enabled: %s
 // Returns:
 //   - int64: Server-assigned report ID
 //   - error: Error if upload fails or API is not configured
-func (a *App) UploadBugReport(folderPath string, input BugReportInput) (int64, error) {
+func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv string) (int64, error) {
 	// Load config to get API URL and key
 	cfgPath := utils.DefaultConfigPath()
 	cfg, err := utils.LoadConfig(cfgPath)
@@ -338,8 +338,8 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput) (int64, e
 
 	// Add files from the folder
 	fileRoles := map[string]string{
-		"screenshot": "screenshot",
-		"mail_file":  "mail_file",
+		"screenshot":        "screenshot",
+		"mail_file":         "mail_file",
 		"localStorage.json": "localstorage",
 		"config.json":       "config",
 	}
@@ -394,6 +394,11 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput) (int64, e
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("X-API-Key", apiKey)
+
+	if currEnv != "prod" && currEnv != "test" {
+		return 0, fmt.Errorf("selected db enviroment is not valid")
+	}
+	req.Header.Set("X-DB-Env", currEnv)
 
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
