@@ -337,8 +337,8 @@ func (a *App) copyFileWithProgress(src, dst string) error {
 // Install Methods
 // =============================================================================
 
-// InstallUpdate launches the downloaded installer with elevated privileges
-// and optionally quits the application.
+// InstallUpdate launches the downloaded installer silently as a detached process
+// and quits the application if requested.
 //
 // Parameters:
 //   - quitAfterLaunch: If true, exits EMLy after launching the installer
@@ -361,52 +361,30 @@ func (a *App) InstallUpdate(quitAfterLaunch bool) error {
 
 	log.Printf("Launching installer: %s", installerPath)
 
-	// Launch installer with UAC elevation using ShellExecute
-	if err := shellExecuteAsAdmin(installerPath); err != nil {
+	logPath := filepath.Join(os.TempDir(), "emly_install.log")
+	args := []string{
+		"/VERYSILENT",
+		"/SUPPRESSMSGBOXES",
+		"/NORESTART",
+		"/FORCEUPGRADE",
+		fmt.Sprintf(`/LOG="%s"`, logPath),
+	}
+
+	var relaunchPath string
+	if quitAfterLaunch {
+		relaunchPath, _ = os.Executable()
+	}
+
+	if err := launchInstallerAndRelaunch(installerPath, args, relaunchPath); err != nil {
 		updateStatus.ErrorMessage = fmt.Sprintf("Failed to launch installer: %v", err)
 		return fmt.Errorf("failed to launch installer: %w", err)
 	}
 
 	log.Printf("Installer launched successfully")
 
-	// Quit application if requested
 	if quitAfterLaunch {
-		time.Sleep(500 * time.Millisecond) // Brief delay to ensure installer starts
+		time.Sleep(500 * time.Millisecond)
 		runtime.Quit(a.ctx)
-	}
-
-	return nil
-}
-
-// shellExecuteAsAdmin launches an executable with UAC elevation on Windows
-func shellExecuteAsAdmin(exePath string) error {
-	verb := "runas" // Triggers UAC elevation
-	exe := syscall.StringToUTF16Ptr(exePath)
-	verbPtr := syscall.StringToUTF16Ptr(verb)
-
-	var hwnd uintptr = 0
-	var operation = verbPtr
-	var file = exe
-	var parameters uintptr = 0
-	var directory uintptr = 0
-	var showCmd int32 = 1 // SW_SHOWNORMAL
-
-	// Load shell32.dll
-	shell32 := syscall.NewLazyDLL("shell32.dll")
-	shellExecute := shell32.NewProc("ShellExecuteW")
-
-	ret, _, err := shellExecute.Call(
-		hwnd,
-		uintptr(unsafe.Pointer(operation)),
-		uintptr(unsafe.Pointer(file)),
-		parameters,
-		directory,
-		uintptr(showCmd),
-	)
-
-	// ShellExecuteW returns a value > 32 on success
-	if ret <= 32 {
-		return fmt.Errorf("ShellExecuteW failed with code %d: %v", ret, err)
 	}
 
 	return nil
@@ -480,86 +458,43 @@ func launchDetachedInstaller(exePath string, args []string) error {
 	return nil
 }
 
-// InstallUpdateSilent downloads the update (if needed) and launches the installer
-// in completely silent mode with a detached process. The installer will run with
-// these arguments: /VERYSILENT /ALLUSERS /SUPPRESSMSGBOXES /NORESTART /FORCEUPGRADE
-//
-// This method automatically quits EMLy after launching the installer, allowing the
-// installer to close the application and complete the upgrade without user interaction.
+// launchInstallerAndRelaunch writes a temporary batch file that runs the installer
+// and, if relaunchPath is non-empty, restarts the application afterwards.
+// The batch is executed via a detached cmd.exe process so it survives EMLy exiting.
+func launchInstallerAndRelaunch(installerPath string, args []string, relaunchPath string) error {
+	installerCmd := fmt.Sprintf(`"%s" %s`, installerPath, strings.Join(args, " "))
+	batch := "@echo off\r\n" + installerCmd + "\r\n"
+	if relaunchPath != "" {
+		batch += fmt.Sprintf("start \"\" \"%s\"\r\n", relaunchPath)
+	}
+
+	batchPath := filepath.Join(os.TempDir(), "emly_update.bat")
+	if err := os.WriteFile(batchPath, []byte(batch), 0644); err != nil {
+		return fmt.Errorf("failed to write update batch: %w", err)
+	}
+
+	log.Printf("Launching update batch: %s", batchPath)
+	return launchDetachedInstaller("cmd.exe", []string{"/c", batchPath})
+}
+
+// InstallUpdateSilent downloads the update (if needed) then delegates to InstallUpdate.
 //
 // Returns:
 //   - error: Error if download or launch fails
 func (a *App) InstallUpdateSilent() error {
 	log.Println("Starting silent update installation...")
 
-	// If installer not ready, attempt to download first
 	if !updateStatus.Ready || updateStatus.InstallerPath == "" {
 		log.Println("Installer not ready, downloading update first...")
-
-		_, err := a.DownloadUpdate()
-		if err != nil {
+		if _, err := a.DownloadUpdate(); err != nil {
 			errMsg := fmt.Sprintf("Failed to download update: %v", err)
 			log.Println(errMsg)
 			updateStatus.ErrorMessage = errMsg
 			return fmt.Errorf("download failed: %w", err)
 		}
-
-		// Wait briefly for download to complete
-		log.Println("Download initiated, waiting for completion...")
-		for i := 0; i < 60; i++ { // Wait up to 60 seconds
-			time.Sleep(1 * time.Second)
-			if updateStatus.Ready {
-				break
-			}
-			if updateStatus.ErrorMessage != "" {
-				return fmt.Errorf("download error: %s", updateStatus.ErrorMessage)
-			}
-		}
-
-		if !updateStatus.Ready {
-			return fmt.Errorf("download timeout - update not ready after 60 seconds")
-		}
 	}
 
-	installerPath := updateStatus.InstallerPath
-
-	// Verify installer exists
-	if _, err := os.Stat(installerPath); os.IsNotExist(err) {
-		updateStatus.ErrorMessage = "Installer file not found"
-		updateStatus.Ready = false
-		log.Printf("Installer not found: %s", installerPath)
-		return fmt.Errorf("installer not found: %s", installerPath)
-	}
-
-	log.Printf("Installer ready at: %s", installerPath)
-
-	// Prepare silent installation arguments
-	args := []string{
-		"/VERYSILENT",           // No UI, completely silent
-		"/ALLUSERS",             // Install for all users (requires admin)
-		"/SUPPRESSMSGBOXES",     // Suppress all message boxes
-		"/NORESTART",            // Don't restart system
-		"/FORCEUPGRADE",         // Skip upgrade confirmation dialog
-		`/LOG="C:\install.log"`, // Create installation log
-	}
-
-	log.Printf("Launching installer with args: %v", args)
-
-	// Launch detached installer
-	if err := launchDetachedInstaller(installerPath, args); err != nil {
-		errMsg := fmt.Sprintf("Failed to launch installer: %v", err)
-		log.Println(errMsg)
-		updateStatus.ErrorMessage = errMsg
-		return fmt.Errorf("failed to launch installer: %w", err)
-	}
-
-	log.Println("Detached installer launched successfully, quitting EMLy...")
-
-	// Quit application to allow installer to replace files
-	time.Sleep(500 * time.Millisecond) // Brief delay to ensure installer starts
-	runtime.Quit(a.ctx)
-
-	return nil
+	return a.InstallUpdate(true)
 }
 
 // InstallUpdateSilentFromPath downloads an installer from a custom SMB/network path
@@ -616,29 +551,28 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 
 	log.Printf("Installer copied successfully (%d bytes)", bytesWritten)
 
-	// Prepare silent installation arguments
+	logPath := filepath.Join(os.TempDir(), "emly_install.log")
 	args := []string{
-		"/VERYSILENT",           // No UI, completely silent
-		"/ALLUSERS",             // Install for all users (requires admin)
-		"/SUPPRESSMSGBOXES",     // Suppress all message boxes
-		"/NORESTART",            // Don't restart system
-		"/FORCEUPGRADE",         // Skip upgrade confirmation dialog
-		`/LOG="C:\install.log"`, // Create installation log
+		"/VERYSILENT",
+		"/ALLUSERS",
+		"/SUPPRESSMSGBOXES",
+		"/NORESTART",
+		"/FORCEUPGRADE",
+		fmt.Sprintf(`/LOG="%s"`, logPath),
 	}
 
 	log.Printf("Launching installer with args: %v", args)
 
-	// Launch detached installer
-	if err := launchDetachedInstaller(tempInstallerPath, args); err != nil {
+	relaunchPath, _ := os.Executable()
+	if err := launchInstallerAndRelaunch(tempInstallerPath, args, relaunchPath); err != nil {
 		errMsg := fmt.Sprintf("Failed to launch installer: %v", err)
 		log.Println(errMsg)
 		return fmt.Errorf("failed to launch installer: %w", err)
 	}
 
-	log.Println("Detached installer launched successfully, quitting EMLy...")
+	log.Println("Installer batch launched successfully, quitting EMLy...")
 
-	// Quit application to allow installer to replace files
-	time.Sleep(500 * time.Millisecond) // Brief delay to ensure installer starts
+	time.Sleep(500 * time.Millisecond)
 	runtime.Quit(a.ctx)
 
 	return nil
