@@ -1,5 +1,13 @@
 # Changelog EMLy
 
+## 1.6.3 (2026-03-03)
+1) Fixato un bug dove scaricando un singolo allegato PDF dal visualizzatore, il file scaricato era corrotto con dimensioni di 0 byte.
+2) Aggiunta la possibilità di selezionare il percorso di aggiornamento (DC-RM2, DC-CB, o percorso personalizzato) direttamente dalle impostazioni.
+3) Inserito disclaimer all'avvio se il file config.ini non è presente o non è accessibile.
+4) Aggiunti più dati di diagnostica nel report di segnalazione bug (IP interno, dominio Active Directory, configurazione EMLy)
+5) Fixato un bug dove se l'aggiornamento falliva, il pulsante di aggiornamento rimaneva bloccato.
+6) Fixato un bug dove se l'aggiornamento falliva, il testo diceva che si era all'ultimo aggiornamento disponibile.
+
 ## 1.6.2 (2026-02-27)
 1) Aggiunto il supporto al MIME "message/rfc822" per visualizzare correttamente le mail con allegati mail (mail annidate).
 2) Aggiunto il supporto ai raw Quoted-Printable, per gestire correttamente le mail con codifica non standard.

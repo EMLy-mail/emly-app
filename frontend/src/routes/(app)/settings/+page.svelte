@@ -56,6 +56,10 @@
     let { data } = $props();
     let config = $state(data.config);
 
+    if (!config) {
+        toast.error(m.settings_config_load_error());
+    }
+
     let runningInDevMode: boolean = dev || false;
 
     const defaults: EMLy_GUI_Settings = {
@@ -65,7 +69,7 @@
         previewFileSupportedTypes: ["jpg", "jpeg", "png"],
         enableAttachedDebuggerProtection: true,
         useDarkEmailViewer: true,
-        enableUpdateChecker: false,
+        enableUpdateChecker: true,
         reduceMotion: false,
         theme: "dark",
         increaseWindowButtonsContrast: false,
@@ -110,9 +114,16 @@
     const UPDATE_PATH_LABELS: Record<UpdatePathOption, string> = {
         "DC-RM2": `DC-RM2 (${UPDATE_PATH_OPTIONS["DC-RM2"]})`,
         "DC-CB": `DC-CB (${UPDATE_PATH_OPTIONS["DC-CB"]})`,
-        Other: "Altro (percorso personalizzato)",
+        Other: m.settings_update_select_other(),
     };
     let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
+    const UNC_PATH_RE = /^\\\\[^\\/]+\\[^\\/]+/;
+    const LOCAL_PATH_RE = /^[A-Za-z]:\\/;
+    const customPathValid = $derived(
+        updatePathSelection !== "Other" ||
+            UNC_PATH_RE.test(customUpdatePath.trim()) ||
+            (runningInDevMode && LOCAL_PATH_RE.test(customUpdatePath.trim())),
+    );
 
     function normalizeSettings(s: EMLy_GUI_Settings): EMLy_GUI_Settings {
         return {
@@ -416,7 +427,9 @@
     async function checkForUpdates() {
         try {
             const status = await CheckForUpdates();
+            console.log("checkForUpdates status", status);
             updateStatus = status;
+            $inspect("updateStatus", updateStatus);
 
             if (status.updateAvailable) {
                 toast.success(
@@ -431,6 +444,9 @@
             }
         } catch (err) {
             console.error("Failed to check for updates:", err);
+            updateStatus.checking = false;
+            updateStatus.errorMessage = String(err);
+            updateStatus.lastCheckTime = new Date().toISOString();
             toast.error(m.settings_toast_check_failed());
         }
     }
@@ -1133,11 +1149,11 @@
                         >
                             <div class="space-y-1">
                                 <Label class="text-sm"
-                                    >Percorso aggiornamenti</Label
+                                    >{m.settings_update_path_label()}</Label
                                 >
                                 <div class="text-sm text-muted-foreground">
-                                    Seleziona il server da cui scaricare gli
-                                    aggiornamenti. Viene salvato in <code
+                                    {m.settings_update_path_description()}
+                                    <code
                                         class="text-xs bg-muted px-1 py-0.5 rounded"
                                         >config.ini</code
                                     >.
@@ -1184,29 +1200,36 @@
                                     class="cursor-pointer hover:cursor-pointer"
                                     onclick={saveUpdatePath}
                                     disabled={savingUpdatePath ||
-                                        (updatePathSelection === "Other" &&
-                                            !customUpdatePath.trim())}
+                                        !customPathValid}
                                 >
                                     <Save class="size-4 mr-2" />
-                                    Salva
+                                    {m.settings_update_path_btn()}
                                 </Button>
                             </div>
                             {#if updatePathSelection === "Other"}
                                 <div class="flex flex-col gap-1.5">
                                     <Label class="text-xs text-muted-foreground"
-                                        >Percorso UNC (es.
-                                        \\server\cartella\update)</Label
+                                        >{m.settings_update_unc_label()}</Label
                                     >
                                     <Input
                                         bind:value={customUpdatePath}
-                                        placeholder={"\\\\server\\cartella\\update"}
-                                        class="font-mono text-sm"
+                                        placeholder={m.settings_update_unc_placeholder()}
+                                        class="font-mono text-sm {customUpdatePath.trim() &&
+                                        !customPathValid
+                                            ? 'border-destructive focus-visible:ring-destructive'
+                                            : ''}"
                                     />
+                                    {#if customUpdatePath.trim() && !customPathValid}
+                                        <p class="text-xs text-destructive">
+                                            {m.settings_update_unc_invalid()}
+                                        </p>
+                                    {/if}
                                 </div>
                             {/if}
                             {#if (config as any)?.UpdatePath}
                                 <div class="text-xs text-muted-foreground">
-                                    Percorso attuale: <code
+                                    {m.settings_update_path_hint()}
+                                    <code
                                         class="text-xs bg-muted px-1 py-0.5 rounded"
                                         >{(config as any).UpdatePath}</code
                                     >

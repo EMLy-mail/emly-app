@@ -37,6 +37,9 @@ jobs:
       - name: Install InnoSetup
         run: choco install innosetup -y
 
+      - name: Install UPX
+        run: choco install upx -y
+
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
@@ -45,7 +48,7 @@ jobs:
         run: bun install
 
       - name: Build EMLy
-        run: wails build --devtools
+        run: wails build --devtools --upx
 
       - name: Compile installer
         run: iscc installer\installer.iss

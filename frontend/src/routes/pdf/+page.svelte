@@ -88,7 +88,7 @@
     }, 10000);
 
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice() });
       pdfDoc = await loadingTask.promise;
       totalPages = pdfDoc.numPages;
       pageNum = 1;

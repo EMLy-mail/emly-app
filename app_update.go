@@ -109,9 +109,11 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 
 	// Load manifest from network share
 	manifest, err := a.loadUpdateManifest(updatePath)
+	fmt.Println("loadUpdateManifest err", err)
 	if err != nil {
 		updateStatus.ErrorMessage = fmt.Sprintf("Failed to load manifest: %v", err)
 		updateStatus.Checking = false
+		fmt.Println("updateStatus", updateStatus)
 		return updateStatus, err
 	}
 

@@ -57,13 +57,19 @@ func SaveConfig(path string, config *Config) error {
 }
 
 func DefaultConfigPath() string {
-	// Prefer config.ini next to the executable (packaged app), fallback to CWD (dev).
+	configName := "config.ini"
+	if isDebugBuild {
+		log.Println("Debug build: using config.debug.ini")
+		configName = "config.debug.ini"
+	}
+
+	// Prefer the config file next to the executable (packaged app), fallback to CWD (dev).
 	exe, err := os.Executable()
 	if err == nil {
-		p := filepath.Join(filepath.Dir(exe), "config.ini")
+		p := filepath.Join(filepath.Dir(exe), configName)
 		if _, statErr := os.Stat(p); statErr == nil {
 			return p
 		}
 	}
-	return "config.ini"
+	return configName
 }
