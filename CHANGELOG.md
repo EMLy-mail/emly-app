@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+## 1.6.3 (2026-03-04)
+1) Fixato un bug dove email con `Content-Transfer-Encoding: 8Bit` (maiuscolo) non venivano parsate correttamente a causa di un confronto case-sensitive.
+
 ## 1.6.3 (2026-03-03)
 1) Fixato un bug dove scaricando un singolo allegato PDF dal visualizzatore, il file scaricato era corrotto con dimensioni di 0 byte.
 2) Aggiunta la possibilità di selezionare il percorso di aggiornamento (DC-RM2, DC-CB, o percorso personalizzato) direttamente dalle impostazioni.
