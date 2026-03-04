@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -66,4 +64,24 @@ jobs:
           name: EMLy-installer
           path: installer\Output\EMLy_Installer_*.exe
           if-no-files-found: error
+
+      - name: Read version from config
+        if: github.event_name != 'pull_request'
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content config.ini | Select-String 'GUI_SEMVER').ToString().Split('=')[1].Trim()
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: EMLy v${{ steps.version.outputs.version }}
+          files: |
+            build/bin/EMLy.exe
+            installer/Output/EMLy_Installer_*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

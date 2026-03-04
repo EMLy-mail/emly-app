@@ -1,6 +1,6 @@
 #define ApplicationName 'EMLy'
 #define ApplicationVersion GetVersionNumbersString('EMLy.exe')
-#define ApplicationVersion '1.6.3_beta'
+#define ApplicationVersion '1.6.4_beta'
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -224,4 +224,3 @@ begin
   if (not IsUpgrade) or IsLegacyMigration then
     WizardForm.WelcomeLabel2.Caption := CustomMessage('FreshInstallMessage');
 end;
-
