@@ -2,12 +2,15 @@
   import MailViewer from "$lib/components/MailViewer.svelte";
   import { mailState } from "$lib/stores/mail-state.svelte";
   import * as m from "$lib/paraglide/messages.js";
+  import { toast } from "svelte-sonner";
 
   let { data } = $props();
 
   $effect(() => {
     if (data.email) {
       mailState.setParams(data.email);
+    } else if (data.loadError) {
+      toast.error(m.mail_error_opening());
     }
   });
 </script>

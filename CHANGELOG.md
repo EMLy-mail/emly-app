@@ -1,8 +1,9 @@
 # Changelog EMLy
 
-## 1.6.3 (2026-03-04)
+## 1.6.4 (2026-03-04)
 1) Fixato un bug dove email con `Content-Transfer-Encoding: 8Bit` (maiuscolo) non venivano parsate correttamente a causa di un confronto case-sensitive.
 2) Fixato un bug dove email con struttura `multipart/alternative` contenente una parte `multipart/mixed` (come quelle inviate da Apple Mail) mostravano un allegato fantasma denominato `embedded_image.mixed` invece di mostrare correttamente gli allegati reali.
+3) Aggiunta la toast di errore quando si verifica un errore durante il caricamento dell'email.
 
 ## 1.6.3 (2026-03-03)
 1) Fixato un bug dove scaricando un singolo allegato PDF dal visualizzatore, il file scaricato era corrotto con dimensioni di 0 byte.
