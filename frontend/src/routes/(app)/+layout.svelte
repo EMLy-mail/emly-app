@@ -8,6 +8,7 @@
         sidebarOpen,
         bugReportDialogOpen,
         dangerZoneEnabled,
+        runningInDebugMode,
     } from "$lib/stores/app";
     import { onMount } from "svelte";
     import * as m from "$lib/paraglide/messages.js";
@@ -42,7 +43,11 @@
         EventsOff,
     } from "$lib/wailsjs/runtime/runtime";
     import { RefreshCcwDot } from "@lucide/svelte";
-    import { IsDebuggerRunning, QuitApp } from "$lib/wailsjs/go/main/App";
+    import {
+        IsDebuggerRunning,
+        QuitApp,
+        IsAppInDebugMode,
+    } from "$lib/wailsjs/go/main/App";
     import { settingsStore } from "$lib/stores/settings.svelte.js";
 
     let versionInfo: utils.Config | null = $state(null);
@@ -94,6 +99,7 @@
         if (!versionInfo) {
             configMissingDialogOpen = true;
         }
+        runningInDebugMode.set(await IsAppInDebugMode());
     });
 
     function handleWheel(event: WheelEvent) {
@@ -142,6 +148,7 @@
             ? true
             : false;
         $inspect(isDebbugerProtectionOn, "isDebbugerProtectionOn");
+        $inspect($runningInDebugMode, "isAppInDebugMode");
 
         applyTheme(stored === "light" ? "light" : "dark");
     });
@@ -185,10 +192,14 @@
             <bold>EMLy</bold>
             <div class="version-wrapper">
                 <version>
-                    {#if dev}
+                    {#if dev && $runningInDebugMode}
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
-                        <debug>(DEBUG BUILD)</debug>
+                        <debug>(DEBUG BUILD (Go + Vite))</debug>
+                    {:else if dev}
+                        v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
+                            .GUIReleaseChannel}
+                        <debug>(DEV BUILD (Vite))</debug>
                     {:else if versionInfo?.EMLy.GUIReleaseChannel !== "stable"}
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
@@ -299,11 +310,8 @@
         <Settings
             size="16"
             onclick={() => {
-                if (
-                    page.url.pathname !== "/settings" &&
-                    page.url.pathname !== "/settings/"
-                )
-                    goto("/settings");
+                const p = page.url.pathname as string;
+                if (p !== "/settings" && p !== "/settings/") goto("/settings");
             }}
             style="cursor: pointer; opacity: 0.7;"
             class="hover:opacity-100 transition-opacity"
@@ -311,11 +319,8 @@
         <Info
             size="16"
             onclick={() => {
-                if (
-                    page.url.pathname !== "/credits" &&
-                    page.url.pathname !== "/credits/"
-                )
-                    goto("/credits");
+                const p = page.url.pathname as string;
+                if (p !== "/credits" && p !== "/credits/") goto("/credits");
             }}
             style="cursor: pointer; opacity: 0.7;"
             class="hover:opacity-100 transition-opacity"

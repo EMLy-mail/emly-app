@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -109,7 +108,8 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 
 	// Load manifest from network share
 	manifest, err := a.loadUpdateManifest(updatePath)
-	fmt.Println("loadUpdateManifest err", err)
+	log := fmt.Sprintf("loadUpdateManifest err: %v", err)
+	Log(log)
 	if err != nil {
 		updateStatus.ErrorMessage = fmt.Sprintf("Failed to load manifest: %v", err)
 		updateStatus.Checking = false
@@ -140,15 +140,15 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 			updateStatus.ReleaseNotes = notes
 		}
 
-		log.Printf("Update available: %s -> %s (%s channel)",
-			updateStatus.CurrentVersion, targetVersion, currentChannel)
+		Log(fmt.Sprintf("Update available: %s -> %s (%s channel)",
+			updateStatus.CurrentVersion, targetVersion, currentChannel))
 	} else {
 		updateStatus.UpdateAvailable = false
 		updateStatus.InstallerPath = ""
 		updateStatus.Ready = false
 		updateStatus.ReleaseNotes = ""
-		log.Printf("Already on latest version: %s (%s channel)",
-			updateStatus.CurrentVersion, currentChannel)
+		Log(fmt.Sprintf("Already on latest version: %s (%s channel)",
+			updateStatus.CurrentVersion, currentChannel))
 	}
 
 	updateStatus.Checking = false
@@ -163,7 +163,7 @@ func (a *App) loadUpdateManifest(updatePath string) (*UpdateManifest, error) {
 		return nil, fmt.Errorf("failed to resolve manifest path: %w", err)
 	}
 
-	log.Printf("Loading update manifest from: %s", manifestPath)
+	Log("Loading update manifest from:", manifestPath)
 
 	// Read manifest file
 	data, err := os.ReadFile(manifestPath)
@@ -242,7 +242,7 @@ func (a *App) DownloadUpdate() (string, error) {
 		return "", fmt.Errorf("failed to resolve installer path: %w", err)
 	}
 
-	log.Printf("Downloading installer from: %s", sourcePath)
+	Log("Downloading installer from:", sourcePath)
 
 	// Create temp directory for download
 	tempDir := filepath.Join(os.TempDir(), "emly_update")
@@ -262,22 +262,22 @@ func (a *App) DownloadUpdate() (string, error) {
 
 	// Verify checksum if available
 	if checksum, ok := manifest.SHA256Checksums[downloadFilename]; ok {
-		log.Printf("Verifying checksum for %s", downloadFilename)
+		Log("Verifying checksum for", downloadFilename)
 		if err := verifyChecksum(destPath, checksum); err != nil {
 			updateStatus.ErrorMessage = "Checksum verification failed"
 			// Delete corrupted file
 			os.Remove(destPath)
 			return "", fmt.Errorf("checksum verification failed: %w", err)
 		}
-		log.Printf("Checksum verified successfully")
+		Log("Checksum verified successfully")
 	} else {
-		log.Printf("Warning: No checksum available for %s", downloadFilename)
+		Log("Warning: No checksum available for", downloadFilename)
 	}
 
 	updateStatus.InstallerPath = destPath
 	updateStatus.Ready = true
 	updateStatus.DownloadProgress = 100
-	log.Printf("Update downloaded successfully to: %s", destPath)
+	Log("Update downloaded successfully to:", destPath)
 
 	return destPath, nil
 }
@@ -359,7 +359,7 @@ func (a *App) InstallUpdate(quitAfterLaunch bool) error {
 		return fmt.Errorf("installer not found: %s", installerPath)
 	}
 
-	log.Printf("Launching installer: %s", installerPath)
+	Log("Launching installer:", installerPath)
 
 	logPath := filepath.Join(os.TempDir(), "emly_install.log")
 	args := []string{
@@ -380,7 +380,7 @@ func (a *App) InstallUpdate(quitAfterLaunch bool) error {
 		return fmt.Errorf("failed to launch installer: %w", err)
 	}
 
-	log.Printf("Installer launched successfully")
+	Log("Installer launched successfully")
 
 	if quitAfterLaunch {
 		time.Sleep(500 * time.Millisecond)
@@ -407,7 +407,7 @@ func launchDetachedInstaller(exePath string, args []string) error {
 		cmdLine += " " + strings.Join(args, " ")
 	}
 
-	log.Printf("Launching detached installer: %s", cmdLine)
+	Log("Launching detached installer:", cmdLine)
 
 	// Convert to UTF16 for Windows API
 	cmdLinePtr := syscall.StringToUTF16Ptr(cmdLine)
@@ -444,7 +444,7 @@ func launchDetachedInstaller(exePath string, args []string) error {
 	)
 
 	if err != nil {
-		log.Printf("CreateProcess failed: %v", err)
+		Log("CreateProcess failed:", err)
 		return fmt.Errorf("failed to create detached process: %w", err)
 	}
 
@@ -453,7 +453,7 @@ func launchDetachedInstaller(exePath string, args []string) error {
 	syscall.CloseHandle(pi.Process)
 	syscall.CloseHandle(pi.Thread)
 
-	log.Printf("Detached installer process launched successfully (PID: %d)", pi.ProcessId)
+	Log(fmt.Sprintf("Detached installer process launched successfully (PID: %d)", pi.ProcessId))
 
 	return nil
 }
@@ -473,7 +473,7 @@ func launchInstallerAndRelaunch(installerPath string, args []string, relaunchPat
 		return fmt.Errorf("failed to write update batch: %w", err)
 	}
 
-	log.Printf("Launching update batch: %s", batchPath)
+	Log("Launching update batch:", batchPath)
 	return launchDetachedInstaller("cmd.exe", []string{"/c", batchPath})
 }
 
@@ -482,13 +482,13 @@ func launchInstallerAndRelaunch(installerPath string, args []string, relaunchPat
 // Returns:
 //   - error: Error if download or launch fails
 func (a *App) InstallUpdateSilent() error {
-	log.Println("Starting silent update installation...")
+	Log("Starting silent update installation...")
 
 	if !updateStatus.Ready || updateStatus.InstallerPath == "" {
-		log.Println("Installer not ready, downloading update first...")
+		Log("Installer not ready, downloading update first...")
 		if _, err := a.DownloadUpdate(); err != nil {
 			errMsg := fmt.Sprintf("Failed to download update: %v", err)
-			log.Println(errMsg)
+			Log(errMsg)
 			updateStatus.ErrorMessage = errMsg
 			return fmt.Errorf("download failed: %w", err)
 		}
@@ -508,12 +508,12 @@ func (a *App) InstallUpdateSilent() error {
 // Returns:
 //   - error: Error if download or launch fails
 func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
-	log.Printf("Starting silent installation from custom path: %s", smbPath)
+	Log("Starting silent installation from custom path:", smbPath)
 
 	// Verify source installer exists and is accessible
 	if _, err := os.Stat(smbPath); os.IsNotExist(err) {
 		errMsg := fmt.Sprintf("Installer not found at: %s", smbPath)
-		log.Println(errMsg)
+		Log(errMsg)
 		return fmt.Errorf("%s", errMsg)
 	}
 
@@ -522,13 +522,13 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 	installerFilename := filepath.Base(smbPath)
 	tempInstallerPath := filepath.Join(tempDir, installerFilename)
 
-	log.Printf("Copying installer to temp location: %s", tempInstallerPath)
+	Log("Copying installer to temp location:", tempInstallerPath)
 
 	// Copy installer from SMB path to local temp
 	sourceFile, err := os.Open(smbPath)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to open source installer: %v", err)
-		log.Println(errMsg)
+		Log(errMsg)
 		return fmt.Errorf("failed to open installer: %w", err)
 	}
 	defer sourceFile.Close()
@@ -536,7 +536,7 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 	destFile, err := os.Create(tempInstallerPath)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to create temp installer: %v", err)
-		log.Println(errMsg)
+		Log(errMsg)
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer destFile.Close()
@@ -545,11 +545,11 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 	bytesWritten, err := io.Copy(destFile, sourceFile)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to copy installer: %v", err)
-		log.Println(errMsg)
+		Log(errMsg)
 		return fmt.Errorf("failed to copy installer: %w", err)
 	}
 
-	log.Printf("Installer copied successfully (%d bytes)", bytesWritten)
+	Log(fmt.Sprintf("Installer copied successfully (%d bytes)", bytesWritten))
 
 	logPath := filepath.Join(os.TempDir(), "emly_install.log")
 	args := []string{
@@ -561,16 +561,16 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 		fmt.Sprintf(`/LOG="%s"`, logPath),
 	}
 
-	log.Printf("Launching installer with args: %v", args)
+	Log("Launching installer with args:", args)
 
 	relaunchPath, _ := os.Executable()
 	if err := launchInstallerAndRelaunch(tempInstallerPath, args, relaunchPath); err != nil {
 		errMsg := fmt.Sprintf("Failed to launch installer: %v", err)
-		log.Println(errMsg)
+		Log(errMsg)
 		return fmt.Errorf("failed to launch installer: %w", err)
 	}
 
-	log.Println("Installer batch launched successfully, quitting EMLy...")
+	Log("Installer batch launched successfully, quitting EMLy...")
 
 	time.Sleep(500 * time.Millisecond)
 	runtime.Quit(a.ctx)

@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"path/filepath"
+
+	"emly/backend/logger"
 
 	"gopkg.in/ini.v1"
 )
@@ -28,15 +29,16 @@ type EMLyConfig struct {
 
 // LoadConfig reads the config.ini file at the given path and returns a Config struct
 func LoadConfig(path string) (*Config, error) {
+	logger.Log("LoadConfig path:", path)
 	cfg, err := ini.Load(path)
 	if err != nil {
-		log.Printf("Fail to read file: %v", err)
+		logger.Log("Fail to read file:", err)
 		return nil, err
 	}
 
 	config := new(Config)
 	if err := cfg.MapTo(config); err != nil {
-		log.Printf("Fail to map config: %v", err)
+		logger.Log("Fail to map config:", err)
 		return nil, err
 	}
 
@@ -44,13 +46,14 @@ func LoadConfig(path string) (*Config, error) {
 }
 
 func SaveConfig(path string, config *Config) error {
+	logger.Log("SaveConfig path:", path)
 	cfg := ini.Empty()
 	if err := cfg.ReflectFrom(config); err != nil {
-		log.Printf("Fail to reflect config: %v", err)
+		logger.Log("Fail to reflect config:", err)
 		return err
 	}
 	if err := cfg.SaveTo(path); err != nil {
-		log.Printf("Fail to save config file: %v", err)
+		logger.Log("Fail to save config file:", err)
 		return err
 	}
 	return nil
@@ -59,7 +62,7 @@ func SaveConfig(path string, config *Config) error {
 func DefaultConfigPath() string {
 	configName := "config.ini"
 	if isDebugBuild {
-		log.Println("Debug build: using config.debug.ini")
+		logger.Log("Debug build: using config.debug.ini")
 		configName = "config.debug.ini"
 	}
 

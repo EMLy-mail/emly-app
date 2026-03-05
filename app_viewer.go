@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"strings"
 	"time"
 )
@@ -289,6 +290,7 @@ func (a *App) OpenPDF(base64Data string, filename string) error {
 
 	// Open with Windows default application
 	cmd := exec.Command("cmd", "/c", "start", "", tempFile)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
@@ -325,6 +327,7 @@ func (a *App) OpenImage(base64Data string, filename string) error {
 
 	// Open with Windows default application
 	cmd := exec.Command("cmd", "/c", "start", "", tempFile)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}

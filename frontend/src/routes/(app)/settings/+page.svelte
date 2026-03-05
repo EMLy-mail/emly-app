@@ -54,11 +54,13 @@
     import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
 
     let { data } = $props();
-    let config = $state(data.config);
+    let config = $derived(data.config);
 
-    if (!config) {
-        toast.error(m.settings_config_load_error());
-    }
+    $effect(() => {
+        if (!config) {
+            toast.error(m.settings_config_load_error());
+        }
+    });
 
     let runningInDevMode: boolean = dev || false;
 

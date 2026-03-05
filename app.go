@@ -5,11 +5,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"emly/backend/utils"
@@ -103,25 +103,26 @@ func (a *App) startup(ctx context.Context) {
 
 			config := a.GetConfig()
 			if config == nil {
-				log.Printf("Failed to load config for auto-update check")
+				Log("Failed to load config for auto-update check")
 				return
 			}
 
 			// Check if auto-update is enabled
 			if config.EMLy.UpdateAutoCheck == "true" && config.EMLy.UpdateCheckEnabled == "true" {
-				log.Println("Performing automatic update check...")
+				Log("Performing automatic update check...")
 				status, err := a.CheckForUpdates()
 				if err != nil {
-					log.Printf("Auto-update check failed: %v", err)
+					Log("Auto-update check failed: ", err)
 					return
 				}
 
 				// Emit event if update is available
 				if status.UpdateAvailable {
-					log.Printf("Update available: %s -> %s", status.CurrentVersion, status.AvailableVersion)
+					log := fmt.Sprintf("Update available: %s -> %s", status.CurrentVersion, status.AvailableVersion)
+					Log(log)
 					runtime.EventsEmit(ctx, "update:available", status)
 				} else {
-					log.Println("No updates available")
+					Log("No updates available")
 				}
 			}
 		}()
@@ -158,6 +159,7 @@ func (a *App) RestartApp() error {
 	script := fmt.Sprintf(`Start-Sleep -Seconds 1; Start-Process '%s'`, safePath)
 
 	cmd := exec.Command("powershell", "-WindowStyle", "Hidden", "-Command", script)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	if err := cmd.Start(); err != nil {
 		Log("RestartApp: failed to schedule restart:", err)
 		return err
@@ -243,4 +245,11 @@ func (a *App) IsDebuggerRunning() bool {
 		return false
 	}
 	return utils.IsDebugged()
+}
+
+func (a *App) IsAppInDebugMode() bool {
+	if a == nil {
+		return false
+	}
+	return utils.IsRunningInDebugMode()
 }

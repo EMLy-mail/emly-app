@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"strings"
 	"unicode/utf8"
 
@@ -91,6 +92,7 @@ func (a *App) CheckIsDefaultEMLHandler() (bool, error) {
 //   - error: Error if launching settings fails
 func (a *App) OpenDefaultAppsSettings() error {
 	cmd := exec.Command("cmd", "/c", "start", "ms-settings:defaultapps")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	return cmd.Start()
 }
 
@@ -155,5 +157,6 @@ func (a *App) OpenFolderInExplorer(folderPath string) error {
 //   - error: Error if launching the browser fails
 func (a *App) OpenURLInBrowser(url string) error {
 	cmd := exec.Command("cmd", "/c", "start", "", url)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	return cmd.Start()
 }

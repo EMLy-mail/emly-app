@@ -19,11 +19,11 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 	var secondInstanceArgs []string
 	secondInstanceArgs = secondInstanceData.Args
 
-	log.Println("user opened second instance", strings.Join(secondInstanceData.Args, ","))
-	log.Println("user opened second from", secondInstanceData.WorkingDirectory)
+	Log("user opened second instance", strings.Join(secondInstanceData.Args, ","))
+	Log("user opened second from", secondInstanceData.WorkingDirectory)
 	runtime.WindowUnminimise(a.ctx)
 	runtime.WindowShow(a.ctx)
-	log.Println("launchArgs", secondInstanceArgs)
+	Log("launchArgs", secondInstanceArgs)
 	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
 }
 
@@ -38,7 +38,7 @@ func main() {
 	uniqueId := "emly-app-lock"
 	windowTitle := "EMLy - EML Viewer for 3gIT"
 	windowWidth := 1024
-	windowHeight := 768
+	windowHeight := 700
 	frameless := true
 
 	for _, arg := range args {

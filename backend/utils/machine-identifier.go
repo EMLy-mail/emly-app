@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"syscall"
 	"strings"
 
 	"github.com/jaypipes/ghw"
@@ -80,7 +81,9 @@ func GetMachineInfo() (*MachineInfo, error) {
 	// 3. Get HWID (Windows specific via wmic)
 	// Fallback or different implementation needed for Linux/Mac if required
 	if runtime.GOOS == "windows" {
-		out, err := exec.Command("wmic", "csproduct", "get", "uuid").Output()
+		wmicCmd := exec.Command("wmic", "csproduct", "get", "uuid")
+		wmicCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+		out, err := wmicCmd.Output()
 		if err == nil {
 			// Parse output which looks like "UUID \n <UUID> \n\n"
 			lines := strings.Split(string(out), "\n")
@@ -97,7 +100,9 @@ func GetMachineInfo() (*MachineInfo, error) {
 		if info.HWID == "" {
 			// Simplified registry read attempt using reg query command to avoid cgo/syscall complexity for now
 			// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography -> MachineGuid
-			out, err := exec.Command("reg", "query", `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography`, "/v", "MachineGuid").Output()
+			regCmd := exec.Command("reg", "query", `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography`, "/v", "MachineGuid")
+			regCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+			out, err := regCmd.Output()
 			if err == nil {
 				// Parse output
 				content := string(out)
@@ -220,7 +225,9 @@ func getADDomain() (string, error) {
 	if runtime.GOOS != "windows" {
 		return "", fmt.Errorf("AD domain retrieval not implemented for %s", runtime.GOOS)
 	}
-	out, err := exec.Command("powershell", "-Command", "(Get-WmiObject Win32_ComputerSystem).Domain").Output()
+	psCmd := exec.Command("powershell", "-Command", "(Get-WmiObject Win32_ComputerSystem).Domain")
+	psCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	out, err := psCmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to get AD domain: %w", err)
 	}
