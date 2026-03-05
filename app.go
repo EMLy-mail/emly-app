@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	pkglogger "emly/backend/logger"
 	"emly/backend/utils"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -73,6 +74,7 @@ func NewApp() *App {
 // This method:
 //   - Saves the context for later use
 //   - Syncs CurrentMailFilePath with StartupFilePath if a file was opened via CLI
+//   - Applies LOG_LEVEL from config.ini
 //   - Logs the startup mode (main app vs viewer window)
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
@@ -80,6 +82,12 @@ func (a *App) startup(ctx context.Context) {
 	// Sync CurrentMailFilePath with StartupFilePath if a file was opened via command line
 	if a.StartupFilePath != "" {
 		a.CurrentMailFilePath = a.StartupFilePath
+	}
+
+	// Apply log level from config (overrides env var if set)
+	if cfg := a.GetConfig(); cfg != nil && cfg.EMLy.LogLevel != "" {
+		pkglogger.SetLevelFromString(cfg.EMLy.LogLevel)
+		pkglogger.Info("log level set from config", "level", cfg.EMLy.LogLevel)
 	}
 
 	// Check if this instance is running as a viewer (image/PDF) rather than main app
@@ -92,9 +100,9 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	if isViewer {
-		Log("Viewer instance started")
+		pkglogger.Info("viewer instance started")
 	} else {
-		Log("EMLy main application started")
+		pkglogger.Info("EMLy main application started")
 
 		// Automatic update check on startup (if enabled)
 		go func() {
@@ -103,26 +111,28 @@ func (a *App) startup(ctx context.Context) {
 
 			config := a.GetConfig()
 			if config == nil {
-				Log("Failed to load config for auto-update check")
+				pkglogger.Warn("failed to load config for auto-update check")
 				return
 			}
 
 			// Check if auto-update is enabled
 			if config.EMLy.UpdateAutoCheck == "true" && config.EMLy.UpdateCheckEnabled == "true" {
-				Log("Performing automatic update check...")
+				pkglogger.Info("performing automatic update check")
 				status, err := a.CheckForUpdates()
 				if err != nil {
-					Log("Auto-update check failed: ", err)
+					pkglogger.Error("auto-update check failed", "error", err.Error())
 					return
 				}
 
 				// Emit event if update is available
 				if status.UpdateAvailable {
-					log := fmt.Sprintf("Update available: %s -> %s", status.CurrentVersion, status.AvailableVersion)
-					Log(log)
+					pkglogger.Info("update available",
+						"current", status.CurrentVersion,
+						"available", status.AvailableVersion,
+					)
 					runtime.EventsEmit(ctx, "update:available", status)
 				} else {
-					Log("No updates available")
+					pkglogger.Info("no updates available")
 				}
 			}
 		}()
@@ -148,9 +158,13 @@ func (a *App) QuitApp() {
 // It schedules a new process via PowerShell with a short delay to ensure the
 // single-instance lock is released before the new instance starts, then exits.
 func (a *App) RestartApp() error {
+	start := time.Now()
+	var err error
+	defer func() { canonicalLog("RestartApp", start, err) }()
+
 	exe, err := os.Executable()
 	if err != nil {
-		Log("RestartApp: failed to get executable path:", err)
+		pkglogger.Error("RestartApp: failed to get executable path", "error", err.Error())
 		return err
 	}
 
@@ -160,12 +174,12 @@ func (a *App) RestartApp() error {
 
 	cmd := exec.Command("powershell", "-WindowStyle", "Hidden", "-Command", script)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
-	if err := cmd.Start(); err != nil {
-		Log("RestartApp: failed to schedule restart:", err)
+	if err = cmd.Start(); err != nil {
+		pkglogger.Error("RestartApp: failed to schedule restart", "error", err.Error())
 		return err
 	}
 
-	Log("RestartApp: scheduled restart, quitting current instance...")
+	pkglogger.Info("RestartApp: scheduled restart, quitting current instance")
 	runtime.Quit(a.ctx)
 	return nil
 }
@@ -180,7 +194,7 @@ func (a *App) GetConfig() *utils.Config {
 	cfgPath := utils.DefaultConfigPath()
 	cfg, err := utils.LoadConfig(cfgPath)
 	if err != nil {
-		Log("Failed to load config:", err)
+		pkglogger.Error("failed to load config", "error", err.Error())
 		return nil
 	}
 	return cfg
@@ -199,7 +213,7 @@ func (a *App) ReloadEMLyConfig() (utils.EMLyConfig, error) {
 func (a *App) SaveConfig(cfg *utils.Config) error {
 	cfgPath := utils.DefaultConfigPath()
 	if err := utils.SaveConfig(cfgPath, cfg); err != nil {
-		Log("Failed to save config:", err)
+		pkglogger.Error("failed to save config", "error", err.Error())
 		return err
 	}
 	return nil

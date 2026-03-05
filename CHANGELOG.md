@@ -1,5 +1,13 @@
 # Changelog EMLy
 
+## 1.6.4 (2026-03-05)
+1) Implementato un sistema di logging strutturato in JSON basato su `log/slog`, con output simultaneo su stdout e file di log.
+2) Aggiunta la "Canonical Log Line" per ogni funzione esposta al frontend (nome funzione, durata, stato success/error).
+3) Aggiunto il mascheramento automatico dei dati sensibili nei log (password, API key, token).
+4) Aggiunto il livello di log configurabile tramite `LOG_LEVEL` nel file `config.ini` (DEBUG, INFO, WARN, ERROR).
+5) Creato il servizio di logging frontend (`logger.ts`) che invia log strutturati al backend con contesto del browser (URL, user agent).
+6) Aggiornato il bridge `FrontendLog` per supportare il contesto JSON dal frontend.
+
 ## 1.6.4 (2026-03-04)
 1) Fixato un bug dove email con `Content-Transfer-Encoding: 8Bit` (maiuscolo) non venivano parsate correttamente a causa di un confronto case-sensitive.
 2) Fixato un bug dove email con struttura `multipart/alternative` contenente una parte `multipart/mixed` (come quelle inviate da Apple Mail) mostravano un allegato fantasma denominato `embedded_image.mixed` invece di mostrare correttamente gli allegati reali.

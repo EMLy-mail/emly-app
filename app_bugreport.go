@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"time"
 
+	pkglogger "emly/backend/logger"
 	"emly/backend/utils"
 )
 
@@ -112,13 +113,13 @@ func (a *App) CreateBugReportFolder() (*BugReportResult, error) {
 		mailData, err := os.ReadFile(a.CurrentMailFilePath)
 		if err != nil {
 			// Log but don't fail - screenshot is still valid
-			Log("Failed to read mail file for bug report:", err)
+			pkglogger.Warn("failed to read mail file for bug report", "error", err.Error())
 		} else {
 			mailFilename := filepath.Base(a.CurrentMailFilePath)
 			mailFilePath := filepath.Join(bugReportFolder, mailFilename)
 
 			if err := os.WriteFile(mailFilePath, mailData, 0644); err != nil {
-				Log("Failed to copy mail file for bug report:", err)
+				pkglogger.Warn("failed to copy mail file for bug report", "error", err.Error())
 			} else {
 				result.MailFilePath = mailFilePath
 			}
@@ -162,11 +163,11 @@ func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugR
 	if input.ScreenshotData != "" {
 		screenshotData, err := base64.StdEncoding.DecodeString(input.ScreenshotData)
 		if err != nil {
-			Log("Failed to decode screenshot:", err)
+			pkglogger.Warn("failed to decode screenshot", "error", err.Error())
 		} else {
 			screenshotPath := filepath.Join(bugReportFolder, fmt.Sprintf("emly_screenshot_%s.png", timestamp))
 			if err := os.WriteFile(screenshotPath, screenshotData, 0644); err != nil {
-				Log("Failed to save screenshot:", err)
+				pkglogger.Warn("failed to save screenshot", "error", err.Error())
 			}
 		}
 	}
@@ -175,12 +176,12 @@ func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugR
 	if a.CurrentMailFilePath != "" {
 		mailData, err := os.ReadFile(a.CurrentMailFilePath)
 		if err != nil {
-			Log("Failed to read mail file for bug report:", err)
+			pkglogger.Warn("failed to read mail file for bug report", "error", err.Error())
 		} else {
 			mailFilename := filepath.Base(a.CurrentMailFilePath)
 			mailFilePath := filepath.Join(bugReportFolder, mailFilename)
 			if err := os.WriteFile(mailFilePath, mailData, 0644); err != nil {
-				Log("Failed to copy mail file for bug report:", err)
+				pkglogger.Warn("failed to copy mail file for bug report", "error", err.Error())
 			}
 		}
 	}
@@ -189,7 +190,7 @@ func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugR
 	if input.LocalStorageData != "" {
 		localStoragePath := filepath.Join(bugReportFolder, "localStorage.json")
 		if err := os.WriteFile(localStoragePath, []byte(input.LocalStorageData), 0644); err != nil {
-			Log("Failed to save localStorage data:", err)
+			pkglogger.Warn("failed to save localStorage data", "error", err.Error())
 		}
 	}
 
@@ -197,7 +198,7 @@ func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugR
 	if input.ConfigData != "" {
 		configPath := filepath.Join(bugReportFolder, "config.json")
 		if err := os.WriteFile(configPath, []byte(input.ConfigData), 0644); err != nil {
-			Log("Failed to save config data:", err)
+			pkglogger.Warn("failed to save config data", "error", err.Error())
 		}
 	}
 
@@ -246,7 +247,7 @@ Update Check Enabled: %s
 
 		sysInfoPath := filepath.Join(bugReportFolder, "system_info.txt")
 		if err := os.WriteFile(sysInfoPath, []byte(sysInfoContent), 0644); err != nil {
-			Log("Failed to save system info:", err)
+			pkglogger.Warn("failed to save system info", "error", err.Error())
 		}
 	}
 
@@ -263,12 +264,12 @@ Update Check Enabled: %s
 
 	// Attempt to upload to the bug report API server (only if reachable)
 	if !a.CheckBugReportAPI() {
-		Log("Bug report API is offline, skipping upload")
+		pkglogger.Warn("bug report API is offline, skipping upload")
 		result.UploadError = "Bug report API is offline"
 	} else {
 		reportID, uploadErr := a.UploadBugReport(bugReportFolder, input, currEnv)
 		if uploadErr != nil {
-			Log("Bug report upload failed (falling back to local zip):", uploadErr)
+			pkglogger.Warn("bug report upload failed, falling back to local zip", "error", uploadErr.Error())
 			result.UploadError = uploadErr.Error()
 		} else {
 			result.Uploaded = true

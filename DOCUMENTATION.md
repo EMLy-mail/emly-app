@@ -85,9 +85,11 @@ EMLy/
 ├── app_settings.go           # Settings import/export
 ├── app_system.go             # Windows system utilities (registry, encoding)
 ├── main.go                   # Application entry point
-├── logger.go                 # Logging utilities
+├── logger.go                 # Logging wrappers (canonical log lines, FrontendLog bridge)
 ├── wails.json                # Wails configuration
 ├── backend/
+│   ├── logger/
+│   │   └── logger.go             # Structured JSON logging (log/slog)
 │   └── utils/
 │       ├── mail/
 │       │   ├── eml_reader.go     # EML file parsing
@@ -921,6 +923,63 @@ EventsOn("launchArgs", (args: string[]) => {
 
 ---
 
+## Logging
+
+EMLy uses structured JSON logging based on Go's `log/slog` standard library.
+
+### Backend (`backend/logger/`)
+
+- **Output**: Simultaneous JSON output to `stdout` and `%APPDATA%/EMLy/logs/app.log`
+- **Log Levels**: Configurable via `LOG_LEVEL` in `config.ini` (DEBUG, INFO, WARN, ERROR)
+- **Structured Fields**: All log entries include timestamp, level, source file, and key-value attributes
+
+```go
+import pkglogger "emly/backend/logger"
+
+pkglogger.Info("email loaded", "path", filePath, "format", "eml")
+pkglogger.Error("parse failed", "error", err.Error(), "path", filePath)
+pkglogger.Debug("attachment details", "count", len(attachments))
+```
+
+#### Canonical Log Lines
+
+Every Wails-bound function emits a canonical log line at completion with function name, duration, and status:
+
+```go
+func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
+    start := time.Now()
+    defer func() { canonicalLog("ReadEML", start, err) }()
+    return internal.ReadEmlFile(filePath)
+}
+// Output: {"level":"INFO","msg":"canonical_line","function":"ReadEML","duration_ms":42,"status":"success"}
+```
+
+#### Sensitive Data Redaction
+
+Use `logger.Redacted` to mask passwords, API keys, and tokens in log output:
+
+```go
+slog.Any("api_key", pkglogger.Redacted(apiKey)) // logs "[REDACTED]"
+pkglogger.RedactStruct(configMap)                // redacts known sensitive keys
+```
+
+### Frontend (`lib/utils/logger.ts`)
+
+Structured logger service that sends logs to the Go backend via the `FrontendLog` Wails binding. Each entry includes browser context (URL, user agent).
+
+```typescript
+import { logger } from '$lib/utils/logger';
+
+logger.info('email loaded', { filePath: '/tmp/test.eml' });
+logger.error('failed to parse', { error: err.message });
+```
+
+### Console Hook (`lib/utils/logger-hook.ts`)
+
+Intercepts `console.log/warn/error/info` and forwards them to the backend for unified logging. Called once at app startup via `setupConsoleLogger()`.
+
+---
+
 ## Error Handling
 
 ### Frontend
@@ -941,13 +1000,10 @@ try {
 
 Errors are returned to frontend and logged:
 ```go
-func (a *App) ReadEML(filePath string) (*internal.EmailData, error) {
-    data, err := internal.ReadEmlFile(filePath)
-    if err != nil {
-        Log("Failed to read EML:", err)
-        return nil, err
-    }
-    return data, nil
+func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
+    start := time.Now()
+    defer func() { canonicalLog("ReadEML", start, err) }()
+    return internal.ReadEmlFile(filePath)
 }
 ```
 

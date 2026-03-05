@@ -18,6 +18,8 @@ import (
 	"time"
 	"unsafe"
 
+	pkglogger "emly/backend/logger"
+
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -108,12 +110,11 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 
 	// Load manifest from network share
 	manifest, err := a.loadUpdateManifest(updatePath)
-	log := fmt.Sprintf("loadUpdateManifest err: %v", err)
-	Log(log)
+	pkglogger.Debug("loadUpdateManifest result", "error", fmt.Sprintf("%v", err))
 	if err != nil {
 		updateStatus.ErrorMessage = fmt.Sprintf("Failed to load manifest: %v", err)
 		updateStatus.Checking = false
-		fmt.Println("updateStatus", updateStatus)
+		pkglogger.Debug("update status", "status", updateStatus)
 		return updateStatus, err
 	}
 
@@ -140,15 +141,20 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 			updateStatus.ReleaseNotes = notes
 		}
 
-		Log(fmt.Sprintf("Update available: %s -> %s (%s channel)",
-			updateStatus.CurrentVersion, targetVersion, currentChannel))
+		pkglogger.Info("update available",
+			"current", updateStatus.CurrentVersion,
+			"available", targetVersion,
+			"channel", currentChannel,
+		)
 	} else {
 		updateStatus.UpdateAvailable = false
 		updateStatus.InstallerPath = ""
 		updateStatus.Ready = false
 		updateStatus.ReleaseNotes = ""
-		Log(fmt.Sprintf("Already on latest version: %s (%s channel)",
-			updateStatus.CurrentVersion, currentChannel))
+		pkglogger.Info("already on latest version",
+			"current", updateStatus.CurrentVersion,
+			"channel", currentChannel,
+		)
 	}
 
 	updateStatus.Checking = false
@@ -163,7 +169,7 @@ func (a *App) loadUpdateManifest(updatePath string) (*UpdateManifest, error) {
 		return nil, fmt.Errorf("failed to resolve manifest path: %w", err)
 	}
 
-	Log("Loading update manifest from:", manifestPath)
+	pkglogger.Info("loading update manifest", "path", manifestPath)
 
 	// Read manifest file
 	data, err := os.ReadFile(manifestPath)
@@ -242,7 +248,7 @@ func (a *App) DownloadUpdate() (string, error) {
 		return "", fmt.Errorf("failed to resolve installer path: %w", err)
 	}
 
-	Log("Downloading installer from:", sourcePath)
+	pkglogger.Info("downloading installer", "source", sourcePath)
 
 	// Create temp directory for download
 	tempDir := filepath.Join(os.TempDir(), "emly_update")
@@ -262,22 +268,22 @@ func (a *App) DownloadUpdate() (string, error) {
 
 	// Verify checksum if available
 	if checksum, ok := manifest.SHA256Checksums[downloadFilename]; ok {
-		Log("Verifying checksum for", downloadFilename)
+		pkglogger.Info("verifying checksum", "file", downloadFilename)
 		if err := verifyChecksum(destPath, checksum); err != nil {
 			updateStatus.ErrorMessage = "Checksum verification failed"
 			// Delete corrupted file
 			os.Remove(destPath)
 			return "", fmt.Errorf("checksum verification failed: %w", err)
 		}
-		Log("Checksum verified successfully")
+		pkglogger.Info("checksum verified")
 	} else {
-		Log("Warning: No checksum available for", downloadFilename)
+		pkglogger.Warn("no checksum available", "file", downloadFilename)
 	}
 
 	updateStatus.InstallerPath = destPath
 	updateStatus.Ready = true
 	updateStatus.DownloadProgress = 100
-	Log("Update downloaded successfully to:", destPath)
+	pkglogger.Info("update downloaded", "path", destPath)
 
 	return destPath, nil
 }
@@ -359,7 +365,7 @@ func (a *App) InstallUpdate(quitAfterLaunch bool) error {
 		return fmt.Errorf("installer not found: %s", installerPath)
 	}
 
-	Log("Launching installer:", installerPath)
+	pkglogger.Info("launching installer", "path", installerPath)
 
 	logPath := filepath.Join(os.TempDir(), "emly_install.log")
 	args := []string{
@@ -380,7 +386,7 @@ func (a *App) InstallUpdate(quitAfterLaunch bool) error {
 		return fmt.Errorf("failed to launch installer: %w", err)
 	}
 
-	Log("Installer launched successfully")
+	pkglogger.Info("installer launched")
 
 	if quitAfterLaunch {
 		time.Sleep(500 * time.Millisecond)
@@ -407,7 +413,7 @@ func launchDetachedInstaller(exePath string, args []string) error {
 		cmdLine += " " + strings.Join(args, " ")
 	}
 
-	Log("Launching detached installer:", cmdLine)
+	pkglogger.Info("launching detached installer", "cmd", cmdLine)
 
 	// Convert to UTF16 for Windows API
 	cmdLinePtr := syscall.StringToUTF16Ptr(cmdLine)
@@ -444,7 +450,7 @@ func launchDetachedInstaller(exePath string, args []string) error {
 	)
 
 	if err != nil {
-		Log("CreateProcess failed:", err)
+		pkglogger.Error("CreateProcess failed", "error", err.Error())
 		return fmt.Errorf("failed to create detached process: %w", err)
 	}
 
@@ -453,7 +459,7 @@ func launchDetachedInstaller(exePath string, args []string) error {
 	syscall.CloseHandle(pi.Process)
 	syscall.CloseHandle(pi.Thread)
 
-	Log(fmt.Sprintf("Detached installer process launched successfully (PID: %d)", pi.ProcessId))
+	pkglogger.Info("detached installer process launched", "pid", pi.ProcessId)
 
 	return nil
 }
@@ -473,7 +479,7 @@ func launchInstallerAndRelaunch(installerPath string, args []string, relaunchPat
 		return fmt.Errorf("failed to write update batch: %w", err)
 	}
 
-	Log("Launching update batch:", batchPath)
+	pkglogger.Info("launching update batch", "path", batchPath)
 	return launchDetachedInstaller("cmd.exe", []string{"/c", batchPath})
 }
 
@@ -482,14 +488,13 @@ func launchInstallerAndRelaunch(installerPath string, args []string, relaunchPat
 // Returns:
 //   - error: Error if download or launch fails
 func (a *App) InstallUpdateSilent() error {
-	Log("Starting silent update installation...")
+	pkglogger.Info("starting silent update installation")
 
 	if !updateStatus.Ready || updateStatus.InstallerPath == "" {
-		Log("Installer not ready, downloading update first...")
+		pkglogger.Info("installer not ready, downloading update first")
 		if _, err := a.DownloadUpdate(); err != nil {
-			errMsg := fmt.Sprintf("Failed to download update: %v", err)
-			Log(errMsg)
-			updateStatus.ErrorMessage = errMsg
+			pkglogger.Error("failed to download update", "error", err.Error())
+			updateStatus.ErrorMessage = fmt.Sprintf("Failed to download update: %v", err)
 			return fmt.Errorf("download failed: %w", err)
 		}
 	}
@@ -508,13 +513,12 @@ func (a *App) InstallUpdateSilent() error {
 // Returns:
 //   - error: Error if download or launch fails
 func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
-	Log("Starting silent installation from custom path:", smbPath)
+	pkglogger.Info("starting silent installation from custom path", "path", smbPath)
 
 	// Verify source installer exists and is accessible
 	if _, err := os.Stat(smbPath); os.IsNotExist(err) {
-		errMsg := fmt.Sprintf("Installer not found at: %s", smbPath)
-		Log(errMsg)
-		return fmt.Errorf("%s", errMsg)
+		pkglogger.Error("installer not found", "path", smbPath)
+		return fmt.Errorf("installer not found at: %s", smbPath)
 	}
 
 	// Create temporary directory for installer
@@ -522,21 +526,19 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 	installerFilename := filepath.Base(smbPath)
 	tempInstallerPath := filepath.Join(tempDir, installerFilename)
 
-	Log("Copying installer to temp location:", tempInstallerPath)
+	pkglogger.Info("copying installer to temp", "dest", tempInstallerPath)
 
 	// Copy installer from SMB path to local temp
 	sourceFile, err := os.Open(smbPath)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to open source installer: %v", err)
-		Log(errMsg)
+		pkglogger.Error("failed to open source installer", "error", err.Error())
 		return fmt.Errorf("failed to open installer: %w", err)
 	}
 	defer sourceFile.Close()
 
 	destFile, err := os.Create(tempInstallerPath)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to create temp installer: %v", err)
-		Log(errMsg)
+		pkglogger.Error("failed to create temp installer", "error", err.Error())
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer destFile.Close()
@@ -544,12 +546,11 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 	// Copy file
 	bytesWritten, err := io.Copy(destFile, sourceFile)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to copy installer: %v", err)
-		Log(errMsg)
+		pkglogger.Error("failed to copy installer", "error", err.Error())
 		return fmt.Errorf("failed to copy installer: %w", err)
 	}
 
-	Log(fmt.Sprintf("Installer copied successfully (%d bytes)", bytesWritten))
+	pkglogger.Info("installer copied", "bytes", bytesWritten)
 
 	logPath := filepath.Join(os.TempDir(), "emly_install.log")
 	args := []string{
@@ -561,16 +562,15 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 		fmt.Sprintf(`/LOG="%s"`, logPath),
 	}
 
-	Log("Launching installer with args:", args)
+	pkglogger.Info("launching installer", "args", args)
 
 	relaunchPath, _ := os.Executable()
 	if err := launchInstallerAndRelaunch(tempInstallerPath, args, relaunchPath); err != nil {
-		errMsg := fmt.Sprintf("Failed to launch installer: %v", err)
-		Log(errMsg)
+		pkglogger.Error("failed to launch installer", "error", err.Error())
 		return fmt.Errorf("failed to launch installer: %w", err)
 	}
 
-	Log("Installer batch launched successfully, quitting EMLy...")
+	pkglogger.Info("installer batch launched, quitting EMLy")
 
 	time.Sleep(500 * time.Millisecond)
 	runtime.Quit(a.ctx)

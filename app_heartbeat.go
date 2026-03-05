@@ -2,10 +2,10 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	pkglogger "emly/backend/logger"
 	"emly/backend/utils"
 )
 
@@ -16,13 +16,13 @@ func (a *App) CheckBugReportAPI() bool {
 	cfgPath := utils.DefaultConfigPath()
 	cfg, err := utils.LoadConfig(cfgPath)
 	if err != nil {
-		Log("Heartbeat: failed to load config:", err)
+		pkglogger.Warn("heartbeat: failed to load config", "error", err.Error())
 		return false
 	}
 
 	apiURL := cfg.EMLy.BugReportAPIURL
 	if apiURL == "" {
-		Log("Heartbeat: bug report API URL not configured")
+		pkglogger.Warn("heartbeat: bug report API URL not configured")
 		return false
 	}
 
@@ -31,13 +31,13 @@ func (a *App) CheckBugReportAPI() bool {
 
 	resp, err := client.Get(endpoint)
 	if err != nil {
-		Log("Heartbeat: API unreachable:", err)
+		pkglogger.Debug("heartbeat: API unreachable", "error", err.Error())
 		return false
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		Log(fmt.Sprintf("Heartbeat: API returned status %d", resp.StatusCode))
+		pkglogger.Warn("heartbeat: API returned non-200 status", "status", resp.StatusCode)
 		return false
 	}
 

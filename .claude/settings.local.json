@@ -16,7 +16,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(bunx shadcn-svelte@latest:*)",
       "Bash(printf y\\\\nn\\\\n:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(go get gopkg.in/natefinch/lumberjack.v2)"
     ]
   }
 }
