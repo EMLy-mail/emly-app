@@ -14,6 +14,8 @@
   import * as m from "$lib/paraglide/messages.js";
   import * as pdfjsLib from "pdfjs-dist";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+  import openjpegWasmUrl from "pdfjs-dist/wasm/openjpeg.wasm?url";
+  import { logger } from "$lib/utils/logger";
 
   if (typeof Promise.withResolvers === "undefined") {
     // @ts-ignore
@@ -45,8 +47,12 @@
   let canvasRef = $state<HTMLCanvasElement>();
   let canvasContainerRef = $state<HTMLDivElement>();
   let renderTask = $state<pdfjsLib.RenderTask | null>(null);
+  // Plain (non-reactive) flag: prevents the $effect from firing a concurrent
+  // render during the initial load, which is handled explicitly in loadPDF.
+  let pdfLoaded = false;
 
   onMount(async () => {
+    logger.debug("pdf_viewer: mount");
     try {
       const result = data?.data;
       if (result) {
@@ -59,17 +65,20 @@
         }
         pdfData = bytes;
         filename = result.filename;
+        logger.info("pdf_viewer: data received", { filename, sizeBytes: len });
         // Adjust title
         document.title = filename + " - EMLy PDF Viewer";
         sidebarOpen.set(false);
 
         await loadPDF();
       } else {
+        logger.warn("pdf_viewer: no data received");
         toast.error(m.pdf_error_no_data());
         error = m.pdf_error_no_data_desc();
         loading = false;
       }
     } catch (e) {
+      logger.error("pdf_viewer: mount error", { error: String(e) });
       error = m.pdf_error_loading() + e;
       loading = false;
     }
@@ -78,23 +87,36 @@
   async function loadPDF() {
     if (!pdfData) return;
 
+    logger.debug("pdf_viewer: loadPDF start", { filename });
+
     // Set a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       if (loading) {
+        logger.error("pdf_viewer: load timeout", { filename });
         loading = false;
         error = m.pdf_error_timeout();
         toast.error(error);
       }
     }, 10000);
 
+    const t0 = performance.now();
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice() });
+      // wasmUrl must be a directory URL (trailing slash), not a file path
+      const wasmBaseUrl = openjpegWasmUrl.substring(0, openjpegWasmUrl.lastIndexOf("/") + 1);
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(), wasmUrl: wasmBaseUrl });
       pdfDoc = await loadingTask.promise;
       totalPages = pdfDoc.numPages;
       pageNum = 1;
+      logger.info("pdf_viewer: document parsed", {
+        filename,
+        totalPages,
+        durationMs: Math.round(performance.now() - t0),
+      });
       await renderPage(pageNum);
+      pdfLoaded = true; // allow $effect to handle subsequent renders
       loading = false;
     } catch (e) {
+      logger.error("pdf_viewer: parse error", { filename, error: String(e) });
       console.error(e);
       error = m.pdf_error_parsing() + e;
       loading = false;
@@ -108,6 +130,7 @@
 
     if (renderTask) {
       // Cancel previous render if any and await its cleanup
+      logger.debug("pdf_viewer: cancelling previous render", { page: num });
       renderTask.cancel();
       try {
         await renderTask.promise;
@@ -116,6 +139,7 @@
       }
     }
 
+    const t0 = performance.now();
     try {
       const page = await pdfDoc.getPage(num);
 
@@ -140,8 +164,18 @@
       const task = page.render(renderContext as any);
       renderTask = task;
       await task.promise;
+      logger.debug("pdf_viewer: page rendered", {
+        page: num,
+        totalPages,
+        scale: Math.round(scale * 100) / 100,
+        rotation,
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        durationMs: Math.round(performance.now() - t0),
+      });
     } catch (e: any) {
       if (e.name !== "RenderingCancelledException") {
+        logger.error("pdf_viewer: render error", { page: num, error: e.message });
         console.error(e);
         toast.error(m.pdf_error_rendering() + e.message);
       }
@@ -156,6 +190,7 @@
       const containerWidth = canvasContainerRef!.clientWidth - 40; // padding
       const viewport = page.getViewport({ scale: 1, rotation: rotation });
       scale = containerWidth / viewport.width;
+      logger.debug("pdf_viewer: fit to width", { page: pageNum, scale: Math.round(scale * 100) / 100 });
       renderPage(pageNum).then(() => {
         loading = false;
       });
@@ -163,13 +198,13 @@
   }
 
   $effect(() => {
-    // Re-render when scale or rotation changes
-    // Access them here to ensure dependency tracking since renderPage is untracked
-    // We also track pageNum to ensure we re-render if it changes via other means, 
-    // although navigation functions usually call renderPage manually.
+    // Re-render when scale, rotation, or pageNum changes.
+    // pdfLoaded is a plain boolean (not $state) so it acts as a non-reactive
+    // guard: the effect is skipped during the initial load (handled by loadPDF),
+    // which prevents the "cannot use same canvas during multiple render()" error.
     const _deps = [scale, rotation, pageNum];
 
-    if (pdfDoc) {
+    if (pdfDoc && pdfLoaded) {
       // Untrack renderPage because it reads and writes to renderTask,
       // which would otherwise cause an infinite loop.
       untrack(() => renderPage(pageNum));
@@ -198,6 +233,7 @@
 
   function downloadPDF() {
     if (!pdfData) return;
+    logger.info("pdf_viewer: download initiated", { filename });
     try {
       // @ts-ignore
       const blob = new Blob([pdfData], { type: "application/pdf" });
@@ -210,6 +246,7 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
+      logger.error("pdf_viewer: download error", { filename, error: String(e) });
       toast.error(m.pdf_error_downloading() + e);
     }
   }

@@ -1,6 +1,10 @@
 # Changelog EMLy
 
 ## 1.6.4 (2026-03-06)
+1) Fixato un bug nel visualizzatore PDF dove due operazioni di rendering concorrenti sullo stesso canvas causavano un errore all'apertura del file.
+2) Aggiunto il supporto al codec OpenJPEG (JPEG 2000 / JPX) nel visualizzatore PDF tramite il modulo WASM incluso in pdfjs-dist, necessario per decodificare correttamente immagini JPX nei documenti PDF.
+
+## 1.6.4 (2026-03-06)
 1) Aggiunto logging di debug dettagliato durante il caricamento delle email: estensione file, dimensione, formato rilevato, tipo di body (HTML/testo), numero allegati, tipi MIME degli allegati, stato PEC, e presenza di email annidate.
 
 ## 1.6.4 (2026-03-05)

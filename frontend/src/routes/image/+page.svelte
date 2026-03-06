@@ -12,6 +12,7 @@
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
   import * as m from "$lib/paraglide/messages.js";
+  import { logger } from "$lib/utils/logger";
 
   let { data }: { data: PageData } = $props();
 
@@ -32,19 +33,23 @@
   let startY = 0;
 
   onMount(async () => {
+    logger.debug("image_viewer: mount");
     try {
       const result = data?.data
       if (result) {
         imageData = result.data;
         filename = result.filename;
+        logger.info("image_viewer: data received", { filename, dataLength: result.data.length });
         // Adjust title
         document.title = filename + " - EMLy " + m.image_viewer_title();
         sidebarOpen.set(false);
       } else {
+        logger.warn("image_viewer: no data received");
         toast.error(m.image_error_no_data());
         error = m.image_error_no_data();
       }
     } catch (e) {
+      logger.error("image_viewer: mount error", { error: String(e) });
       error = m.image_error_loading() + e;
     } finally {
       loading = false;
@@ -54,7 +59,7 @@
   function fitToScreen() {
     if (!imgElement || !containerElement) return;
 
-    const padding = 60; 
+    const padding = 60;
     const cw = containerElement.clientWidth - padding;
     const ch = containerElement.clientHeight - padding;
     const iw = imgElement.naturalWidth;
@@ -71,6 +76,12 @@
 
     translateX = 0;
     translateY = 0;
+    logger.debug("image_viewer: fit to screen", {
+      filename,
+      naturalWidth: iw,
+      naturalHeight: ih,
+      scale: Math.round(scale * 100) / 100,
+    });
   }
 
   function rotate(deg: number) {
@@ -88,7 +99,7 @@
 
   function downloadImage() {
     if (!imageData || !filename) return;
-
+    logger.info("image_viewer: download initiated", { filename });
     const link = document.createElement("a");
     link.href = `data:image/png;base64,${imageData}`;
     link.download = filename;
