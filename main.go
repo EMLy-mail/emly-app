@@ -2,11 +2,14 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
 	pkglogger "emly/backend/logger"
+	"emly/backend/utils"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -60,8 +63,15 @@ func main() {
 		}
 	}
 
+	// Build custom User-Agent from config version
+	guiVersion := "unknown"
+	if cfg, err := utils.LoadConfig(utils.DefaultConfigPath()); err == nil && cfg != nil {
+		guiVersion = cfg.EMLy.GUISemver
+	}
+	userAgent := fmt.Sprintf("EMLy/%s", guiVersion)
+
 	// Create an instance of the app structure
-	app := NewApp()
+	app := NewApp(userAgent)
 
 	// Parse args again to set startup file on the app instance
 	for _, arg := range args {
@@ -80,6 +90,7 @@ func main() {
 		Height: windowHeight,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
+			Middleware: userAgentMiddleware(userAgent),
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
@@ -98,5 +109,16 @@ func main() {
 
 	if err != nil {
 		pkglogger.Error("application error", "error", err.Error())
+	}
+}
+
+// userAgentMiddleware returns an AssetServer middleware that sets the
+// User-Agent header on every request to the given value.
+func userAgentMiddleware(ua string) assetserver.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Header.Set("User-Agent", ua)
+			next.ServeHTTP(w, r)
+		})
 	}
 }

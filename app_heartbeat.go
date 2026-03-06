@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -27,9 +28,17 @@ func (a *App) CheckBugReportAPI() bool {
 	}
 
 	endpoint := apiURL + "/health"
-	client := &http.Client{Timeout: 3 * time.Second}
 
-	resp, err := client.Get(endpoint)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		pkglogger.Debug("heartbeat: failed to create request", "error", err.Error())
+		return false
+	}
+
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		pkglogger.Debug("heartbeat: API unreachable", "error", err.Error())
 		return false

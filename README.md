@@ -34,7 +34,7 @@ Before developing or building EMLy, ensure you have the following installed:
 To run the application in development mode with hot-reload:
 
 ```bash
-wails dev
+wails dev -tags debug
 ```
 
 *   This starts the Go backend and a Vite development server for the frontend.
@@ -79,4 +79,3 @@ To run Go unit tests (if any are added to `backend/`) or standard Go tests:
 ```bash
 go test ./...
 ```
-

@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+## 1.6.4 (2026-03-06)
+1) Aggiunto logging di debug dettagliato durante il caricamento delle email: estensione file, dimensione, formato rilevato, tipo di body (HTML/testo), numero allegati, tipi MIME degli allegati, stato PEC, e presenza di email annidate.
+
 ## 1.6.4 (2026-03-05)
 1) Implementato un sistema di logging strutturato in JSON basato su `log/slog`, con output simultaneo su stdout e file di log.
 2) Aggiunta la "Canonical Log Line" per ogni funzione esposta al frontend (nome funzione, durata, stato success/error).

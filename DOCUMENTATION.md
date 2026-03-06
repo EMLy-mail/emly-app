@@ -1003,9 +1003,18 @@ Errors are returned to frontend and logged:
 func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
     start := time.Now()
     defer func() { canonicalLog("ReadEML", start, err) }()
-    return internal.ReadEmlFile(filePath)
+    logMailFileInfo("ReadEML", filePath)
+    data, err = internal.ReadEmlFile(filePath)
+    if err == nil && data != nil {
+        logParsedMailInfo("ReadEML", data)
+    }
+    return data, err
 }
 ```
+
+When `LOG_LEVEL=DEBUG`, every mail loading call emits two debug entries:
+1. **`loading mail file`** — file name, extension, size in bytes
+2. **`mail parsed successfully`** — subject (truncated), from, to/cc count, body type (html/text/none), body length, attachment count, unique attachment MIME types, PEC flag, inner email flag
 
 ---
 

@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -52,6 +53,10 @@ type App struct {
 	// openEMLs tracks which EML attachments are currently open in viewer windows
 	openEMLsMux sync.Mutex
 	openEMLs    map[string]bool
+
+	// httpClient is a shared HTTP client with custom User-Agent for all
+	// outgoing requests (heartbeat, bug report upload, etc.)
+	httpClient *http.Client
 }
 
 // =============================================================================
@@ -59,13 +64,33 @@ type App struct {
 // =============================================================================
 
 // NewApp creates and initializes a new App instance.
-// This is called from main.go before the Wails application starts.
-func NewApp() *App {
+// userAgent is injected into the shared HTTP client so every outgoing
+// request identifies itself as "EMLy/<version>".
+func NewApp(userAgent string) *App {
 	return &App{
 		openImages: make(map[string]bool),
 		openPDFs:   make(map[string]bool),
 		openEMLs:   make(map[string]bool),
+		httpClient: &http.Client{
+			Transport: &userAgentTransport{
+				ua:   userAgent,
+				base: http.DefaultTransport,
+			},
+		},
 	}
+}
+
+// userAgentTransport is an http.RoundTripper that injects a custom
+// User-Agent header into every outgoing HTTP request.
+type userAgentTransport struct {
+	ua   string
+	base http.RoundTripper
+}
+
+func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("User-Agent", t.ua)
+	return t.base.RoundTrip(req)
 }
 
 // startup is called by Wails when the application starts.

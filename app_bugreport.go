@@ -6,6 +6,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -401,8 +402,11 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv s
 	}
 	req.Header.Set("X-DB-Env", currEnv)
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	req = req.WithContext(ctx)
+
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("failed to send request: %w", err)
 	}
