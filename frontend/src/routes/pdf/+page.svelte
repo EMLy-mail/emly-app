@@ -14,7 +14,6 @@
   import * as m from "$lib/paraglide/messages.js";
   import * as pdfjsLib from "pdfjs-dist";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-  import openjpegWasmUrl from "pdfjs-dist/wasm/openjpeg.wasm?url";
   import { logger } from "$lib/utils/logger";
 
   if (typeof Promise.withResolvers === "undefined") {
@@ -101,9 +100,8 @@
 
     const t0 = performance.now();
     try {
-      // wasmUrl must be a directory URL (trailing slash), not a file path
-      const wasmBaseUrl = openjpegWasmUrl.substring(0, openjpegWasmUrl.lastIndexOf("/") + 1);
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(), wasmUrl: wasmBaseUrl });
+      // openjpeg.wasm and openjpeg_nowasm_fallback.js are served from static/ at root
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice(), wasmUrl: "/" });
       pdfDoc = await loadingTask.promise;
       totalPages = pdfDoc.numPages;
       pageNum = 1;

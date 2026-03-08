@@ -27,6 +27,7 @@
         Heart,
         Info,
         Music,
+        TriangleAlert,
     } from "@lucide/svelte";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { toast } from "svelte-sonner";
@@ -191,15 +192,15 @@
         <div class="title">
             <bold>EMLy</bold>
             <div class="version-wrapper">
-                <version>
+                <version class="inline">
                     {#if dev && $runningInDebugMode}
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
-                        <debug>(DEBUG BUILD (Go + Vite))</debug>
+                        <debug><TriangleAlert size="16" /> DEBUG BUILD</debug>
                     {:else if dev}
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
-                        <debug>(DEV BUILD (Vite))</debug>
+                        <dev><TriangleAlert size="16" /> DEV BUILD</dev>
                     {:else if versionInfo?.EMLy.GUIReleaseChannel !== "stable"}
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
@@ -445,12 +446,27 @@
     }
 
     .title version {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         color: var(--muted-foreground);
         opacity: 0.6;
     }
 
     .title version debug {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         color: var(--destructive);
+        opacity: 1;
+        font-weight: 600;
+    }
+
+    .title version dev {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--color-yellow-400);
         opacity: 1;
         font-weight: 600;
     }
