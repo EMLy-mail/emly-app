@@ -53,6 +53,7 @@
 
     let versionInfo: utils.Config | null = $state(null);
     let isMaximized = $state(false);
+    let windowFocused = $state(true);
     let isDebugerOn: boolean = $state(false);
     let isDebbugerProtectionOn: boolean = $state(true);
     let configMissingDialogOpen = $state(false);
@@ -90,6 +91,8 @@
     }
 
     onMount(async () => {
+        window.addEventListener("focus", () => (windowFocused = true));
+        window.addEventListener("blur", () => (windowFocused = false));
         if (dev) dangerZoneEnabled.set(true);
         if (browser && isDebbugerProtectionOn) {
             detectDebugging();
@@ -238,10 +241,11 @@
             class="controls"
             class:high-contrast={settingsStore.settings
                 .increaseWindowButtonsContrast}
+            style:opacity={windowFocused ? 1 : 0.4}
         >
-            <button class="btn" onclick={minimize}>─</button>
+            <button class="btn" onmousedown={minimize}>─</button>
 
-            <button class="btn" onclick={toggleMaximize}>
+            <button class="btn" onmousedown={toggleMaximize}>
                 {#if isMaximized}
                     ❐
                 {:else}
@@ -249,7 +253,7 @@
                 {/if}
             </button>
 
-            <button class="btn close" onclick={closeWindow}>✕</button>
+            <button class="btn close" onmousedown={closeWindow}>✕</button>
         </div>
     </div>
 
@@ -263,7 +267,6 @@
         >
             <AppSidebar />
             <main>
-                <!-- <Sidebar.Trigger /> -->
                 <Toaster />
                 {#await navigating?.complete}
                     <div class="loading-overlay">

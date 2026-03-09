@@ -7,10 +7,12 @@
     Quit,
   } from "$lib/wailsjs/runtime/runtime";
   import type { LayoutProps } from "./$types";
+  import { onMount } from "svelte";
 
   let { data, children }: LayoutProps = $props();
 
   let isMaximized = $state(false);
+  let windowFocused = $state(true);
 
   async function syncMaxState() {
     isMaximized = await WindowIsMaximised();
@@ -38,6 +40,11 @@
   }
 
   syncMaxState();
+
+  onMount(() => {
+    window.addEventListener("focus", () => (windowFocused = true));
+    window.addEventListener("blur", () => (windowFocused = false));
+  });
 </script>
 
 <div class="app-layout">
@@ -50,16 +57,16 @@
   >
     <div class="title">EMLy Viewer</div>
 
-    <div class="controls">
-      <button class="btn" onclick={minimize}>─</button>
-      <button class="btn" onclick={toggleMaximize}>
+    <div class="controls" style:opacity={windowFocused ? 1 : 0.4}>
+      <button class="btn" onmousedown={minimize}>─</button>
+      <button class="btn" onmousedown={toggleMaximize}>
         {#if isMaximized}
           ❐
         {:else}
           ☐
         {/if}
       </button>
-      <button class="btn close" onclick={closeWindow}>✕</button>
+      <button class="btn close" onmousedown={closeWindow}>✕</button>
     </div>
   </div>
 
