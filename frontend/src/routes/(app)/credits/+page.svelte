@@ -6,23 +6,29 @@
   import { ChevronLeft, Heart, Code, Package, Globe, Github, Mail, BadgeInfo, Music, PartyPopper } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages";
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
-  import { dangerZoneEnabled } from "$lib/stores/app";
-  import { settingsStore } from "$lib/stores/settings.svelte";
 
   let { data } = $props();
   let config = $derived(data.config);
 
   // Open external URL in default browser
   async function openUrl(url: string) {
+    let sanitizedUrl: URL = new URL(url);
+    if(!["http:", "https:"].includes(sanitizedUrl.protocol)) {
+      console.warn("Attempted to open URL with unsupported protocol:", url);
+      return;
+    }
+    const urlPattern = /^[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+$/;
+    if (!urlPattern.test(sanitizedUrl.href)) {
+      console.warn("Attempted to open URL with potentially unsafe characters:", url);
+      return;
+    }
     try {
-      await OpenURLInBrowser(url);
+      await OpenURLInBrowser(sanitizedUrl.href);
     } catch (e) {
       console.error("Failed to open URL:", e);
     }
   }
 
-  // Gravatar URL helper - uses MD5 hash of email
-  // Pre-computed hashes for known emails
   const gravatarUrls: Record<string, string> = {
     "f.fois@3git.eu": "https://gravatar.com/avatar/6a2b6cfd8ab2c36ac3eace1faa871f79084b64ad08fb6e490f050e71ee1b599c",
     "iraci.matteo@gmail.com": "https://gravatar.com/avatar/0c17334ae886eb44b670d226e7de32ac082b9c85925ce4ed4c12239d9d8351f2",

@@ -99,7 +99,7 @@ EMLy/
 │       ├── screenshot_windows.go  # Windows screenshot capture
 │       ├── debug_windows.go       # Debugger detection
 │       ├── ini-reader.go          # Configuration file parsing
-│       ├── machine-identifier.go  # System info collection
+│       ├── machine-identifier.go  # System info collection (hostname, OS, HWID, CPU, RAM, internal IP, AD domain)
 │       └── file-metadata.go       # File metadata utilities
 ├── frontend/
 │   ├── src/
@@ -257,7 +257,7 @@ The Go backend is split into logical files:
 |--------|-------------|
 | `CreateBugReportFolder()` | Creates folder with screenshot and mail file |
 | `SubmitBugReport(input)` | Creates complete bug report with ZIP archive, attempts server upload |
-| `UploadBugReport(folderPath, input)` | Uploads bug report files to configured API server via multipart POST |
+| `UploadBugReport(folderPath, input, currEnv, machineInfo)` | Uploads bug report files to configured API server via multipart POST (machineInfo reused from SubmitBugReport to avoid double fetch) |
 | `CheckBugReportAPI()` | Checks if the bug report API is reachable via /health endpoint (3s timeout) |
 
 **Settings (`app_settings.go`)**

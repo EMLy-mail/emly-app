@@ -2,28 +2,27 @@ package utils
 
 import (
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
-	"syscall"
 	"strings"
+	"syscall"
+	"time"
+
+	"emly/backend/logger"
 
 	"github.com/jaypipes/ghw"
 	"golang.org/x/sys/windows/registry"
 )
 
 type MachineInfo struct {
-	Hostname   string         `json:"Hostname"`
-	OS         string         `json:"OS"`
-	Version    string         `json:"Version"`
-	HWID       string         `json:"HWID"`
-	ExternalIP string         `json:"ExternalIP"`
-	CPU        ghw.CPUInfo    `json:"CPU"`
-	RAM        ghw.MemoryInfo `json:"RAM"`
-	GPU        ghw.GPUInfo    `json:"GPU"`
+	Hostname string         `json:"Hostname"`
+	OS       string         `json:"OS"`
+	Version  string         `json:"Version"`
+	HWID     string         `json:"HWID"`
+	CPU      ghw.CPUInfo    `json:"CPU"`
+	RAM      ghw.MemoryInfo `json:"RAM"`
 }
 
 type ExtendedMachineInfo struct {
@@ -34,19 +33,30 @@ type ExtendedMachineInfo struct {
 }
 
 func GetMachineInfo() (*MachineInfo, error) {
+	logger.Debug("GetMachineInfo: starting metadata collection")
+	start := time.Now()
+
 	info := &MachineInfo{}
 
 	// 1. Get Hostname
+	logger.Debug("GetMachineInfo: fetching hostname")
+	t1 := time.Now()
 	hostname, err := os.Hostname()
+	logger.Debug("GetMachineInfo: fetched hostname", "duration_ms", time.Since(t1).Milliseconds())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hostname: %w", err)
 	}
 	info.Hostname = hostname
 
 	// 2. Get OS Info
+	logger.Debug("GetMachineInfo: fetching OS info")
+	t2 := time.Now()
 	info.OS = fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH)
+	logger.Debug("GetMachineInfo: fetched OS info", "duration_ms", time.Since(t2).Milliseconds())
 
 	// 3. Get Version Info
+	logger.Debug("GetMachineInfo: fetching Windows version info")
+	t3 := time.Now()
 	k, _ := registry.OpenKey(
 		registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\Windows NT\CurrentVersion`,
@@ -77,8 +87,11 @@ func GetMachineInfo() (*MachineInfo, error) {
 	}
 
 	info.Version = fmt.Sprintf("%s %s %s (Build %s.%d)", product, display, edition, build, ubr)
+	logger.Debug("GetMachineInfo: fetched Windows version info", "duration_ms", time.Since(t3).Milliseconds())
 
 	// 3. Get HWID (Windows specific via wmic)
+	logger.Debug("GetMachineInfo: fetching HWID")
+	t4 := time.Now()
 	// Fallback or different implementation needed for Linux/Mac if required
 	if runtime.GOOS == "windows" {
 		wmicCmd := exec.Command("wmic", "csproduct", "get", "uuid")
@@ -114,49 +127,34 @@ func GetMachineInfo() (*MachineInfo, error) {
 	} else {
 		info.HWID = "Not implemented for " + runtime.GOOS
 	}
-
-	// 4. Get External IP
-	ip, err := getExternalIP()
-	if err == nil {
-		info.ExternalIP = ip
-	} else {
-		info.ExternalIP = "Unavailable"
-	}
+	logger.Debug("GetMachineInfo: fetched HWID", "duration_ms", time.Since(t4).Milliseconds())
 
 	// 5. Get CPU Info
+	logger.Debug("GetMachineInfo: fetching CPU info")
+	t6 := time.Now()
 	cpuInfo, err := getCPUInfo()
+	elapsed6 := time.Since(t6).Milliseconds()
 	if err == nil {
+		logger.Debug("GetMachineInfo: fetched CPU info", "duration_ms", elapsed6)
 		info.CPU = *cpuInfo
-	}
-
-	// 6. Get GPU Info
-	gpuInfo, err := getGPUInfo()
-	if err == nil {
-		info.GPU = *gpuInfo
+	} else {
+		logger.Debug("GetMachineInfo: CPU info failed", "error", err, "duration_ms", elapsed6)
 	}
 
 	// 7. Get RAM Info
+	logger.Debug("GetMachineInfo: fetching RAM info")
+	t8 := time.Now()
 	ramInfo, err := getRAMInfo()
+	elapsed8 := time.Since(t8).Milliseconds()
 	if err == nil {
+		logger.Debug("GetMachineInfo: fetched RAM info", "duration_ms", elapsed8)
 		info.RAM = *ramInfo
+	} else {
+		logger.Debug("GetMachineInfo: RAM info failed", "error", err, "duration_ms", elapsed8)
 	}
 
+	logger.Debug("GetMachineInfo: completed", "duration_ms", time.Since(start).Milliseconds())
 	return info, nil
-}
-
-func getExternalIP() (string, error) {
-	resp, err := http.Get("https://api.ipify.org?format=text")
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(body), nil
 }
 
 func getCPUInfo() (*ghw.CPUInfo, error) {
@@ -165,14 +163,6 @@ func getCPUInfo() (*ghw.CPUInfo, error) {
 		return nil, fmt.Errorf("failed to get CPU info")
 	}
 	return cpuInfo, nil
-}
-
-func getGPUInfo() (*ghw.GPUInfo, error) {
-	gpuInfo, err := ghw.GPU()
-	if gpuInfo == nil {
-		return nil, fmt.Errorf("failed to get GPU info: %w", err)
-	}
-	return gpuInfo, nil
 }
 
 func getRAMInfo() (*ghw.MemoryInfo, error) {
@@ -188,6 +178,7 @@ func getInternalIP() (string, error) {
 	// For a more robust solution, consider using a library like "github.com/vishvananda/netlink"
 	ifaces, err := net.Interfaces()
 	if err != nil {
+		logger.Error("getInternalIP: failed to list interfaces", "error", err)
 		return "", fmt.Errorf("failed to get network interfaces: %w", err)
 	}
 	for _, iface := range ifaces {
@@ -214,6 +205,7 @@ func getInternalIP() (string, error) {
 			if ip == nil {
 				continue
 			}
+			logger.Debug("getInternalIP: found valid IP", "interface", iface.Name, "ip", ip.String())
 			return ip.String(), nil
 		}
 	}
@@ -223,38 +215,71 @@ func getInternalIP() (string, error) {
 func getADDomain() (string, error) {
 	// This is a Windows-specific implementation to get the Active Directory domain
 	if runtime.GOOS != "windows" {
+		logger.Debug("getADDomain: skipped on non-windows OS")
 		return "", fmt.Errorf("AD domain retrieval not implemented for %s", runtime.GOOS)
 	}
+	logger.Debug("getADDomain: querying Win32_ComputerSystem")
 	psCmd := exec.Command("powershell", "-Command", "(Get-WmiObject Win32_ComputerSystem).Domain")
 	psCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	out, err := psCmd.Output()
 	if err != nil {
+		logger.Error("getADDomain: powershell query failed", "error", err)
 		return "", fmt.Errorf("failed to get AD domain: %w", err)
 	}
-	return strings.TrimSpace(string(out)), nil
+	domain := strings.TrimSpace(string(out))
+	logger.Debug("getADDomain: success", "domain", domain)
+	return domain, nil
 }
 
 func GetExtendedMachineInfo() (*ExtendedMachineInfo, error) {
+	logger.Debug("GetExtendedMachineInfo: starting extended info collection")
+	start := time.Now()
+
+	t1 := time.Now()
 	baseInfo, err := GetMachineInfo()
+	elapsed1 := time.Since(t1).Milliseconds()
 	if err != nil {
+		logger.Error("GetExtendedMachineInfo: base info failed", "error", err, "duration_ms", elapsed1)
 		return nil, err
 	}
+	logger.Debug("GetExtendedMachineInfo: fetched base info", "duration_ms", elapsed1)
+
+	logger.Debug("GetExtendedMachineInfo: fetching internal IP")
+	t2 := time.Now()
 	internalIP, err := getInternalIP()
+	elapsed2 := time.Since(t2).Milliseconds()
 	if err != nil {
+		logger.Debug("GetExtendedMachineInfo: internal IP failed", "error", err, "duration_ms", elapsed2)
 		internalIP = "Unavailable"
+	} else {
+		logger.Debug("GetExtendedMachineInfo: fetched internal IP", "duration_ms", elapsed2)
 	}
+
+	logger.Debug("GetExtendedMachineInfo: fetching AD domain")
+	t3 := time.Now()
 	adDomain, err := getADDomain()
+	elapsed3 := time.Since(t3).Milliseconds()
 	if err != nil {
+		logger.Debug("GetExtendedMachineInfo: AD domain failed", "error", err, "duration_ms", elapsed3)
 		adDomain = "Unavailable"
+	} else {
+		logger.Debug("GetExtendedMachineInfo: fetched AD domain", "duration_ms", elapsed3)
 	}
+
+	logger.Debug("GetExtendedMachineInfo: loading config")
+	t4 := time.Now()
 	cfgPath := DefaultConfigPath()
 	rawConfig, err := LoadConfig(cfgPath)
 	var emlyConfig EMLyConfig
 	if err == nil {
 		emlyConfig = rawConfig.EMLy
 	} else {
+		logger.Warn("GetExtendedMachineInfo: config loading failed, using defaults", "error", err)
 		emlyConfig = EMLyConfig{} // Return empty config if there's an error
 	}
+	logger.Debug("GetExtendedMachineInfo: loaded config", "duration_ms", time.Since(t4).Milliseconds())
+
+	logger.Debug("GetExtendedMachineInfo: completed", "duration_ms", time.Since(start).Milliseconds())
 	return &ExtendedMachineInfo{
 		MachineInfo: *baseInfo,
 		InternalIP:  internalIP,

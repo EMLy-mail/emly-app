@@ -1,5 +1,12 @@
 # Changelog EMLy
 
+## 1.6.5 (2026-03-10)
+1) Rimosso il recupero dell'IP esterno (api.ipify.org) dalla raccolta informazioni di sistema nel report bug.
+2) Rimosso il recupero delle informazioni GPU dalla raccolta informazioni di sistema nel report bug.
+3) Rimosso dead code `_configCache` dal dialog bug report; rinominata `captureEnvironmentData` in `captureConfigData` per coerenza con la variabile di stato.
+4) Reso interno (unexported) il metodo `uploadBugReport` in Go, rimuovendolo dai binding Wails; ottimizzato il recupero di apiURL/apiKey usando i dati già presenti in `machineInfo` invece di chiamare `GetConfig()` ridondante.
+5) Aggiunte le transizioni CSS nello switching delle pagine.
+
 ## 1.6.4 (2026-03-06)
 1) Fixato un bug nel visualizzatore PDF dove due operazioni di rendering concorrenti sullo stesso canvas causavano un errore all'apertura del file.
 2) Aggiunto il supporto al codec OpenJPEG (JPEG 2000 / JPX) nel visualizzatore PDF tramite il modulo WASM incluso in pdfjs-dist, necessario per decodificare correttamente immagini JPX nei documenti PDF.

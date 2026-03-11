@@ -24,6 +24,7 @@
     } from "$lib/wailsjs/go/main/App";
     import { browser } from "$app/environment";
     import { dev } from "$app/environment";
+    import { systemInfoStore } from "$lib/stores/system-info.svelte";
 
     // Bug report form state
     let userName = $state("");
@@ -68,8 +69,8 @@
             captureScreenshot();
             // Capture localStorage data
             captureLocalStorage();
-            // Capture config.ini data
-            captureConfig();
+            // Capture config data (machine info from store, or config as fallback)
+            captureConfigData();
         } else {
             // Reset form when dialog closes
             resetBugReportForm();
@@ -112,7 +113,13 @@
         }
     }
 
-    async function captureConfig() {
+    async function captureConfigData() {
+        // Prefer machine info already fetched at startup - no extra backend call
+        if (systemInfoStore.data) {
+            configData = JSON.stringify(systemInfoStore.data, null, 2);
+            console.log("Environment data: reusing machine info from store");
+            return;
+        }
         try {
             const config = await GetConfig();
             configData = JSON.stringify(config, null, 2);

@@ -276,7 +276,15 @@
                         >
                     </div>
                 {:then}
-                    {@render children()}
+                    {#key page.url.pathname}
+                        <div
+                            class="page-enter"
+                            class:no-motion={settingsStore.settings.reduceMotion}
+                            style="height: 100%;"
+                        >
+                            {@render children()}
+                        </div>
+                    {/key}
                 {/await}
             </main>
         </Sidebar.Provider>
@@ -623,6 +631,19 @@
 
     ::-webkit-scrollbar-corner {
         background: transparent;
+    }
+
+    .page-enter {
+        animation: page-fade-in 150ms ease-out;
+    }
+
+    .page-enter.no-motion {
+        animation: none;
+    }
+
+    @keyframes page-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .loading-overlay {

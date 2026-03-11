@@ -231,7 +231,6 @@ Hostname: %s
 OS: %s
 Version: %s
 Hardware ID: %s
-External IP: %s
 Internal IP: %s
 AD Domain: %s
 
@@ -241,7 +240,7 @@ SDK Version: %s
 GUI Version: %s
 Language: %s
 Update Check Enabled: %s
-`, machineInfo.Hostname, machineInfo.OS, machineInfo.Version, machineInfo.HWID, machineInfo.ExternalIP,
+`, machineInfo.Hostname, machineInfo.OS, machineInfo.Version, machineInfo.HWID,
 			machineInfo.InternalIP, machineInfo.ADDomain,
 			machineInfo.EMLyConfig.SDKDecoderSemver, machineInfo.EMLyConfig.GUISemver,
 			machineInfo.EMLyConfig.Language, machineInfo.EMLyConfig.UpdateCheckEnabled)
@@ -268,7 +267,7 @@ Update Check Enabled: %s
 		pkglogger.Warn("bug report API is offline, skipping upload")
 		result.UploadError = "Bug report API is offline"
 	} else {
-		reportID, uploadErr := a.UploadBugReport(bugReportFolder, input, currEnv)
+		reportID, uploadErr := a.uploadBugReport(bugReportFolder, input, currEnv, machineInfo)
 		if uploadErr != nil {
 			pkglogger.Warn("bug report upload failed, falling back to local zip", "error", uploadErr.Error())
 			result.UploadError = uploadErr.Error()
@@ -281,27 +280,32 @@ Update Check Enabled: %s
 	return result, nil
 }
 
-// UploadBugReport uploads the bug report files from the temp folder to the
+// uploadBugReport uploads the bug report files from the temp folder to the
 // configured API server. Returns the server-assigned report ID on success.
 //
 // Parameters:
 //   - folderPath: Path to the bug report folder containing the files
 //   - input: Original bug report input with user details
+//   - currEnv: The current environment ("prod" or "test")
+//   - machineInfo: Extended machine info (may be nil, triggers config fallback)
 //
 // Returns:
 //   - int64: Server-assigned report ID
 //   - error: Error if upload fails or API is not configured
-func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv string) (int64, error) {
-	// Load config to get API URL and key
-	cfgPath := utils.DefaultConfigPath()
-	cfg, err := utils.LoadConfig(cfgPath)
-	if err != nil {
-		return 0, fmt.Errorf("failed to load config: %w", err)
+func (a *App) uploadBugReport(folderPath string, input BugReportInput, currEnv string, machineInfo *utils.ExtendedMachineInfo) (int64, error) {
+	var apiURL, apiKey string
+	if machineInfo != nil {
+		apiURL = machineInfo.EMLyConfig.BugReportAPIURL
+		apiKey = machineInfo.EMLyConfig.BugReportAPIKey
 	}
-
-	apiURL := cfg.EMLy.BugReportAPIURL
-	apiKey := cfg.EMLy.BugReportAPIKey
-
+	if apiURL == "" || apiKey == "" {
+		cfg := a.GetConfig()
+		if cfg == nil {
+			return 0, fmt.Errorf("failed to load config")
+		}
+		apiURL = cfg.EMLy.BugReportAPIURL
+		apiKey = cfg.EMLy.BugReportAPIKey
+	}
 	if apiURL == "" {
 		return 0, fmt.Errorf("bug report API URL not configured")
 	}
@@ -319,8 +323,7 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv s
 	writer.WriteField("description", input.Description)
 
 	// Add machine identification fields
-	machineInfo, err := utils.GetExtendedMachineInfo()
-	if err == nil && machineInfo != nil {
+	if machineInfo != nil {
 		writer.WriteField("hwid", machineInfo.HWID)
 		writer.WriteField("hostname", machineInfo.Hostname)
 		writer.WriteField("internal_ip", machineInfo.InternalIP)
@@ -340,8 +343,6 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv s
 
 	// Add files from the folder
 	fileRoles := map[string]string{
-		"screenshot":        "screenshot",
-		"mail_file":         "mail_file",
 		"localStorage.json": "localstorage",
 		"config.json":       "config",
 	}
@@ -374,16 +375,18 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv s
 		}
 
 		filePath := filepath.Join(folderPath, filename)
-		fileData, readErr := os.ReadFile(filePath)
-		if readErr != nil {
+		f, openErr := os.Open(filePath)
+		if openErr != nil {
 			continue
 		}
 
 		part, partErr := writer.CreateFormFile(role, filename)
 		if partErr != nil {
+			f.Close()
 			continue
 		}
-		part.Write(fileData)
+		io.Copy(part, f)
+		f.Close()
 	}
 
 	writer.Close()
@@ -398,7 +401,7 @@ func (a *App) UploadBugReport(folderPath string, input BugReportInput, currEnv s
 	req.Header.Set("X-API-Key", apiKey)
 
 	if currEnv != "prod" && currEnv != "test" {
-		return 0, fmt.Errorf("selected db enviroment is not valid")
+		return 0, fmt.Errorf("selected db environment is not valid")
 	}
 	req.Header.Set("X-DB-Env", currEnv)
 

@@ -1133,11 +1133,6 @@
                             onclick={reloadConfig}
                             disabled={reloadingConfig}
                         >
-                            <RefreshCcw
-                                class="size-4 mr-2 {reloadingConfig
-                                    ? 'animate-spin'
-                                    : ''}"
-                            />
                             {m.settings_reload_config_btn()}
                         </Button>
                     </div>

@@ -227,8 +227,8 @@ func (a *App) GetConfig() *utils.Config {
 
 func (a *App) ReloadEMLyConfig() (utils.EMLyConfig, error) {
 	cfg, err := a.ReloadConfig()
-	if cfg == nil {
-		return utils.EMLyConfig{}, fmt.Errorf("failed to load config: %w", err)
+	if err != nil {
+		return utils.EMLyConfig{}, err
 	}
 	return cfg.EMLy, nil
 }

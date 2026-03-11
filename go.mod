@@ -10,6 +10,7 @@ require (
 	golang.org/x/sys v0.40.0
 	golang.org/x/text v0.22.0
 	gopkg.in/ini.v1 v1.67.1
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
