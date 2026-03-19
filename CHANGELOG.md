@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+## 1.6.5 (2026-03-19)
+1) Aggiunta navigazione tra le pagine nel visualizzatore PDF: pulsanti pagina precedente/successiva e contatore pagina corrente/totale nella toolbar.
+
 ## 1.6.5 (2026-03-10)
 1) Rimosso il recupero dell'IP esterno (api.ipify.org) dalla raccolta informazioni di sistema nel report bug.
 2) Rimosso il recupero delle informazioni GPU dalla raccolta informazioni di sistema nel report bug.

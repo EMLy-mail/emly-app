@@ -234,6 +234,8 @@
   "image_error_no_data": "No image data provided",
   "image_error_loading": "Failed to load image: ",
   "image_reset_btn": "Reset",
+  "pdf_prev_page": "Previous Page",
+  "pdf_next_page": "Next Page",
   "pdf_error_loading": "Failed to load PDF: ",
   "pdf_error_downloading": "Failed to download PDF: ",
   "mail_email_body_title": "Email Body",

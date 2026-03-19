@@ -7,7 +7,9 @@
     ZoomIn,
     ZoomOut,
     AlignHorizontalSpaceAround,
-    Download
+    Download,
+    ChevronLeft,
+    ChevronRight
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
@@ -272,6 +274,14 @@
         <Download size="16" />
       </button>
       <div class="separator"></div>
+      <button class="btn" onclick={prevPage} disabled={pageNum <= 1} title={m.pdf_prev_page()}>
+        <ChevronLeft size="16" />
+      </button>
+      <span class="page-info">{pageNum} / {totalPages}</span>
+      <button class="btn" onclick={nextPage} disabled={pageNum >= totalPages} title={m.pdf_next_page()}>
+        <ChevronRight size="16" />
+      </button>
+      <div class="separator"></div>
       <button class="btn" onclick={() => zoom(0.1)} title={m.pdf_zoom_in()}>
         <ZoomIn size="16" />
       </button>
@@ -400,6 +410,24 @@
   .btn:hover {
     background: var(--accent);
     color: var(--accent-foreground);
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn:disabled:hover {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+
+  .page-info {
+    font-size: 13px;
+    min-width: 48px;
+    text-align: center;
+    color: var(--foreground);
+    opacity: 0.8;
   }
 
   .canvas-container {

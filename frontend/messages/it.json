@@ -234,6 +234,8 @@
   "image_error_no_data": "Nessun dato immagine fornito",
   "image_error_loading": "Impossibile caricare l'immagine: ",
   "image_reset_btn": "Ripristina",
+  "pdf_prev_page": "Pagina precedente",
+  "pdf_next_page": "Pagina successiva",
   "pdf_error_loading": "Impossibile caricare il PDF: ",
   "pdf_error_downloading": "Impossibile scaricare il PDF: ",
   "mail_email_body_title": "Corpo Email",
