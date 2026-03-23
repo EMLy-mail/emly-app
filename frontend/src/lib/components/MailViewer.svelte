@@ -10,6 +10,7 @@
     FileCode,
     Loader2,
     Download,
+    FileQuestionMark,
   } from '@lucide/svelte';
   import { sidebarOpen } from '$lib/stores/app';
   import { onDestroy, onMount } from 'svelte';
@@ -17,6 +18,8 @@
   import { EventsOn, WindowShow, WindowUnminimise } from '$lib/wailsjs/runtime/runtime';
   import { mailState } from '$lib/stores/mail-state.svelte';
   import * as m from '$lib/paraglide/messages';
+  import OpenDefaultAttachmentBar from './OpenDefaultAttachmentBar.svelte';
+  import { showUnsavedChangesToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
   import { dev } from '$app/environment';
 
   // Import refactored utilities
@@ -58,6 +61,7 @@
   // ============================================================================
 
   function onClear() {
+    cancelCurrentToast();
     mailState.clear();
   }
 
@@ -111,6 +115,7 @@
   async function handleOpenEML(base64Data: string, filename: string) {
     await openEMLAttachment(base64Data, filename);
   }
+
 
   function handleWheel(event: WheelEvent) {
     if (event.ctrlKey) {
@@ -185,6 +190,7 @@
   });
 
   onDestroy(() => {
+    cancelCurrentToast();
     if (unregisterEvents) {
       unregisterEvents();
     }
@@ -358,18 +364,16 @@
                     <span class="att-name">{att.filename}</span>
                   </a>
                 {:else}
-                  <a
+                  <button
                     class="att-btn file"
-                    href={createDataUrl(att.contentType, base64)}
-                    download={att.filename}
+                    onclick={() => showUnsavedChangesToast({
+                      onSave: () => downloadFileFromBase64(base64, att.filename),
+                      onReset: () => {},
+                    })}
                   >
-                    {#if isImage}
-                      <Image size="14" />
-                    {:else}
-                      <File size="14" />
-                    {/if}
+                    <File size="14" />
                     <span class="att-name">{att.filename}</span>
-                  </a>
+                  </button>
                 {/if}
               {/each}
             {:else}

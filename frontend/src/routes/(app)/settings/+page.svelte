@@ -50,6 +50,7 @@
         RestartApp,
         ReloadConfig,
         SetUpdatePath,
+        SetReleaseChannel,
     } from "$lib/wailsjs/go/main/App";
     import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
 
@@ -111,6 +112,7 @@
     let updatePathSelection = $state<UpdatePathOption>("DC-RM2");
     let customUpdatePath = $state("");
     let savingUpdatePath = $state(false);
+    let savingChannel = $state(false);
     let reloadingConfig = $state(false);
 
     const UPDATE_PATH_LABELS: Record<UpdatePathOption, string> = {
@@ -365,6 +367,21 @@
             toast.error("Errore durante il ricaricamento del config");
         } finally {
             reloadingConfig = false;
+        }
+    }
+
+    async function saveReleaseChannel(channel: string) {
+        savingChannel = true;
+        try {
+            await SetReleaseChannel(channel);
+            const freshConfig = await ReloadConfig();
+            config = freshConfig.EMLy;
+            toast.success(m.settings_update_channel_saved({ channel }));
+        } catch (err) {
+            console.error("Failed to set release channel:", err);
+            toast.error(m.settings_update_channel_error());
+        } finally {
+            savingChannel = false;
         }
     }
 
@@ -1032,6 +1049,33 @@
                             </div>
                         </div>
                     {/if}
+
+                    <Separator />
+
+                    <!-- Release Channel -->
+                    <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
+                        <div>
+                            <div class="font-medium">{m.settings_update_channel_label()}</div>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_update_channel_description()}
+                            </div>
+                        </div>
+                        <RadioGroup.Root
+                            value={(config as any)?.GUIReleaseChannel || "stable"}
+                            onValueChange={saveReleaseChannel}
+                            class="flex gap-4"
+                            disabled={savingChannel}
+                        >
+                            <div class="flex items-center gap-2">
+                                <RadioGroup.Item value="stable" id="ch-stable" class="cursor-pointer" />
+                                <Label for="ch-stable" class="cursor-pointer">{m.settings_update_channel_stable()}</Label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <RadioGroup.Item value="beta" id="ch-beta" class="cursor-pointer" />
+                                <Label for="ch-beta" class="cursor-pointer">{m.settings_update_channel_beta()}</Label>
+                            </div>
+                        </RadioGroup.Root>
+                    </div>
 
                     <!-- Info about update path -->
                     <div class="text-xs text-muted-foreground">

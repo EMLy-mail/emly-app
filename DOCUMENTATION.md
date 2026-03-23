@@ -266,6 +266,10 @@ The Go backend is split into logical files:
 |--------|-------------|
 | `ExportSettings(json)` | Exports settings to JSON file |
 | `ImportSettings()` | Imports settings from JSON file |
+| `SetReleaseChannel(channel)` | Updates `GUI_RELEASE_CHANNEL` in config.ini; valid values are `"stable"` and `"beta"` |
+| `SetUpdatePath(path)` | Updates `UPDATE_PATH` in config.ini with the provided UNC or local path |
+| `SetUpdateCheckerEnabled(enabled)` | Updates `UPDATE_CHECK_ENABLED` in config.ini |
+| `ReloadConfig()` | Re-reads config.ini from disk and returns the current configuration |
 
 **System Utilities (`app_system.go`)**
 

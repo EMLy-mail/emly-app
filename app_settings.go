@@ -135,6 +135,26 @@ func (a *App) SetUpdatePath(path string) error {
 	return nil
 }
 
+// SetReleaseChannel updates the GUI_RELEASE_CHANNEL setting in config.ini.
+// Valid values are "stable" and "beta".
+//
+// Parameters:
+//   - channel: The release channel to set ("stable" or "beta")
+//
+// Returns:
+//   - error: Error if the channel is invalid or if loading/saving config fails
+func (a *App) SetReleaseChannel(channel string) error {
+	if channel != "stable" && channel != "beta" {
+		return fmt.Errorf("invalid channel: %s", channel)
+	}
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.GUIReleaseChannel = channel
+	return a.SaveConfig(config)
+}
+
 // SetUpdateCheckerEnabled updates the UPDATE_CHECK_ENABLED setting in config.ini
 // based on the user's preference from the GUI settings.
 //

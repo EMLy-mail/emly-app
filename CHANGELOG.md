@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+## 1.6.7 (2026-03-23)
+1) Aggiunto selettore del canale di rilascio (Stabile / Beta) nella sezione Aggiornamenti delle Impostazioni, che permette di scegliere da quale canale ricevere gli aggiornamenti e salva immediatamente la scelta in config.ini.
+2) Aggiunta la toast per l'apertura degli allegati non supportati, con opzione per scaricare il file o meno.
+
 ## 1.6.6 (2026-03-19)
 1) Aggiunta navigazione tra le pagine nel visualizzatore PDF: pulsanti pagina precedente/successiva e contatore pagina corrente/totale nella toolbar.
 2) Vari bug fix

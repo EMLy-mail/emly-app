@@ -75,7 +75,7 @@
 				try {
 					const settings = JSON.parse(localStorage.getItem("emly_gui_settings") || "{}");
 					const lang = settings.selectedLanguage || "en";
-					const text = lang === "it" ? "Caricamento..." : "Loading...";
+					const text = lang === "it" ? "Inizializzazione..." : "Initialization...";
 					const el = document.getElementById("loading-text");
 					if (el) el.textContent = text;
 				} catch (e) {

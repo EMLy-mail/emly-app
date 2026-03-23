@@ -12,6 +12,7 @@
 
 		const loader = document.getElementById('app-loading');
 		const stepEl = document.getElementById('loading-step');
+		const loadingEl = document.getElementById('loading-text');
 
 		let lang = 'en';
 		try {
@@ -20,6 +21,8 @@
 		} catch { /* fallback a 'en' */ }
 
 		const t = (it: string, en: string) => lang === 'it' ? it : en;
+
+		if (loadingEl) loadingEl.textContent = t('Caricamento...', 'Loading...');
 
 		// Fase 1 – Recupero dati macchina
 		if (stepEl) stepEl.textContent = t('Recupero dati...', 'Fetching data...');

@@ -258,6 +258,12 @@
   "settings_update_path_description": "Seleziona il server da cui scaricare gli aggiornamenti. Viene salvato in",
   "settings_update_path_btn": "Salva",
   "settings_update_path_hint": "Percorso attuale:",
+  "settings_update_channel_label": "Canale di rilascio",
+  "settings_update_channel_description": "Scegli se ricevere versioni stabili o versioni beta.",
+  "settings_update_channel_stable": "Stabile",
+  "settings_update_channel_beta": "Beta",
+  "settings_update_channel_saved": "Canale aggiornato: {channel}",
+  "settings_update_channel_error": "Impossibile salvare il canale di rilascio",
   "settings_update_select_other": "Altro (percorso personalizzato)",
   "settings_update_unc_label": "Percorso UNC (es.\\server\\cartella\\update)",
   "settings_update_unc_placeholder": "\\server\\cartella\\update",
@@ -270,5 +276,8 @@
   "layout_config_missing_item_updates": "Il controllo aggiornamenti non funzionerà",
   "layout_config_missing_item_features": "Alcune funzionalità potrebbero non essere disponibili",
   "layout_config_missing_understood": "Capito",
-  "layout_report_issue_label": "Segnala un problema"
+  "layout_report_issue_label": "Segnala un problema",
+  "attachment_default_open_toast": "EMLy non può aprire questo file. Vuoi scaricarlo?",
+  "attachment_default_open_toast_action": "Si",
+  "attachment_default_open_toast_cancel": "No"
 }

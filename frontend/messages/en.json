@@ -258,6 +258,12 @@
   "settings_update_path_description": "Select the server from which to download updates. Saved in",
   "settings_update_path_btn": "Save",
   "settings_update_path_hint": "Current path:",
+  "settings_update_channel_label": "Release Channel",
+  "settings_update_channel_description": "Choose whether to receive stable releases or beta versions.",
+  "settings_update_channel_stable": "Stable",
+  "settings_update_channel_beta": "Beta",
+  "settings_update_channel_saved": "Release channel updated to {channel}",
+  "settings_update_channel_error": "Failed to save release channel",
   "settings_update_select_other": "Other (custom path)",
   "settings_update_unc_label": "UNC Path (ex.\\server\\folder\\update)",
   "settings_update_unc_placeholder": "\\server\\folder\\update",
@@ -270,5 +276,8 @@
   "layout_config_missing_item_updates": "Update checks will not work",
   "layout_config_missing_item_features": "Some features may be unavailable",
   "layout_config_missing_understood": "Understood",
-  "layout_report_issue_label": "Report an issue"
+  "layout_report_issue_label": "Report an issue",
+  "attachment_default_open_toast": "EMLy can’t open this file. Download it?",
+  "attachment_default_open_toast_action": "Yes",
+  "attachment_default_open_toast_cancel": "No"
 }
