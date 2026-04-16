@@ -2,6 +2,7 @@
 
 ## 1.6.6 (2026-04-16)
 1) I link presenti nel corpo delle email sono ora cliccabili: al click viene mostrato un avviso di sicurezza con l'URL di destinazione, richiedendo conferma prima di aprire il link nel browser.
+2) Installer: le chiavi di registro per le associazioni file (.eml, .msg) vengono ora scritte in HKLM e i collegamenti in posizioni All Users; entrambi persistono tra profili AD temporanei e sono visibili a tutti gli utenti della macchina.
 
 ## 1.6.6 (2026-03-19)
 1) Aggiunta navigazione tra le pagine nel visualizzatore PDF: pulsanti pagina precedente/successiva e contatore pagina corrente/totale nella toolbar.
