@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+## 1.6.6 (2026-04-16)
+1) I link presenti nel corpo delle email sono ora cliccabili: al click viene mostrato un avviso di sicurezza con l'URL di destinazione, richiedendo conferma prima di aprire il link nel browser.
+
 ## 1.6.6 (2026-03-19)
 1) Aggiunta navigazione tra le pagine nel visualizzatore PDF: pulsanti pagina precedente/successiva e contatore pagina corrente/totale nella toolbar.
 2) Vari bug fix

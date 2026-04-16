@@ -270,5 +270,13 @@
   "layout_config_missing_item_updates": "Il controllo aggiornamenti non funzionerà",
   "layout_config_missing_item_features": "Alcune funzionalità potrebbero non essere disponibili",
   "layout_config_missing_understood": "Capito",
-  "layout_report_issue_label": "Segnala un problema"
+  "layout_report_issue_label": "Segnala un problema",
+  "settings_link_confirmation_label": "Conferma apertura link",
+  "settings_link_confirmation_hint": "Mostra un avviso di sicurezza prima di aprire i link presenti nel corpo delle email.",
+  "settings_link_confirmation_info": "Info: Quando abilitato, cliccando su un link nel corpo email verrà mostrato un avviso di sicurezza prima di aprirlo nel browser.",
+  "mail_link_security_title": "Attenzione: Link esterno",
+  "mail_link_security_description": "Stai per aprire un link esterno nel browser. Assicurati che sia sicuro prima di continuare.",
+  "mail_link_security_url_label": "URL:",
+  "mail_link_security_cancel": "Annulla",
+  "mail_link_security_open": "Apri link"
 }

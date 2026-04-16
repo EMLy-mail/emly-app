@@ -17,6 +17,7 @@ const defaults: EMLy_GUI_Settings = {
     reduceMotion: false,
     theme: "dark",
     increaseWindowButtonsContrast: false,
+    enableLinkClickConfirmation: false,
 };
 
 class SettingsStore {
