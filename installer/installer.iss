@@ -53,34 +53,37 @@ Source: "..\build\bin\{#ApplicationName}.exe"; DestDir: "{app}"; Flags: ignoreve
 Source: "..\config.ini"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
-; File associations using HKA (HKEY_AUTO) registry root
-; HKA automatically selects the appropriate registry hive:
-; - HKLM (HKEY_LOCAL_MACHINE) for admin/system-wide installations
-; - HKCU (HKEY_CURRENT_USER) for user-only installations
-; This ensures file associations work correctly for both installation modes
+; File associations are written to HKLM (machine-wide) only when the installer
+; runs as administrator. On subsequent non-admin updates, IsAdmin() returns False
+; and these entries are skipped — the HKLM keys from the first install remain.
+; This ensures file associations survive AD temporary profile logouts.
 
 ; 1. Register the .eml extension and point it to our internal ProgID "EMLy.EML"
-Root: HKA; Subkey: "Software\Classes\.eml"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.EML"; Flags: uninsdeletevalue
-Root: HKA; Subkey: "Software\Classes\.msg"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.MSG"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\Classes\.eml"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.EML"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.msg"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.MSG"; Flags: uninsdeletevalue; Check: IsAdmin()
 
 ; 2. Define the ProgID with a readable name and icon
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.EML"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName} Email Message"; Flags: uninsdeletekey
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.EML\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#ApplicationName}.exe,0"
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.EML"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName} Email Message"; Flags: uninsdeletekey; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.EML\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#ApplicationName}.exe,0"; Check: IsAdmin()
 
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.MSG"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName} Outlook Message"; Flags: uninsdeletekey
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.MSG\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#ApplicationName}.exe,0"
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.MSG"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName} Outlook Message"; Flags: uninsdeletekey; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.MSG\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#ApplicationName}.exe,0"; Check: IsAdmin()
 
 ; 3. Define the open command
 ; "%1" passes the file path to the application
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.EML\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\EMLy.exe"" ""%1"""
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\EMLy.exe"" ""%1"""
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.EML\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\EMLy.exe"" ""%1"""; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\EMLy.exe"" ""%1"""; Check: IsAdmin()
 
 ; Optional: Add "Open with EMLy" to context menu explicitly (though file association typically handles the double click)
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.EML\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"
-Root: HKA; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.EML\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"; Check: IsAdmin()
 
 [Icons]
-Name: "{autoprograms}\{#ApplicationName}"; Filename: "{app}\{#ApplicationName}.exe"
+; Shortcuts are created in machine-wide All Users locations (persist across AD
+; temporary profiles) only when running as administrator. Non-admin updates skip
+; these entries — the shortcuts already exist from the first admin install.
+Name: "{commonprograms}\{#ApplicationName}"; Filename: "{app}\{#ApplicationName}.exe"; Check: IsAdmin()
+Name: "{commondesktop}\{#ApplicationName}"; Filename: "{app}\{#ApplicationName}.exe"; Check: IsAdmin()
 
 [Code]
 var

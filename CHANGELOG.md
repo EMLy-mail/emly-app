@@ -3,6 +3,8 @@
 ## 1.6.7 (2026-03-23)
 1) Aggiunto selettore del canale di rilascio (Stabile / Beta) nella sezione Aggiornamenti delle Impostazioni, che permette di scegliere da quale canale ricevere gli aggiornamenti e salva immediatamente la scelta in config.ini.
 2) Aggiunta la toast per l'apertura degli allegati non supportati, con opzione per scaricare il file o meno.
+3) I link presenti nel corpo delle email sono ora cliccabili: al click viene mostrato un avviso di sicurezza con l'URL di destinazione, richiedendo conferma prima di aprire il link nel browser.
+4) Installer: le chiavi di registro per le associazioni file (.eml, .msg) vengono ora scritte in HKLM e i collegamenti in posizioni All Users; entrambi persistono tra profili AD temporanei e sono visibili a tutti gli utenti della macchina.
 
 ## 1.6.6 (2026-03-19)
 1) Aggiunta navigazione tra le pagine nel visualizzatore PDF: pulsanti pagina precedente/successiva e contatore pagina corrente/totale nella toolbar.

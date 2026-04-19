@@ -277,6 +277,15 @@
   "layout_config_missing_item_features": "Some features may be unavailable",
   "layout_config_missing_understood": "Understood",
   "layout_report_issue_label": "Report an issue",
+  "settings_link_confirmation_label": "Link click confirmation",
+  "settings_link_confirmation_hint": "Show a security warning before opening links found in the email body.",
+  "settings_link_confirmation_info": "Info: When enabled, clicking a link in the email body will show a security warning before opening it in the browser.",
+  "mail_link_security_title": "Warning: External Link",
+  "mail_link_security_description": "You are about to open an external link in your browser. Make sure it is safe before continuing.",
+  "mail_link_security_url_label": "URL:",
+  "mail_link_security_cancel": "Cancel",
+  "mail_link_security_open": "Open link"
+  "layout_report_issue_label": "Report an issue",
   "attachment_default_open_toast": "EMLy can’t open this file. Download it?",
   "attachment_default_open_toast_action": "Yes",
   "attachment_default_open_toast_cancel": "No"

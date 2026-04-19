@@ -15,17 +15,20 @@
   import { sidebarOpen } from '$lib/stores/app';
   import { onDestroy, onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import { EventsOn, WindowShow, WindowUnminimise } from '$lib/wailsjs/runtime/runtime';
+  import { EventsOn, WindowShow, WindowUnminimise, BrowserOpenURL } from '$lib/wailsjs/runtime/runtime';
   import { mailState } from '$lib/stores/mail-state.svelte';
   import * as m from '$lib/paraglide/messages';
   import OpenDefaultAttachmentBar from './OpenDefaultAttachmentBar.svelte';
   import { showDefaultAttachmentToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
   import { dev } from '$app/environment';
+  import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 
   // Import refactored utilities
   import {
     IFRAME_UTIL_HTML_DARK,
+    IFRAME_UTIL_HTML_DARK_NO_LINKS,
     IFRAME_UTIL_HTML_LIGHT,
+    IFRAME_UTIL_HTML_LIGHT_NO_LINKS,
     CONTENT_TYPES,
     PEC_FILES,
     arrayBufferToBase64,
@@ -48,12 +51,14 @@
   let unregisterEvents = () => {};
   let isLoading = $state(false);
   let loadingText = $state('');
+  let linkDialogOpen = $state(false);
+  let pendingLinkUrl = $state('');
 
-  // Derived iframe HTML based on dark/light setting
+  // Derived iframe HTML based on dark/light and link confirmation settings
   let iframeUtilHtml = $derived(
     settingsStore.settings.useDarkEmailViewer !== false
-      ? IFRAME_UTIL_HTML_DARK
-      : IFRAME_UTIL_HTML_LIGHT
+      ? (settingsStore.settings.enableLinkClickConfirmation !== false ? IFRAME_UTIL_HTML_DARK : IFRAME_UTIL_HTML_DARK_NO_LINKS)
+      : (settingsStore.settings.enableLinkClickConfirmation !== false ? IFRAME_UTIL_HTML_LIGHT : IFRAME_UTIL_HTML_LIGHT_NO_LINKS)
   );
 
   // ============================================================================
@@ -123,6 +128,31 @@
     }
   }
 
+  function handleIframeMessage(event: MessageEvent) {
+    if (
+      settingsStore.settings.enableLinkClickConfirmation !== false &&
+      event.data?.type === 'emly-link-click' &&
+      typeof event.data.url === 'string' &&
+      event.data.url &&
+      !linkDialogOpen
+    ) {
+      pendingLinkUrl = event.data.url;
+      linkDialogOpen = true;
+    }
+  }
+
+  function onConfirmOpenLink() {
+    const url = pendingLinkUrl;
+    linkDialogOpen = false;
+    pendingLinkUrl = '';
+    if (url) BrowserOpenURL(url);
+  }
+
+  function onCancelOpenLink() {
+    linkDialogOpen = false;
+    pendingLinkUrl = '';
+  }
+
   // ============================================================================
   // Effects
   // ============================================================================
@@ -152,6 +182,8 @@
   // ============================================================================
 
   onMount(async () => {
+    window.addEventListener('message', handleIframeMessage);
+
     // Listen for second instance args (when another file is opened while app is running)
     unregisterEvents = EventsOn('launchArgs', async (args: string[]) => {
       console.log('got event launchArgs:', args);
@@ -194,6 +226,7 @@
     if (unregisterEvents) {
       unregisterEvents();
     }
+    window.removeEventListener('message', handleIframeMessage);
   });
 
   // ============================================================================
@@ -216,6 +249,25 @@
     return isPec && filename.toLowerCase() === PEC_FILES.CERTIFICATE;
   }
 </script>
+
+<AlertDialog.Root bind:open={linkDialogOpen}>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>{m.mail_link_security_title()}</AlertDialog.Title>
+      <AlertDialog.Description>
+        {m.mail_link_security_description()}
+      </AlertDialog.Description>
+    </AlertDialog.Header>
+    <div class="link-url-box">
+      <span class="link-url-label">{m.mail_link_security_url_label()}</span>
+      <span class="link-url-value">{pendingLinkUrl}</span>
+    </div>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel onclick={onCancelOpenLink}>{m.mail_link_security_cancel()}</AlertDialog.Cancel>
+      <AlertDialog.Action onclick={onConfirmOpenLink}>{m.mail_link_security_open()}</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
 
 <div class="panel fill" aria-label={m.mail_panel_label()}>
   {#if isLoading}
@@ -723,5 +775,31 @@
     vertical-align: middle;
     user-select: none;
     width: fit-content;
+  }
+
+  .link-url-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 4px 0;
+  }
+
+  .link-url-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-foreground);
+  }
+
+  .link-url-value {
+    font-size: 12px;
+    color: var(--foreground);
+    word-break: break-all;
+    font-family: monospace;
   }
 </style>

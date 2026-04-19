@@ -76,6 +76,7 @@
         reduceMotion: false,
         theme: "dark",
         increaseWindowButtonsContrast: false,
+        enableLinkClickConfirmation: false,
     };
 
     async function setLanguage(
@@ -157,6 +158,10 @@
                 s.increaseWindowButtonsContrast ??
                 defaults.increaseWindowButtonsContrast ??
                 false,
+            enableLinkClickConfirmation:
+                s.enableLinkClickConfirmation ??
+                defaults.enableLinkClickConfirmation ??
+                false,
         };
     }
 
@@ -173,6 +178,8 @@
             (a.theme ?? "light") === (b.theme ?? "light") &&
             !!a.increaseWindowButtonsContrast ===
                 !!b.increaseWindowButtonsContrast &&
+            !!a.enableLinkClickConfirmation ===
+                !!b.enableLinkClickConfirmation &&
             JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
                 JSON.stringify(b.previewFileSupportedTypes?.sort())
         );
@@ -683,6 +690,28 @@
                     </div>
                     <p class="text-xs text-muted-foreground mt-2">
                         {m.settings_email_dark_viewer_info()}
+                    </p>
+
+                    <Separator />
+
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+                    >
+                        <div>
+                            <div class="font-medium">
+                                {m.settings_link_confirmation_label()}
+                            </div>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_link_confirmation_hint()}
+                            </div>
+                        </div>
+                        <Switch
+                            bind:checked={form.enableLinkClickConfirmation}
+                            class="cursor-pointer hover:cursor-pointer"
+                        />
+                    </div>
+                    <p class="text-xs text-muted-foreground mt-2">
+                        {m.settings_link_confirmation_info()}
                     </p>
                 </div>
             </Card.Content>
