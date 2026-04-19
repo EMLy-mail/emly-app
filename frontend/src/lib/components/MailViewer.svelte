@@ -19,7 +19,7 @@
   import { mailState } from '$lib/stores/mail-state.svelte';
   import * as m from '$lib/paraglide/messages';
   import OpenDefaultAttachmentBar from './OpenDefaultAttachmentBar.svelte';
-  import { showUnsavedChangesToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
+  import { showDefaultAttachmentToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
   import { dev } from '$app/environment';
 
   // Import refactored utilities
@@ -366,7 +366,7 @@
                 {:else}
                   <button
                     class="att-btn file"
-                    onclick={() => showUnsavedChangesToast({
+                    onclick={() => showDefaultAttachmentToast({
                       onSave: () => downloadFileFromBase64(base64, att.filename),
                       onReset: () => {},
                     })}

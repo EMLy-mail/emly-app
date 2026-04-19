@@ -48,6 +48,23 @@ export const IFRAME_UTIL_HTML_DARK = `<style>
     padding: 12px;
     overflow-x: auto;
   }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 </style><script>function handleWheel(event){if(event.ctrlKey){event.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});<\/script>`;
 
 /**
@@ -74,6 +91,23 @@ export const IFRAME_UTIL_HTML_LIGHT = `<style>
   img {
     max-width: 100%;
     height: auto;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 </style><script>function handleWheel(event){if(event.ctrlKey){event.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});<\/script>`;
 

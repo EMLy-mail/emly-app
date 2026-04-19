@@ -62,7 +62,12 @@
         isMaximized = await WindowIsMaximised();
     }
 
-    beforeNavigate(({ cancel }) => {
+    beforeNavigate(({ cancel, to }) => {
+        const normalize = (p: string) => p.replace(/\/+$/, "") || "/";
+        if (normalize(to?.url?.pathname ?? "") === normalize(page.url.pathname)) {
+            cancel();
+            return;
+        }
         if ($unsavedChanges) {
             toast.warning(m.unsaved_changes_warning());
             cancel();

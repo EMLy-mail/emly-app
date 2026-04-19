@@ -42,7 +42,7 @@ export function cancelCurrentToast() {
   toast.dismiss(OPEN_DEFAULT_ATTACHMENT_TOAST_ID);
 }
 
-export function showUnsavedChangesToast(handlers: OpenDefaultAttachmentToastHandlers) {
+export function showDefaultAttachmentToast(handlers: OpenDefaultAttachmentToastHandlers) {
   // Cancel any existing toast first
   cancelCurrentToast();
 
