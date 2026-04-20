@@ -262,6 +262,7 @@
   "settings_update_channel_beta": "Beta",
   "settings_update_channel_saved": "Canale aggiornato: {channel}",
   "settings_update_channel_error": "Impossibile salvare il canale di rilascio",
+  "settings_update_channel_recheck_hint": "Dopo aver cambiato canale, controlla nuovamente gli aggiornamenti per vedere le versioni disponibili.",
   "settings_update_select_other": "Altro (percorso personalizzato)",
   "settings_update_unc_label": "Percorso UNC (es.\\server\\cartella\\update)",
   "settings_update_unc_placeholder": "\\server\\cartella\\update",

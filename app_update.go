@@ -50,6 +50,7 @@ type UpdateStatus struct {
 	ErrorMessage     string `json:"errorMessage"`
 	ReleaseNotes     string `json:"releaseNotes,omitempty"`
 	LastCheckTime    string `json:"lastCheckTime"`
+	Channel          string `json:"channel,omitempty"`
 }
 
 // Global update state
@@ -126,6 +127,7 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 		targetVersion = manifest.StableVersion
 	}
 
+	updateStatus.Channel = currentChannel
 	updateStatus.AvailableVersion = targetVersion
 
 	// Compare versions

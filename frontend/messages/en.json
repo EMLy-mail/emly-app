@@ -262,6 +262,7 @@
   "settings_update_channel_beta": "Beta",
   "settings_update_channel_saved": "Release channel updated to {channel}",
   "settings_update_channel_error": "Failed to save release channel",
+  "settings_update_channel_recheck_hint": "After changing the channel, check for updates again to see available versions.",
   "settings_update_select_other": "Other (custom path)",
   "settings_update_unc_label": "UNC Path (ex.\\server\\folder\\update)",
   "settings_update_unc_placeholder": "\\server\\folder\\update",

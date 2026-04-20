@@ -21,7 +21,7 @@
     import {
         PanelRightClose,
         PanelRightOpen,
-        House,
+        Mail,
         Settings,
         Bug,
         Heart,
@@ -314,7 +314,7 @@
 
         <Separator orientation="vertical" />
 
-        <House
+        <Mail
             size="16"
             onclick={() => {
                 if (page.url.pathname !== "/") goto("/");

@@ -1,5 +1,11 @@
 # Changelog EMLy
 
+## 1.7.0 (2026-04-20)
+1) Selettore canale di aggiornamento (Stabile / Beta) spostato in cima alla sezione Aggiornamenti, ora sempre visibile prima dei controlli di versione.
+2) Il cambio di canale azzera immediatamente lo stato della ricerca aggiornamenti, richiedendo una nuova verifica esplicita con il canale selezionato.
+3) Aggiunto il campo `channel` nella risposta di `CheckForUpdates`, così il frontend sa sempre su quale canale è stato effettuato l'ultimo controllo.
+4) Rimossi i cast `as any` superflui sull'oggetto `config` nella pagina Impostazioni, sostituiti con accesso tipizzato corretto.
+
 ## 1.6.7 (2026-03-23)
 1) Aggiunto selettore del canale di rilascio (Stabile / Beta) nella sezione Aggiornamenti delle Impostazioni, che permette di scegliere da quale canale ricevere gli aggiornamenti e salva immediatamente la scelta in config.ini.
 2) Aggiunta la toast per l'apertura degli allegati non supportati, con opzione per scaricare il file o meno.

@@ -376,6 +376,21 @@
             await SetReleaseChannel(channel);
             const freshConfig = await ReloadConfig();
             config = freshConfig.EMLy;
+            // Reset update status: changing channel invalidates the previous check
+            updateStatus = {
+                currentVersion: updateStatus.currentVersion,
+                availableVersion: "",
+                updateAvailable: false,
+                checking: false,
+                downloading: false,
+                downloadProgress: 0,
+                ready: false,
+                installerPath: "",
+                errorMessage: "",
+                releaseNotes: undefined,
+                lastCheckTime: "",
+                channel,
+            };
             toast.success(m.settings_update_channel_saved({ channel }));
         } catch (err) {
             console.error("Failed to set release channel:", err);
@@ -421,6 +436,7 @@
         errorMessage: string;
         releaseNotes?: string;
         lastCheckTime: string;
+        channel?: string;
     };
 
     let updateStatus = $state<UpdateStatus>({
@@ -448,7 +464,6 @@
             const status = await CheckForUpdates();
             console.log("checkForUpdates status", status);
             updateStatus = status;
-            $inspect("updateStatus", updateStatus);
 
             if (status.updateAvailable) {
                 toast.success(
@@ -891,6 +906,36 @@
                     >
                 </Card.Header>
                 <Card.Content class="space-y-4">
+                    <!-- Release Channel -->
+                    <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
+                        <div>
+                            <div class="font-medium">{m.settings_update_channel_label()}</div>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_update_channel_description()}
+                            </div>
+                        </div>
+                        <RadioGroup.Root
+                            value={config?.GUIReleaseChannel || "stable"}
+                            onValueChange={saveReleaseChannel}
+                            class="flex gap-4"
+                            disabled={savingChannel}
+                        >
+                            <div class="flex items-center gap-2">
+                                <RadioGroup.Item value="stable" id="ch-stable" class="cursor-pointer" />
+                                <Label for="ch-stable" class="cursor-pointer">{m.settings_update_channel_stable()}</Label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <RadioGroup.Item value="beta" id="ch-beta" class="cursor-pointer" />
+                                <Label for="ch-beta" class="cursor-pointer">{m.settings_update_channel_beta()}</Label>
+                            </div>
+                        </RadioGroup.Root>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        {m.settings_update_channel_recheck_hint()}
+                    </p>
+
+                    <Separator />
+
                     <!-- Current Version -->
                     <div
                         class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
@@ -1053,41 +1098,14 @@
                         </div>
                     {/if}
 
-                    <Separator />
-
-                    <!-- Release Channel -->
-                    <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
-                        <div>
-                            <div class="font-medium">{m.settings_update_channel_label()}</div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_update_channel_description()}
-                            </div>
-                        </div>
-                        <RadioGroup.Root
-                            value={(config as any)?.GUIReleaseChannel || "stable"}
-                            onValueChange={saveReleaseChannel}
-                            class="flex gap-4"
-                            disabled={savingChannel}
-                        >
-                            <div class="flex items-center gap-2">
-                                <RadioGroup.Item value="stable" id="ch-stable" class="cursor-pointer" />
-                                <Label for="ch-stable" class="cursor-pointer">{m.settings_update_channel_stable()}</Label>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <RadioGroup.Item value="beta" id="ch-beta" class="cursor-pointer" />
-                                <Label for="ch-beta" class="cursor-pointer">{m.settings_update_channel_beta()}</Label>
-                            </div>
-                        </RadioGroup.Root>
-                    </div>
-
                     <!-- Info about update path -->
                     <div class="text-xs text-muted-foreground">
                         <strong>{m.settings_info_label()}</strong>
                         {m.settings_updates_info_message()}
-                        {#if (config as any)?.UpdatePath}
+                        {#if config?.UpdatePath}
                             {m.settings_updates_current_path()}
                             <code class="text-xs bg-muted px-1 py-0.5 rounded"
-                                >{(config as any).UpdatePath}</code
+                                >{config?.UpdatePath}</code
                             >
                         {:else}
                             <span class="text-amber-600 dark:text-amber-400"
@@ -1270,12 +1288,12 @@
                                     {/if}
                                 </div>
                             {/if}
-                            {#if (config as any)?.UpdatePath}
+                            {#if config?.UpdatePath}
                                 <div class="text-xs text-muted-foreground">
                                     {m.settings_update_path_hint()}
                                     <code
                                         class="text-xs bg-muted px-1 py-0.5 rounded"
-                                        >{(config as any).UpdatePath}</code
+                                        >{config?.UpdatePath}</code
                                     >
                                 </div>
                             {/if}
