@@ -75,7 +75,6 @@
         enableUpdateChecker: true,
         reduceMotion: false,
         theme: "dark",
-        increaseWindowButtonsContrast: false,
         enableLinkClickConfirmation: false,
     };
 
@@ -154,10 +153,6 @@
                   true),
             reduceMotion: s.reduceMotion ?? defaults.reduceMotion ?? false,
             theme: s.theme || defaults.theme || "light",
-            increaseWindowButtonsContrast:
-                s.increaseWindowButtonsContrast ??
-                defaults.increaseWindowButtonsContrast ??
-                false,
             enableLinkClickConfirmation:
                 s.enableLinkClickConfirmation ??
                 defaults.enableLinkClickConfirmation ??
@@ -176,8 +171,6 @@
             !!a.enableUpdateChecker === !!b.enableUpdateChecker &&
             !!a.reduceMotion === !!b.reduceMotion &&
             (a.theme ?? "light") === (b.theme ?? "light") &&
-            !!a.increaseWindowButtonsContrast ===
-                !!b.increaseWindowButtonsContrast &&
             !!a.enableLinkClickConfirmation ===
                 !!b.enableLinkClickConfirmation &&
             JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
@@ -652,25 +645,6 @@
                     <p class="text-xs text-muted-foreground mt-2">
                         {m.settings_reduce_motion_info()}
                     </p>
-
-                    <Separator />
-
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_window_buttons_contrast_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_window_buttons_contrast_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.increaseWindowButtonsContrast}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
 
                     <div
                         class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"

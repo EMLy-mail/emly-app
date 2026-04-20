@@ -13,7 +13,6 @@ interface EMLy_GUI_Settings {
     musicInspirationEnabled?: boolean;
     reduceMotion?: boolean;
     theme?: "light" | "dark";
-    increaseWindowButtonsContrast?: boolean;
     enableLinkClickConfirmation?: boolean;
 }
 

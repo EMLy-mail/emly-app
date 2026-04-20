@@ -244,8 +244,6 @@
 
         <div
             class="controls"
-            class:high-contrast={settingsStore.settings
-                .increaseWindowButtonsContrast}
             style:opacity={windowFocused ? 1 : 0.4}
         >
             <button class="btn" onmousedown={minimize}>─</button>
@@ -548,10 +546,6 @@
         display: flex;
         height: 100%;
         opacity: 0.5;
-    }
-
-    .controls.high-contrast {
-        opacity: 1;
     }
 
     .btn {

@@ -65,7 +65,7 @@
   >
     <div class="title">EMLy PDF Viewer</div>
 
-    <div class="controls" class:high-contrast={settingsStore.settings.increaseWindowButtonsContrast} style:opacity={windowFocused ? 1 : 0.4}>
+    <div class="controls" style:opacity={windowFocused ? 1 : 0.4}>
       <button class="btn" onmousedown={minimize}>─</button>
       <button class="btn" onmousedown={toggleMaximize}>
         {#if isMaximized}
@@ -126,10 +126,6 @@
     display: flex;
     height: 100%;
     opacity: 0.5;
-  }
-
-  .controls.high-contrast {
-    opacity: 1;
   }
 
   .btn {

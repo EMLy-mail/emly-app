@@ -397,24 +397,7 @@
                     <MailOpen size="14" />
                     <span class="att-name">{att.filename}</span>
                   </button>
-                {:else if isPecSig}
-                  <a
-                    class="att-btn file"
-                    href={createDataUrl(att.contentType, base64)}
-                    download={att.filename}
-                  >
-                    <Signature size="14" />
-                    <span class="att-name">{att.filename}</span>
-                  </a>
-                {:else if isPecCert}
-                  <a
-                    class="att-btn file"
-                    href={createDataUrl(att.contentType, base64)}
-                    download={att.filename}
-                  >
-                    <FileCode size="14" />
-                    <span class="att-name">{att.filename}</span>
-                  </a>
+                
                 {:else}
                   <button
                     class="att-btn file"

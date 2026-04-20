@@ -16,7 +16,6 @@ const defaults: EMLy_GUI_Settings = {
     enableUpdateChecker: false,
     reduceMotion: false,
     theme: "dark",
-    increaseWindowButtonsContrast: false,
     enableLinkClickConfirmation: false,
 };
 
