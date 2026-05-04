@@ -286,5 +286,10 @@
   "mail_link_security_open": "Open link",
   "attachment_default_open_toast": "EMLy can’t open this file. Download it?",
   "attachment_default_open_toast_action": "Yes",
-  "attachment_default_open_toast_cancel": "No"
+  "attachment_default_open_toast_cancel": "No",
+  "settings_update_path_inaccessible": "The update UNC path is inaccessible. Please ensure you are connected to the network and have the necessary permissions.",
+  "settings_danger_tab_mode_label": "Multi-tab View",
+  "settings_danger_tab_mode_hint": "Open multiple emails simultaneously in separate tabs.",
+  "settings_danger_tab_mode_info": "Info: When enabled, opening a new email will create a new tab instead of replacing the current view. Tabs can be closed individually.",
+  "tabs_close_tab_label": "Close tab"
 }

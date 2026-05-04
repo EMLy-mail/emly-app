@@ -6,24 +6,19 @@
     FileText,
     File,
     ShieldCheck,
-    Signature,
-    FileCode,
     Loader2,
     Download,
-    FileQuestionMark,
   } from '@lucide/svelte';
   import { sidebarOpen } from '$lib/stores/app';
   import { onDestroy, onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { EventsOn, WindowShow, WindowUnminimise, BrowserOpenURL } from '$lib/wailsjs/runtime/runtime';
   import { mailState } from '$lib/stores/mail-state.svelte';
+  import type { internal } from '$lib/wailsjs/go/models';
   import * as m from '$lib/paraglide/messages';
-  import OpenDefaultAttachmentBar from './OpenDefaultAttachmentBar.svelte';
   import { showDefaultAttachmentToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
-  import { dev } from '$app/environment';
   import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 
-  // Import refactored utilities
   import {
     IFRAME_UTIL_HTML_DARK,
     IFRAME_UTIL_HTML_DARK_NO_LINKS,
@@ -45,6 +40,20 @@
   import { Separator } from "$lib/components/ui/separator";
 
   // ============================================================================
+  // Props
+  // ============================================================================
+
+  let {
+    emailData = null,
+    tabId = null,
+    embedded = false,
+  }: {
+    emailData?: internal.EmailData | null;
+    tabId?: string | null;
+    embedded?: boolean;
+  } = $props();
+
+  // ============================================================================
   // State
   // ============================================================================
 
@@ -54,7 +63,14 @@
   let linkDialogOpen = $state(false);
   let pendingLinkUrl = $state('');
 
-  // Derived iframe HTML based on dark/light and link confirmation settings
+  // In tab mode, read from the specific tab in mailState.tabs.
+  // In non-tab mode, read from mailState.currentEmail (which reads the active tab).
+  let activeEmail = $derived<internal.EmailData | null>(
+    tabId !== null
+      ? (mailState.tabs.find(t => t.id === tabId)?.email ?? null)
+      : mailState.currentEmail
+  );
+
   let iframeUtilHtml = $derived(
     settingsStore.settings.useDarkEmailViewer !== false
       ? (settingsStore.settings.enableLinkClickConfirmation !== false ? IFRAME_UTIL_HTML_DARK : IFRAME_UTIL_HTML_DARK_NO_LINKS)
@@ -67,14 +83,18 @@
 
   function onClear() {
     cancelCurrentToast();
-    mailState.clear();
-    sidebarOpen.set(true);
+    if (tabId !== null) {
+      mailState.removeTab(tabId);
+    } else {
+      mailState.clear();
+      sidebarOpen.set(true);
+    }
   }
 
   function onDownloadAttachments() {
-    if (!mailState.currentEmail || !mailState.currentEmail.attachments) return;
+    if (!activeEmail || !activeEmail.attachments) return;
 
-    mailState.currentEmail.attachments.forEach((att) => {
+    activeEmail.attachments.forEach((att) => {
       const base64 = arrayBufferToBase64(att.data);
       const dataUrl = createDataUrl(att.contentType, base64);
       const link = document.createElement('a');
@@ -99,8 +119,12 @@
     }
 
     if (result.success && result.email) {
-      mailState.setParams(result.email);
-      sidebarOpen.set(false);
+      if (tabId !== null) {
+        mailState.updateTabEmail(tabId, result.email);
+      } else {
+        mailState.setParams(result.email);
+        sidebarOpen.set(false);
+      }
     } else if (result.error) {
       console.error('Failed to read email file:', result.error);
       toast.error(m.mail_error_opening());
@@ -121,7 +145,6 @@
   async function handleOpenEML(base64Data: string, filename: string) {
     await openEMLAttachment(base64Data, filename);
   }
-
 
   function handleWheel(event: WheelEvent) {
     if (event.ctrlKey) {
@@ -158,19 +181,18 @@
   // Effects
   // ============================================================================
 
-  // Process email body when current email changes
   $effect(() => {
     const processCurrentEmail = async () => {
-      if (mailState.currentEmail?.body) {
-        const processedBody = await processEmailBody(mailState.currentEmail.body);
-
-        if (processedBody !== mailState.currentEmail.body) {
-          mailState.currentEmail.body = processedBody;
+      if (activeEmail?.body) {
+        const processedBody = await processEmailBody(activeEmail.body);
+        if (processedBody !== activeEmail.body) {
+          activeEmail.body = processedBody;
         }
       }
-      console.info('Current email changed:', mailState.currentEmail?.subject);
+      console.info('Current email changed:', activeEmail?.subject);
 
-      if (mailState.currentEmail !== null) {
+      // Only close sidebar in non-tab mode (tab mode handled by the page)
+      if (activeEmail !== null && tabId === null) {
         sidebarOpen.set(false);
       }
     };
@@ -185,9 +207,11 @@
   onMount(async () => {
     window.addEventListener('message', handleIframeMessage);
 
-    // Listen for second instance args (when another file is opened while app is running)
     unregisterEvents = EventsOn('launchArgs', async (args: string[]) => {
       console.log('got event launchArgs:', args);
+
+      // In tab mode: only the active tab handles this event
+      if (tabId !== null && tabId !== mailState.activeTabId) return;
 
       if (!args || args.length === 0) return;
 
@@ -197,7 +221,6 @@
           isLoading = true;
           loadingText = m.layout_loading_text();
 
-          // Check if MSG file for special loading text
           if (arg.toLowerCase().endsWith('.msg')) {
             loadingText = m.mail_loading_msg_conversion();
           }
@@ -205,8 +228,14 @@
           const result = await loadEmailFromPath(arg);
 
           if (result.success && result.email) {
-            mailState.setParams(result.email);
-            sidebarOpen.set(false);
+            if (tabId !== null) {
+              // In tab mode: open in a new tab
+              mailState.addTab(result.email);
+              sidebarOpen.set(false);
+            } else {
+              mailState.setParams(result.email);
+              sidebarOpen.set(false);
+            }
             WindowUnminimise();
             WindowShow();
           } else if (result.error) {
@@ -270,7 +299,7 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
-<div class="panel fill" aria-label={m.mail_panel_label()}>
+<div class="panel fill" class:embedded aria-label={m.mail_panel_label()}>
   {#if isLoading}
     <div class="loading-overlay">
       <Loader2 class="spinner" size="48" />
@@ -279,7 +308,7 @@
   {/if}
 
   <div class="events" role="log" aria-live="polite">
-    {#if mailState.currentEmail === null}
+    {#if activeEmail === null}
       <!-- Empty State -->
       <div class="empty-state">
         <div class="empty-icon">
@@ -297,7 +326,7 @@
         <div class="email-header-content">
           <div class="subject-row">
             <div class="email-subject">
-              {mailState.currentEmail.subject || m.mail_subject_no_subject()}
+              {activeEmail.subject || m.mail_subject_no_subject()}
             </div>
             <div class="controls">
               <button
@@ -336,24 +365,24 @@
           <!-- Meta Grid -->
           <div class="email-meta-grid">
             <span class="label">{m.mail_from()}</span>
-            <span class="value">{mailState.currentEmail.from}</span>
+            <span class="value">{activeEmail.from}</span>
 
-            {#if mailState.currentEmail.to && mailState.currentEmail.to.length > 0}
+            {#if activeEmail.to && activeEmail.to.length > 0}
               <span class="label">{m.mail_to()}</span>
-              <span class="value">{mailState.currentEmail.to.join(', ')}</span>
+              <span class="value">{activeEmail.to.join(', ')}</span>
             {/if}
 
-            {#if mailState.currentEmail.cc && mailState.currentEmail.cc.length > 0}
+            {#if activeEmail.cc && activeEmail.cc.length > 0}
               <span class="label">{m.mail_cc()}</span>
-              <span class="value">{mailState.currentEmail.cc.join(', ')}</span>
+              <span class="value">{activeEmail.cc.join(', ')}</span>
             {/if}
 
-            {#if mailState.currentEmail.bcc && mailState.currentEmail.bcc.length > 0}
+            {#if activeEmail.bcc && activeEmail.bcc.length > 0}
               <span class="label">{m.mail_bcc()}</span>
-              <span class="value">{mailState.currentEmail.bcc.join(', ')}</span>
+              <span class="value">{activeEmail.bcc.join(', ')}</span>
             {/if}
 
-            {#if mailState.currentEmail.isPec}
+            {#if activeEmail.isPec}
               <span class="label">{m.mail_sign_label()}</span>
               <span class="value">
                 <span class="pec-badge" title="Posta Elettronica Certificata">
@@ -369,16 +398,16 @@
         <div class="email-attachments">
           <span class="att-section-label">{m.mail_attachments()}</span>
           <div class="att-list">
-            {#if mailState.currentEmail.attachments && mailState.currentEmail.attachments.length > 0}
-              {#each mailState.currentEmail.attachments as att}
+            {#if activeEmail.attachments && activeEmail.attachments.length > 0}
+              {#each activeEmail.attachments as att}
                 {@const base64 = arrayBufferToBase64(att.data)}
                 {@const isImage = att.contentType.startsWith(CONTENT_TYPES.IMAGE)}
                 {@const isPdf =
                   att.contentType === CONTENT_TYPES.PDF ||
                   att.filename.toLowerCase().endsWith('.pdf')}
                 {@const isEml = att.filename.toLowerCase().endsWith('.eml')}
-                {@const isPecSig = isPecSignature(att.filename, mailState.currentEmail.isPec)}
-                {@const isPecCert = isPecCertificate(att.filename, mailState.currentEmail.isPec)}
+                {@const isPecSig = isPecSignature(att.filename, activeEmail.isPec)}
+                {@const isPecCert = isPecCertificate(att.filename, activeEmail.isPec)}
 
                 {#if isImage}
                   <button
@@ -398,7 +427,6 @@
                     <MailOpen size="14" />
                     <span class="att-name">{att.filename}</span>
                   </button>
-                
                 {:else}
                   <button
                     class="att-btn file"
@@ -421,7 +449,7 @@
         <!-- Email Body -->
         <div class="email-body-wrapper" class:light-theme={settingsStore.settings.useDarkEmailViewer === false}>
           <iframe
-            srcdoc={mailState.currentEmail.body + iframeUtilHtml}
+            srcdoc={activeEmail.body + iframeUtilHtml}
             title={m.mail_email_body_title()}
             class="email-iframe"
             sandbox="allow-same-origin allow-scripts"
@@ -474,6 +502,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
+    position: relative;
   }
 
   .panel.fill {
@@ -481,6 +510,12 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+  }
+
+  /* When embedded inside a tabbed container, the parent provides border/radius */
+  .panel.embedded {
+    border: none;
+    border-radius: 0;
   }
 
   .btn {
@@ -656,6 +691,10 @@
     min-height: 200px;
     border-radius: 0 0 14px 14px;
     overflow: hidden;
+  }
+
+  .embedded .email-body-wrapper {
+    border-radius: 0;
   }
 
   .email-body-wrapper.light-theme {

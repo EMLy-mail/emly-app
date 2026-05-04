@@ -53,6 +53,7 @@ func main() {
 			windowTitle = "EMLy Image Viewer"
 			windowWidth = 800
 			windowHeight = 600
+
 		}
 		if strings.Contains(arg, "--view-pdf") {
 			uniqueId = "emly-pdf-viewer-" + strings.ReplaceAll(arg, "--view-pdf=", "")
@@ -89,7 +90,7 @@ func main() {
 		Width:  windowWidth,
 		Height: windowHeight,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets:     assets,
 			Middleware: userAgentMiddleware(userAgent),
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
@@ -105,6 +106,7 @@ func main() {
 		MinWidth:                 964,
 		MinHeight:                690,
 		Frameless:                frameless,
+		OnBeforeClose:            app.beforeClose,
 	})
 
 	if err != nil {

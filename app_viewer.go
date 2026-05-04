@@ -4,14 +4,17 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 	"strings"
+	"syscall"
 	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // =============================================================================
@@ -429,4 +432,27 @@ func (a *App) GetViewerData() (*ViewerData, error) {
 		}
 	}
 	return nil, nil
+}
+
+// beforeClose is called by Wails before the main window closes.
+// It prevents closing if any image or PDF viewer sub-processes are still open,
+// showing an informational dialog to the user.
+func (a *App) beforeClose(ctx context.Context) bool {
+	a.openImagesMux.Lock()
+	imagesOpen := len(a.openImages) > 0
+	a.openImagesMux.Unlock()
+
+	a.openPDFsMux.Lock()
+	pdfsOpen := len(a.openPDFs) > 0
+	a.openPDFsMux.Unlock()
+
+	if imagesOpen || pdfsOpen {
+		_, _ = runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
+			Type:    runtime.InfoDialog,
+			Title:   "EMLy",
+			Message: "Ci sono ancora finestre di visualizzazione immagini o PDF aperte. Chiudile prima di uscire da EMLy.",
+		})
+		return true
+	}
+	return false
 }

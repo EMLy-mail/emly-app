@@ -76,6 +76,7 @@
         reduceMotion: false,
         theme: "dark",
         enableLinkClickConfirmation: false,
+        enableTabMode: false,
     };
 
     async function setLanguage(
@@ -157,6 +158,10 @@
                 s.enableLinkClickConfirmation ??
                 defaults.enableLinkClickConfirmation ??
                 false,
+            enableTabMode:
+                s.enableTabMode ??
+                defaults.enableTabMode ??
+                false,
         };
     }
 
@@ -173,6 +178,7 @@
             (a.theme ?? "light") === (b.theme ?? "light") &&
             !!a.enableLinkClickConfirmation ===
                 !!b.enableLinkClickConfirmation &&
+            !!a.enableTabMode === !!b.enableTabMode &&
             JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
                 JSON.stringify(b.previewFileSupportedTypes?.sort())
         );
@@ -480,6 +486,9 @@
             console.error("Failed to check for updates:", err);
             updateStatus.checking = false;
             updateStatus.errorMessage = String(err);
+            if(updateStatus.errorMessage.includes("failed to resolve manifest path: path not accessible: GetFileAttributesEx")) {
+                updateStatus.errorMessage = m.settings_update_path_inaccessible();
+            }
             updateStatus.lastCheckTime = new Date().toISOString();
             toast.error(m.settings_toast_check_failed());
         }
@@ -1399,6 +1408,27 @@
                     </div>
                     <div class="text-xs text-muted-foreground">
                         {m.settings_danger_update_checker_info()}
+                    </div>
+                    <Separator />
+
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
+                    >
+                        <div class="space-y-1">
+                            <Label class="text-sm"
+                                >{m.settings_danger_tab_mode_label()}</Label
+                            >
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_danger_tab_mode_hint()}
+                            </div>
+                        </div>
+                        <Switch
+                            bind:checked={form.enableTabMode}
+                            class="cursor-pointer hover:cursor-pointer"
+                        />
+                    </div>
+                    <div class="text-xs text-muted-foreground">
+                        {m.settings_danger_tab_mode_info()}
                     </div>
                     <Separator />
 

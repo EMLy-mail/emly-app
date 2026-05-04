@@ -286,5 +286,10 @@
   "mail_link_security_description": "Stai per aprire un link esterno nel browser. Assicurati che sia sicuro prima di continuare.",
   "mail_link_security_url_label": "URL:",
   "mail_link_security_cancel": "Annulla",
-  "mail_link_security_open": "Apri link"
+  "mail_link_security_open": "Apri link",
+  "settings_update_path_inaccessible": "Il percorso UNC degli aggiornamenti non è accessibile. Assicurati di essere connesso alla rete e di avere i permessi necessari.",
+  "settings_danger_tab_mode_label": "Vista multi-scheda",
+  "settings_danger_tab_mode_hint": "Apri più email contemporaneamente in schede separate.",
+  "settings_danger_tab_mode_info": "Info: Quando abilitato, l'apertura di una nuova email creerà una nuova scheda invece di sostituire la vista corrente. Le schede possono essere chiuse singolarmente.",
+  "tabs_close_tab_label": "Chiudi scheda"
 }

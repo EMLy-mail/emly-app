@@ -14,6 +14,7 @@ interface EMLy_GUI_Settings {
     reduceMotion?: boolean;
     theme?: "light" | "dark";
     enableLinkClickConfirmation?: boolean;
+    enableTabMode?: boolean;
 }
 
 type SupportedLanguages = "en" | "it";

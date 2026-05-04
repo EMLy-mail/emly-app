@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+## 1.7.0 (2026-05-04)
+1) Aggiunto controllo alla chiusura della finestra principale: se ci sono finestre di visualizzazione immagini o PDF ancora aperte, la chiusura viene bloccata e viene mostrata una finestra di avviso all'utente.
+2) Aggiunto sistema di schede (tab) per la visualizzazione simultanea di più email: attivabile dalla Danger Zone nelle Impostazioni, permette di aprire ogni nuova email in una scheda separata e di chiuderle individualmente.
+
 ## 1.7.0 (2026-04-20)
 1) Selettore canale di aggiornamento (Stabile / Beta) spostato in cima alla sezione Aggiornamenti, ora sempre visibile prima dei controlli di versione.
 2) Il cambio di canale azzera immediatamente lo stato della ricerca aggiornamenti, richiedendo una nuova verifica esplicita con il canale selezionato.
