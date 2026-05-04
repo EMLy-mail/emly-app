@@ -50,6 +50,7 @@
         IsAppInDebugMode,
     } from "$lib/wailsjs/go/main/App";
     import { settingsStore } from "$lib/stores/settings.svelte.js";
+  import { mailState } from "$lib/stores/mail-state.svelte.js";
 
     let versionInfo: utils.Config | null = $state(null);
     let isMaximized = $state(false);
@@ -160,6 +161,10 @@
         $inspect($runningInDebugMode, "isAppInDebugMode");
 
         applyTheme(stored === "light" ? "light" : "dark");
+
+        if(page.url.pathname !== "/") {
+            sidebarOpen.set(true);
+        }
     });
 
     // Listen for automatic update notifications

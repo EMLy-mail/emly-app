@@ -68,6 +68,7 @@
   function onClear() {
     cancelCurrentToast();
     mailState.clear();
+    sidebarOpen.set(true);
   }
 
   function onDownloadAttachments() {
