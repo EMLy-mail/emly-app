@@ -65,7 +65,7 @@
 
     beforeNavigate(({ cancel, to }) => {
         const normalize = (p: string) => p.replace(/\/+$/, "") || "/";
-        if (normalize(to?.url?.pathname ?? "") === normalize(page.url.pathname)) {
+        if (normalize(to?.url?.pathname ?? "") === normalize(page.url.pathname) && !to?.url.search.includes("?reload=true")) {
             cancel();
             return;
         }
@@ -348,7 +348,7 @@
 
         <a
             data-sveltekit-reload
-            href="/"
+            href="/?reload=true"
             class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
             style="text-decoration: none; margin-left: auto; height: 24px; font-size: 12px; padding: 0 8px;"
             aria-label={m.settings_danger_reload_button_ui()}

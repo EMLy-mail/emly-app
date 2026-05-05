@@ -77,6 +77,7 @@
         theme: "dark",
         enableLinkClickConfirmation: false,
         enableTabMode: false,
+        fixEmailTextContrast: false,
     };
 
     async function setLanguage(
@@ -162,6 +163,10 @@
                 s.enableTabMode ??
                 defaults.enableTabMode ??
                 false,
+            fixEmailTextContrast:
+                s.fixEmailTextContrast ??
+                defaults.fixEmailTextContrast ??
+                false,
         };
     }
 
@@ -179,6 +184,7 @@
             !!a.enableLinkClickConfirmation ===
                 !!b.enableLinkClickConfirmation &&
             !!a.enableTabMode === !!b.enableTabMode &&
+            !!a.fixEmailTextContrast === !!b.fixEmailTextContrast &&
             JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
                 JSON.stringify(b.previewFileSupportedTypes?.sort())
         );
@@ -710,6 +716,28 @@
                     </div>
                     <p class="text-xs text-muted-foreground mt-2">
                         {m.settings_link_confirmation_info()}
+                    </p>
+
+                    <Separator />
+
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+                    >
+                        <div>
+                            <div class="font-medium">
+                                {m.settings_contrast_fix_label()}
+                            </div>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_contrast_fix_hint()}
+                            </div>
+                        </div>
+                        <Switch
+                            bind:checked={form.fixEmailTextContrast}
+                            class="cursor-pointer hover:cursor-pointer"
+                        />
+                    </div>
+                    <p class="text-xs text-muted-foreground mt-2">
+                        {m.settings_contrast_fix_info()}
                     </p>
                 </div>
             </Card.Content>

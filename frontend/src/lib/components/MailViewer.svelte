@@ -24,6 +24,7 @@
     IFRAME_UTIL_HTML_DARK_NO_LINKS,
     IFRAME_UTIL_HTML_LIGHT,
     IFRAME_UTIL_HTML_LIGHT_NO_LINKS,
+    IFRAME_CONTRAST_FIX_JS,
     CONTENT_TYPES,
     PEC_FILES,
     arrayBufferToBase64,
@@ -75,6 +76,10 @@
     settingsStore.settings.useDarkEmailViewer !== false
       ? (settingsStore.settings.enableLinkClickConfirmation !== false ? IFRAME_UTIL_HTML_DARK : IFRAME_UTIL_HTML_DARK_NO_LINKS)
       : (settingsStore.settings.enableLinkClickConfirmation !== false ? IFRAME_UTIL_HTML_LIGHT : IFRAME_UTIL_HTML_LIGHT_NO_LINKS)
+  );
+
+  let contrastFixScript = $derived(
+    settingsStore.settings.fixEmailTextContrast ? IFRAME_CONTRAST_FIX_JS : ''
   );
 
   // ============================================================================
@@ -190,6 +195,13 @@
         }
       }
       console.info('Current email changed:', activeEmail?.subject);
+      // Log the email info: Format, N of attachments, and whether it has a body, but only if it's not too large (to avoid spamming the logs)
+      if (activeEmail) {
+        const bodyInfo = activeEmail.body ? `(body length: ${activeEmail.body.length})` : '(no body)';
+        const attachmentsInfo = activeEmail.attachments ? `(${activeEmail.attachments.length} attachments)` : '(no attachments)';
+        const isPecInfo = activeEmail.isPec ? '(PEC)' : '(not PEC)';
+        console.info(`Email info: ${bodyInfo} ${attachmentsInfo} ${isPecInfo}`);
+      }
 
       // Only close sidebar in non-tab mode (tab mode handled by the page)
       if (activeEmail !== null) {
@@ -449,7 +461,7 @@
         <!-- Email Body -->
         <div class="email-body-wrapper" class:light-theme={settingsStore.settings.useDarkEmailViewer === false}>
           <iframe
-            srcdoc={activeEmail.body + iframeUtilHtml}
+            srcdoc={activeEmail.body + iframeUtilHtml + contrastFixScript}
             title={m.mail_email_body_title()}
             class="email-iframe"
             sandbox="allow-same-origin allow-scripts"

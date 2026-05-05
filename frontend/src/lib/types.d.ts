@@ -15,6 +15,7 @@ interface EMLy_GUI_Settings {
     theme?: "light" | "dark";
     enableLinkClickConfirmation?: boolean;
     enableTabMode?: boolean;
+    fixEmailTextContrast?: boolean;
 }
 
 type SupportedLanguages = "en" | "it";

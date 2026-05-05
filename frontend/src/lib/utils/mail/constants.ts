@@ -186,6 +186,14 @@ export const IFRAME_UTIL_HTML_LIGHT_NO_LINKS = `<style>
 export const IFRAME_UTIL_HTML = IFRAME_UTIL_HTML_DARK;
 
 /**
+ * Script injected into the email iframe to fix low-contrast text.
+ * Walks the DOM and, for any element whose text/background contrast ratio
+ * is below 2:1 (near-invisible), flips the text color to white or dark
+ * depending on the effective background luminance.
+ */
+export const IFRAME_CONTRAST_FIX_JS = `<script>(function(){function pc(s){var m=(s||'').match(/(\\d+),\\s*(\\d+),\\s*(\\d+)(?:,\\s*([\\d.]+))?/);if(!m||(m[4]!==undefined&&+m[4]<0.1))return null;return[+m[1],+m[2],+m[3]];}function lm(c){return c.reduce(function(s,v,i){v/=255;v=v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);return s+v*[0.2126,0.7152,0.0722][i];},0);}function gb(el){var e=el;while(e&&e!==document.documentElement){var c=pc(getComputedStyle(e).backgroundColor);if(c)return c;e=e.parentElement;}return[255,255,255];}function fx(el){if(el.nodeType!==1)return;var fg=pc(getComputedStyle(el).color);if(fg){var bg=gb(el);var lf=lm(fg),lb=lm(bg);var hi=Math.max(lf,lb)+0.05,lo=Math.min(lf,lb)+0.05;if(hi/lo<2){el.style.setProperty('color',lb<0.5?'rgba(255,255,255,0.9)':'#1a1a1a','important');}}for(var i=0;i<el.children.length;i++)fx(el.children[i]);}function run(){if(document.body)fx(document.body);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();})();<\/script>`;
+
+/**
  * Supported email file extensions
  */
 export const EMAIL_EXTENSIONS = {

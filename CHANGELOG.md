@@ -1,8 +1,12 @@
 # Changelog EMLy
 
-## 1.7.0 (2026-05-04)
+## 1.7.1 (2026-05-04)
 1) Aggiunto controllo alla chiusura della finestra principale: se ci sono finestre di visualizzazione immagini o PDF ancora aperte, la chiusura viene bloccata e viene mostrata una finestra di avviso all'utente.
 2) Aggiunto sistema di schede (tab) per la visualizzazione simultanea di più email: attivabile dalla Danger Zone nelle Impostazioni, permette di aprire ogni nuova email in una scheda separata e di chiuderle individualmente.
+3) Fixato un bug dove le immagini inline (cid:) nelle email MSG non venivano visualizzate, perché il reader MSG non leggeva il campo PR_ATTACH_CONTENT_ID e non sostituiva i riferimenti cid: con data URI.
+4) Fixato un bug dove le immagini inline (cid:) nelle email PEC annidate (es. email inoltrate con allegati immagine) non venivano visualizzate, perché il reader PEC non processava i file embedded dell'email interna.
+5) Aggiunta opzione "Correzione automatica contrasto testo" nelle Impostazioni (sezione visualizzazione email): quando attiva, un algoritmo WCAG analizza ogni elemento del corpo email e inverte il colore del testo quando è troppo simile allo sfondo (rapporto di contrasto < 2:1), risolvendo il problema del testo nero su sfondo nero e viceversa.
+6) Fixato un bug dove il reload tramite il pulsante "Ricarica" nella footerbar non funzionava correttamente, a causa di un confronto errato del pathname che non considerava i parametri di query (es. ?reload=true).
 
 ## 1.7.0 (2026-04-20)
 1) Selettore canale di aggiornamento (Stabile / Beta) spostato in cima alla sezione Aggiornamenti, ora sempre visibile prima dei controlli di versione.
