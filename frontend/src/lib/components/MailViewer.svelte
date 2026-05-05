@@ -192,7 +192,7 @@
       console.info('Current email changed:', activeEmail?.subject);
 
       // Only close sidebar in non-tab mode (tab mode handled by the page)
-      if (activeEmail !== null && tabId === null) {
+      if (activeEmail !== null) {
         sidebarOpen.set(false);
       }
     };
