@@ -294,5 +294,7 @@
   "settings_danger_tab_mode_label": "Vista multi-scheda",
   "settings_danger_tab_mode_hint": "Apri più email contemporaneamente in schede separate.",
   "settings_danger_tab_mode_info": "Info: Quando abilitato, l'apertura di una nuova email creerà una nuova scheda invece di sostituire la vista corrente. Le schede possono essere chiuse singolarmente.",
-  "tabs_close_tab_label": "Chiudi scheda"
+  "tabs_close_tab_label": "Chiudi scheda",
+  "mail_link_disabled_toast": "I link nelle email sono disabilitati per sicurezza. Vuoi abilitarli?",
+  "mail_link_disabled_enable": "Abilita"
 }

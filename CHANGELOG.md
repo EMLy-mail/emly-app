@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+## 1.7.2 (2026-05-11)
+1) Aggiunta funzionalità di suggerimento abilitazione link: i link nelle email rimangono disabilitati per default, ma se l'utente tenta di cliccarci due o più volte viene mostrata una notifica toast con un pulsante "Abilita" per attivare il supporto ai link con conferma di sicurezza.
+
 ## 1.7.1 (2026-05-04)
 1) Aggiunto controllo alla chiusura della finestra principale: se ci sono finestre di visualizzazione immagini o PDF ancora aperte, la chiusura viene bloccata e viene mostrata una finestra di avviso all'utente.
 2) Aggiunto sistema di schede (tab) per la visualizzazione simultanea di più email: attivabile dalla Danger Zone nelle Impostazioni, permette di aprire ogni nuova email in una scheda separata e di chiuderle individualmente.

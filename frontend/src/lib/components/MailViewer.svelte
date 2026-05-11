@@ -63,6 +63,9 @@
   let loadingText = $state('');
   let linkDialogOpen = $state(false);
   let pendingLinkUrl = $state('');
+  let disabledLinkClickCount = $state(0);
+
+  const LINK_HINT_TOAST_ID = 'emly-link-hint';
 
   // In tab mode, read from the specific tab in mailState.tabs.
   // In non-tab mode, read from mailState.currentEmail (which reads the active tab).
@@ -158,6 +161,23 @@
   }
 
   function handleIframeMessage(event: MessageEvent) {
+    if (event.data?.type === 'emly-link-disabled-click') {
+      disabledLinkClickCount++;
+      if (disabledLinkClickCount >= 2) {
+        toast(m.mail_link_disabled_toast(), {
+          id: LINK_HINT_TOAST_ID,
+          duration: 10000,
+          action: {
+            label: m.mail_link_disabled_enable(),
+            onClick: () => {
+              settingsStore.update({ enableLinkClickConfirmation: true });
+            },
+          },
+        });
+      }
+      return;
+    }
+
     if (
       settingsStore.settings.enableLinkClickConfirmation !== false &&
       event.data?.type === 'emly-link-click' &&
@@ -188,6 +208,9 @@
 
   $effect(() => {
     const processCurrentEmail = async () => {
+      disabledLinkClickCount = 0;
+      toast.dismiss(LINK_HINT_TOAST_ID);
+
       if (activeEmail?.body) {
         const processedBody = await processEmailBody(activeEmail.body);
         if (processedBody !== activeEmail.body) {

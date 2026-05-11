@@ -94,6 +94,8 @@ export const IFRAME_UTIL_HTML_LIGHT = `<style>
 
 /**
  * Dark theme HTML/CSS injected into the email body iframe — links disabled
+ * Links are visually non-clickable (cursor: default) but clicks are intercepted
+ * via JS and forwarded to the parent as 'emly-link-disabled-click' messages.
  */
 export const IFRAME_UTIL_HTML_DARK_NO_LINKS = `<style>
   body {
@@ -105,7 +107,6 @@ export const IFRAME_UTIL_HTML_DARK_NO_LINKS = `<style>
     line-height: 1.5;
   }
   a {
-    pointer-events: none !important;
     cursor: default !important;
     color: #60a5fa !important;
   }
@@ -137,10 +138,12 @@ export const IFRAME_UTIL_HTML_DARK_NO_LINKS = `<style>
     padding: 12px;
     overflow-x: auto;
   }
-</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});<\/script>`;
+</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();window.parent.postMessage({type:'emly-link-disabled-click'},'*');}},{capture:true});<\/script>`;
 
 /**
  * Light theme HTML/CSS injected into the email body iframe — links disabled
+ * Links are visually non-clickable (cursor: default) but clicks are intercepted
+ * via JS and forwarded to the parent as 'emly-link-disabled-click' messages.
  */
 export const IFRAME_UTIL_HTML_LIGHT_NO_LINKS = `<style>
   body {
@@ -152,7 +155,6 @@ export const IFRAME_UTIL_HTML_LIGHT_NO_LINKS = `<style>
     line-height: 1.5;
   }
   a {
-    pointer-events: none !important;
     cursor: default !important;
     color: #2563eb !important;
   }
@@ -177,7 +179,7 @@ export const IFRAME_UTIL_HTML_LIGHT_NO_LINKS = `<style>
   ::-webkit-scrollbar-corner {
     background: transparent;
   }
-</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});<\/script>`;
+</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();window.parent.postMessage({type:'emly-link-disabled-click'},'*');}},{capture:true});<\/script>`;
 
 /**
  * Default iframe HTML (dark theme for backwards compatibility)
