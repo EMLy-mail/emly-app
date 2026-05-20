@@ -75,7 +75,7 @@
   ];
 </script>
 
-<div class="min-h-[calc(100vh-1rem)] bg-linear-to-b from-background to-muted/30">
+<div class="min-h-[calc(100vh-1rem)] from-background to-muted/30">
   <div
     class="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:px-6 sm:py-10 opacity-80"
   >

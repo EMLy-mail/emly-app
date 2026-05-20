@@ -7,12 +7,13 @@
   import { toast } from "svelte-sonner";
   import { X, Plus } from "@lucide/svelte";
   import { openAndLoadEmail } from "$lib/utils/mail";
+  import { onMount } from "svelte";
 
   let { data } = $props();
 
   let isAddingTab = $state(false);
 
-  $effect(() => {
+  onMount(() => {
     if (data.email) {
       if (settingsStore.settings.enableTabMode) {
         mailState.addTab(data.email);

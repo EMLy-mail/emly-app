@@ -1,4 +1,6 @@
 # Changelog EMLy
+## 1.7.3 (2026-05-20)
+1) Sistemato un critico bug di avvio, quando l'utente avviava EMLy tramite un .EML, andava in crash la WebView. Causato dall'uso di $effect invece che onMount.
 
 ## 1.7.2 (2026-05-11)
 1) Aggiunta funzionalità di suggerimento abilitazione link: i link nelle email rimangono disabilitati per default, ma se l'utente tenta di cliccarci due o più volte viene mostrata una notifica toast con un pulsante "Abilita" per attivare il supporto ai link con conferma di sicurezza.
