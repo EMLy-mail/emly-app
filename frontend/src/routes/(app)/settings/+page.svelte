@@ -10,13 +10,11 @@
         ChevronLeft,
         Flame,
         Download,
-        Upload,
         RefreshCw,
         CheckCircle2,
         AlertCircle,
         Sun,
         Moon,
-        RefreshCcw,
         Save,
     } from "@lucide/svelte";
     import { Input } from "$lib/components/ui/input";
@@ -40,14 +38,10 @@
     import { mailState } from "$lib/stores/mail-state.svelte.js";
     import { dev } from "$app/environment";
     import {
-        ExportSettings,
-        ImportSettings,
         CheckForUpdates,
         DownloadUpdate,
         InstallUpdate,
-        GetUpdateStatus,
         SetUpdateCheckerEnabled,
-        RestartApp,
         ReloadConfig,
         SetUpdatePath,
         SetReleaseChannel,
@@ -322,51 +316,6 @@
         }
         previousTheme = form.theme;
     });
-
-    async function exportSettings() {
-        try {
-            const settingsJSON = JSON.stringify(form, null, 2);
-            const result = await ExportSettings(settingsJSON);
-            if (result) {
-                toast.success(m.settings_export_success());
-            }
-        } catch (err) {
-            console.error("Failed to export settings:", err);
-            toast.error(m.settings_export_error());
-        }
-    }
-
-    async function importSettings() {
-        try {
-            const result = await ImportSettings();
-            if (result) {
-                try {
-                    const imported = JSON.parse(result) as EMLy_GUI_Settings;
-                    // Validate that it looks like a valid settings object
-                    if (typeof imported === "object" && imported !== null) {
-                        form = normalizeSettings(imported);
-                        toast.success(m.settings_import_success());
-                    } else {
-                        toast.error(m.settings_import_invalid());
-                    }
-                } catch {
-                    toast.error(m.settings_import_invalid());
-                }
-            }
-        } catch (err) {
-            console.error("Failed to import settings:", err);
-            toast.error(m.settings_import_error());
-        }
-    }
-
-    async function restartEntireApp() {
-        try {
-            await RestartApp();
-        } catch (e) {
-            toast.error(m.settings_danger_reload_app_error());
-            console.error(e);
-        }
-    }
 
     async function reloadConfig() {
         reloadingConfig = true;
@@ -739,58 +688,6 @@
                     <p class="text-xs text-muted-foreground mt-2">
                         {m.settings_contrast_fix_info()}
                     </p>
-                </div>
-            </Card.Content>
-        </Card.Root>
-
-        <Card.Root>
-            <Card.Header class="space-y-1">
-                <Card.Title>{m.settings_export_import_title()}</Card.Title>
-                <Card.Description
-                    >{m.settings_export_import_description()}</Card.Description
-                >
-            </Card.Header>
-            <Card.Content class="space-y-4">
-                <div
-                    class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                >
-                    <div>
-                        <div class="font-medium">
-                            {m.settings_export_button()}
-                        </div>
-                        <div class="text-sm text-muted-foreground">
-                            {m.settings_export_hint()}
-                        </div>
-                    </div>
-                    <Button
-                        variant="outline"
-                        class="cursor-pointer hover:cursor-pointer"
-                        onclick={exportSettings}
-                    >
-                        <Download class="size-4 mr-2" />
-                        {m.settings_export_button()}
-                    </Button>
-                </div>
-
-                <div
-                    class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                >
-                    <div>
-                        <div class="font-medium">
-                            {m.settings_import_button()}
-                        </div>
-                        <div class="text-sm text-muted-foreground">
-                            {m.settings_import_hint()}
-                        </div>
-                    </div>
-                    <Button
-                        variant="outline"
-                        class="cursor-pointer hover:cursor-pointer"
-                        onclick={importSettings}
-                    >
-                        <Upload class="size-4 mr-2" />
-                        {m.settings_import_button()}
-                    </Button>
                 </div>
             </Card.Content>
         </Card.Root>
@@ -1199,14 +1096,7 @@
                             >
                                 {m.settings_danger_reload_button_ui()}
                             </a>
-                            <Button
-                                class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50`}
-                                onclick={restartEntireApp}
-                                style="text-decoration: none;"
-                                disabled={runningInDevMode}
-                            >
-                                {m.settings_danger_reload_button_app()}
-                            </Button>
+                            
                         </div>
                     </div>
 
