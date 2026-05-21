@@ -38,7 +38,6 @@
     isEmailFile,
   } from '$lib/utils/mail';
   import { settingsStore } from '$lib/stores/settings.svelte';
-  import { Separator } from "$lib/components/ui/separator";
 
   // ============================================================================
   // Props
@@ -128,7 +127,8 @@
 
     if (result.success && result.email) {
       if (tabId !== null) {
-        mailState.updateTabEmail(tabId, result.email);
+        const newTabId = mailState.addTab(result.email);
+        mailState.updateTabEmail(newTabId, result.email);
       } else {
         mailState.setParams(result.email);
         sidebarOpen.set(false);

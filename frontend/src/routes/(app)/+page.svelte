@@ -7,7 +7,7 @@
   import { toast } from "svelte-sonner";
   import { X, Plus } from "@lucide/svelte";
   import { openAndLoadEmail } from "$lib/utils/mail";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
   let { data } = $props();
 
@@ -23,6 +23,16 @@
       }
     } else if (data.loadError) {
       toast.error(m.mail_error_opening());
+    }
+  });
+
+  onDestroy(() => {
+    if (!settingsStore.settings.enableTabMode) {
+      mailState.getAllTabs().forEach((tab) => {
+        if (tab.id !== mailState.getActiveTabId()) {
+          mailState.removeTab(tab.id);
+        }
+      });
     }
   });
 
@@ -53,12 +63,16 @@
   }
 
   let showTabs = $derived(
-    settingsStore.settings.enableTabMode === true && mailState.tabs.length > 0
+    settingsStore.settings.enableTabMode === true && mailState.tabs.length > 0,
   );
 </script>
 
 <div class="page">
-  <section class="center" aria-label={m.page_overview_label()} id="main-content-app">
+  <section
+    class="center"
+    aria-label={m.page_overview_label()}
+    id="main-content-app"
+  >
     {#if showTabs}
       <!-- Windows 11 Explorer-style tabbed panel -->
       <div class="tabbed-panel">
@@ -73,9 +87,11 @@
               role="tab"
               aria-selected={isActive}
               onclick={() => mailState.setActiveTab(tab.id)}
-              onkeydown={(e) => e.key === 'Enter' && mailState.setActiveTab(tab.id)}
+              onkeydown={(e) =>
+                e.key === "Enter" && mailState.setActiveTab(tab.id)}
             >
-              <span class="tab-label">{truncateSubject(tab.email.subject)}</span>
+              <span class="tab-label">{truncateSubject(tab.email.subject)}</span
+              >
               <button
                 class="tab-close"
                 tabindex={-1}
@@ -106,7 +122,11 @@
               role="tabpanel"
               style:display={tab.id === mailState.activeTabId ? "flex" : "none"}
             >
-              <MailViewer emailData={tab.email} tabId={tab.id} embedded={true} />
+              <MailViewer
+                emailData={tab.email}
+                tabId={tab.id}
+                embedded={true}
+              />
             </div>
           {/each}
         </div>
@@ -187,7 +207,9 @@
     user-select: none;
     min-width: 80px;
     max-width: 200px;
-    transition: background 0.1s, color 0.1s;
+    transition:
+      background 0.1s,
+      color 0.1s;
     /* extend 1px down to cover the strip's bottom border when active */
     margin-bottom: -1px;
     padding-bottom: 1px;
@@ -222,7 +244,10 @@
     border-radius: 4px;
     flex-shrink: 0;
     opacity: 0.45;
-    transition: opacity 0.1s, background 0.1s, color 0.1s;
+    transition:
+      opacity 0.1s,
+      background 0.1s,
+      color 0.1s;
   }
 
   .tab-item:hover .tab-close,
@@ -251,7 +276,9 @@
     cursor: pointer;
     flex-shrink: 0;
     margin-left: 2px;
-    transition: background 0.1s, color 0.1s;
+    transition:
+      background 0.1s,
+      color 0.1s;
   }
 
   .tab-add:hover:not(:disabled) {

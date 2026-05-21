@@ -31,7 +31,7 @@
         showUnsavedChangesToast,
     } from "$lib/utils/unsaved-changes-toast";
     import { dangerZoneEnabled, unsavedChanges } from "$lib/stores/app";
-    import { LogDebug } from "$lib/wailsjs/runtime/runtime";
+    import { LogDebug, LogInfo } from "$lib/wailsjs/runtime/runtime";
     import { settingsStore } from "$lib/stores/settings.svelte";
     import * as m from "$lib/paraglide/messages";
     import { setLocale } from "$lib/paraglide/runtime";
@@ -47,9 +47,35 @@
         SetReleaseChannel,
     } from "$lib/wailsjs/go/main/App";
     import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
+    import { UPDATE_PATH_OPTIONS, type UpdatePathOption, UNC_PATH_RE, LOCAL_PATH_RE, UPDATE_PATH_LABELS } from "$lib/utils/settingsHelper";
+    import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
 
     let { data } = $props();
     let config = $derived(data.config);
+    let previousTheme = $state<string | undefined>(undefined);
+    let runningInDevMode: boolean = dev;
+    
+    // Clone store state for form editing
+    // Use normalizeSettings to ensure new fields (like useBuiltinPDFViewer) are populated with defaults
+    let form = $state<EMLy_GUI_Settings>(
+        normalizeSettings(settingsStore.settings),
+    );
+    let lastSaved = $state<EMLy_GUI_Settings>(
+        normalizeSettings(settingsStore.settings),
+    );
+    let dangerWarningOpen = $state(false);
+    let updatePathSelection = $state<UpdatePathOption>("DC-RM2");
+    let customUpdatePath = $state("");
+    let savingUpdatePath = $state(false);
+    let savingChannel = $state(false);
+    let reloadingConfig = $state(false);
+    let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
+    
+    const customPathValid = $derived(
+        updatePathSelection !== "Other" ||
+            UNC_PATH_RE.test(customUpdatePath.trim()) ||
+            (runningInDevMode && LOCAL_PATH_RE.test(customUpdatePath.trim())),
+    );
 
     $effect(() => {
         if (!config) {
@@ -57,7 +83,11 @@
         }
     });
 
-    let runningInDevMode: boolean = dev || false;
+    const availablePreviewFileSupportedTypes: EMLy_GUI_Settings["previewFileSupportedTypes"] = [
+        "jpg",
+        "jpeg",
+        "png"
+    ];
 
     const defaults: EMLy_GUI_Settings = {
         selectedLanguage: "it",
@@ -71,7 +101,7 @@
         theme: "dark",
         enableLinkClickConfirmation: false,
         enableTabMode: false,
-        fixEmailTextContrast: false,
+        fixEmailTextContrast: true,
     };
 
     async function setLanguage(
@@ -85,45 +115,6 @@
             toast.error(m.settings_toast_language_change_failed());
         }
     }
-
-    // Clone store state for form editing
-    // Use normalizeSettings to ensure new fields (like useBuiltinPDFViewer) are populated with defaults
-    let form = $state<EMLy_GUI_Settings>(
-        normalizeSettings(settingsStore.settings),
-    );
-    let lastSaved = $state<EMLy_GUI_Settings>(
-        normalizeSettings(settingsStore.settings),
-    );
-    let dangerWarningOpen = $state(false);
-    $inspect("dangerWarningOpen", dangerWarningOpen);
-
-    // Update path state
-    const UPDATE_PATH_OPTIONS = {
-        "DC-RM2": "\\\\dc-rm2\\logo\\update",
-        "DC-CB": "\\\\dc-cb\\logo\\update",
-        Other: "",
-    } as const;
-    type UpdatePathOption = keyof typeof UPDATE_PATH_OPTIONS;
-
-    let updatePathSelection = $state<UpdatePathOption>("DC-RM2");
-    let customUpdatePath = $state("");
-    let savingUpdatePath = $state(false);
-    let savingChannel = $state(false);
-    let reloadingConfig = $state(false);
-
-    const UPDATE_PATH_LABELS: Record<UpdatePathOption, string> = {
-        "DC-RM2": `DC-RM2 (${UPDATE_PATH_OPTIONS["DC-RM2"]})`,
-        "DC-CB": `DC-CB (${UPDATE_PATH_OPTIONS["DC-CB"]})`,
-        Other: m.settings_update_select_other(),
-    };
-    let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
-    const UNC_PATH_RE = /^\\\\[^\\/]+\\[^\\/]+/;
-    const LOCAL_PATH_RE = /^[A-Za-z]:\\/;
-    const customPathValid = $derived(
-        updatePathSelection !== "Other" ||
-            UNC_PATH_RE.test(customUpdatePath.trim()) ||
-            (runningInDevMode && LOCAL_PATH_RE.test(customUpdatePath.trim())),
-    );
 
     function normalizeSettings(s: EMLy_GUI_Settings): EMLy_GUI_Settings {
         return {
@@ -165,23 +156,7 @@
     }
 
     function isSameSettings(a: EMLy_GUI_Settings, b: EMLy_GUI_Settings) {
-        return (
-            (a.selectedLanguage ?? "") === (b.selectedLanguage ?? "") &&
-            !!a.useBuiltinPreview === !!b.useBuiltinPreview &&
-            !!a.useBuiltinPDFViewer === !!b.useBuiltinPDFViewer &&
-            !!a.enableAttachedDebuggerProtection ===
-                !!b.enableAttachedDebuggerProtection &&
-            !!a.useDarkEmailViewer === !!b.useDarkEmailViewer &&
-            !!a.enableUpdateChecker === !!b.enableUpdateChecker &&
-            !!a.reduceMotion === !!b.reduceMotion &&
-            (a.theme ?? "light") === (b.theme ?? "light") &&
-            !!a.enableLinkClickConfirmation ===
-                !!b.enableLinkClickConfirmation &&
-            !!a.enableTabMode === !!b.enableTabMode &&
-            !!a.fixEmailTextContrast === !!b.fixEmailTextContrast &&
-            JSON.stringify(a.previewFileSupportedTypes?.sort()) ===
-                JSON.stringify(b.previewFileSupportedTypes?.sort())
-        );
+        return JSON.stringify(normalizeSettings(a)) === JSON.stringify(normalizeSettings(b))
     }
 
     function resetToLastSaved() {
@@ -223,8 +198,11 @@
                 settingsStore.reset();
                 settingsStore.update(form); // Ensure local form state is persisted
                 sessionStorage.removeItem("debugWindowInSettings");
-                dangerZoneEnabled.set(false);
-                LogDebug("Reset danger zone setting to false.");
+                if(!runningInDevMode) {
+                    dangerZoneEnabled.set(false);
+                    LogDebug("Reset danger zone setting to false.");
+                }
+                LogInfo("Settings reset to defaults.");
             } catch {
                 toast.error(m.settings_toast_reset_failed());
                 return;
@@ -239,9 +217,9 @@
     $effect(() => {
         if (!browser) return;
 
-        const dirty = !isSameSettings(normalizeSettings(form), lastSaved);
-        unsavedChanges.set(dirty);
-        if (dirty) {
+        const unsavedSettingsBool = !isSameSettings(normalizeSettings(form), lastSaved);
+        unsavedChanges.set(unsavedSettingsBool);
+        if (unsavedSettingsBool) {
             showUnsavedChangesToast({
                 onSave: saveToStorage,
                 onReset: resetToLastSaved,
@@ -308,7 +286,6 @@
     });
 
     // Sync theme with email viewer dark mode
-    let previousTheme = $state<string | undefined>(undefined);
     $effect(() => {
         if (!browser) return;
         if (previousTheme !== undefined && form.theme !== previousTheme) {
@@ -504,8 +481,9 @@
                 class="cursor-pointer hover:cursor-pointer"
                 variant="ghost"
                 onclick={() => goto("/")}
-                ><ChevronLeft class="size-4" /> {m.settings_back()}</Button
             >
+                <ChevronLeft class="size-4" /> {m.settings_back()}
+            </Button>
         </header>
 
         <Card.Root>
@@ -605,89 +583,37 @@
                 <Separator />
 
                 <div class="space-y-3">
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_reduce_motion_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_reduce_motion_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.reduceMotion}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <p class="text-xs text-muted-foreground mt-2">
-                        {m.settings_reduce_motion_info()}
-                    </p>
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.reduceMotion}
+                        labelText={m.settings_reduce_motion_label()}
+                        hintText={m.settings_reduce_motion_hint()}
+                        infoText={m.settings_reduce_motion_info()}
+                    />
 
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_email_dark_viewer_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_email_dark_viewer_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.useDarkEmailViewer}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <p class="text-xs text-muted-foreground mt-2">
-                        {m.settings_email_dark_viewer_info()}
-                    </p>
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.useDarkEmailViewer}
+                        labelText={m.settings_email_dark_viewer_label()}
+                        hintText={m.settings_email_dark_viewer_hint()}
+                        infoText={m.settings_email_dark_viewer_info()}
+                    />
 
                     <Separator />
 
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_link_confirmation_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_link_confirmation_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.enableLinkClickConfirmation}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <p class="text-xs text-muted-foreground mt-2">
-                        {m.settings_link_confirmation_info()}
-                    </p>
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.enableLinkClickConfirmation}
+                        labelText={m.settings_link_confirmation_label()}
+                        hintText={m.settings_link_confirmation_hint()}
+                        infoText={m.settings_link_confirmation_info()}
+                    />
 
                     <Separator />
 
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_contrast_fix_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_contrast_fix_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.fixEmailTextContrast}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <p class="text-xs text-muted-foreground mt-2">
-                        {m.settings_contrast_fix_info()}
-                    </p>
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.fixEmailTextContrast}
+                        labelText={m.settings_contrast_fix_label()}
+                        hintText={m.settings_contrast_fix_hint()}
+                        infoText={m.settings_contrast_fix_info()}
+                    />
                 </div>
             </Card.Content>
         </Card.Root>
@@ -703,80 +629,35 @@
                 <div class="space-y-4">
                     <Label>{m.settings_preview_images_label()}</Label>
                     <div class="flex flex-col gap-3">
+                    {#each availablePreviewFileSupportedTypes || [] as type}
                         <div class="flex items-center space-x-2">
                             <Checkbox
-                                id="preview-jpg"
+                                id={"preview-" + type}
                                 checked={form.previewFileSupportedTypes?.includes(
-                                    "jpg",
+                                    type,
                                 )}
                                 onCheckedChange={(checked) => {
+                                    console.log(checked)
                                     const types = new Set(
                                         form.previewFileSupportedTypes || [],
                                     );
-                                    if (checked) types.add("jpg");
-                                    else types.delete("jpg");
+                                    console.log(types)
+                                    if (checked) types.add(type);
+                                    else types.delete(type);
                                     form.previewFileSupportedTypes = Array.from(
                                         types,
                                     ).sort() as any[];
                                 }}
                             />
                             <Label
-                                for="preview-jpg"
+                                for={"preview-" + type}
                                 class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                             >
-                                JPG (.jpg)
+                                {type.toUpperCase()} (.{type})
                             </Label>
                         </div>
-
-                        <div class="flex items-center space-x-2">
-                            <Checkbox
-                                id="preview-jpeg"
-                                checked={form.previewFileSupportedTypes?.includes(
-                                    "jpeg",
-                                )}
-                                onCheckedChange={(checked) => {
-                                    const types = new Set(
-                                        form.previewFileSupportedTypes || [],
-                                    );
-                                    if (checked) types.add("jpeg");
-                                    else types.delete("jpeg");
-                                    form.previewFileSupportedTypes = Array.from(
-                                        types,
-                                    ).sort() as any[];
-                                }}
-                            />
-                            <Label
-                                for="preview-jpeg"
-                                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            >
-                                JPEG (.jpeg)
-                            </Label>
-                        </div>
-
-                        <div class="flex items-center space-x-2">
-                            <Checkbox
-                                id="preview-png"
-                                checked={form.previewFileSupportedTypes?.includes(
-                                    "png",
-                                )}
-                                onCheckedChange={(checked) => {
-                                    const types = new Set(
-                                        form.previewFileSupportedTypes || [],
-                                    );
-                                    if (checked) types.add("png");
-                                    else types.delete("png");
-                                    form.previewFileSupportedTypes = Array.from(
-                                        types,
-                                    ).sort() as any[];
-                                }}
-                            />
-                            <Label
-                                for="preview-png"
-                                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            >
-                                PNG (.png)
-                            </Label>
-                        </div>
+                    {/each}
+                        
                         <p class="text-xs text-muted-foreground mt-2">
                             {m.settings_preview_images_hint()}
                         </p>
@@ -784,48 +665,23 @@
                     </div>
                 </div>
                 <div class="space-y-3">
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_preview_builtin_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_preview_builtin_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.useBuiltinPreview}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <p class="text-xs text-muted-foreground mt-2">
-                        {m.settings_preview_builtin_info()}
-                    </p>
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.useBuiltinPreview}
+                        labelText={m.settings_preview_builtin_label()}
+                        hintText={m.settings_preview_builtin_hint()}
+                        infoText={m.settings_preview_builtin_info()}
+                    />
                 </div>
                 <Separator />
 
                 <div class="space-y-3">
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_preview_pdf_builtin_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_preview_pdf_builtin_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.useBuiltinPDFViewer}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <p class="text-xs text-muted-foreground mt-2">
-                        {m.settings_preview_pdf_builtin_info()}
-                    </p>
+                    
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.useBuiltinPDFViewer}
+                        labelText={m.settings_preview_pdf_builtin_label()}
+                        hintText={m.settings_preview_pdf_builtin_hint()}    
+                        infoText={m.settings_preview_pdf_builtin_info()}
+                    />
                 </div>
             </Card.Content>
         </Card.Root>
@@ -1284,70 +1140,34 @@
                     </div>
                     <Separator />
 
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
-                    >
-                        <div class="space-y-1">
-                            <Label class="text-sm"
-                                >{m.settings_danger_debugger_protection_label()}</Label
-                            >
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_danger_debugger_protection_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.enableAttachedDebuggerProtection}
-                            class="cursor-pointer hover:cursor-pointer"
-                            disabled={!runningInDevMode}
-                        />
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                        <strong
-                            >{m.settings_danger_debugger_protection_info()}</strong
-                        >
-                    </div>
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.enableAttachedDebuggerProtection}
+                        labelText={m.settings_danger_debugger_protection_label()}
+                        hintText={m.settings_danger_debugger_protection_hint()}
+                        infoText={m.settings_danger_debugger_protection_info()}
+                        type="danger"
+                        runningInDevMode={!runningInDevMode}
+                    />
+                    <Separator />
+                    
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.enableUpdateChecker}
+                        labelText={m.settings_danger_update_checker_label()}
+                        hintText={m.settings_danger_update_checker_hint()}
+                        infoText={m.settings_danger_update_checker_info()}
+                        type="danger"
+                    />
+
                     <Separator />
 
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
-                    >
-                        <div class="space-y-1">
-                            <Label class="text-sm"
-                                >{m.settings_danger_update_checker_label()}</Label
-                            >
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_danger_update_checker_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.enableUpdateChecker}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                        {m.settings_danger_update_checker_info()}
-                    </div>
-                    <Separator />
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.enableTabMode}
+                        labelText={m.settings_danger_tab_mode_label()}
+                        hintText={m.settings_danger_tab_mode_hint()}
+                        infoText={m.settings_danger_tab_mode_info()}
+                        type="danger"
+                    />
 
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4 border-destructive/30"
-                    >
-                        <div class="space-y-1">
-                            <Label class="text-sm"
-                                >{m.settings_danger_tab_mode_label()}</Label
-                            >
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_danger_tab_mode_hint()}
-                            </div>
-                        </div>
-                        <Switch
-                            bind:checked={form.enableTabMode}
-                            class="cursor-pointer hover:cursor-pointer"
-                        />
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                        {m.settings_danger_tab_mode_info()}
-                    </div>
                     <Separator />
 
                     <div class="text-xs text-muted-foreground">

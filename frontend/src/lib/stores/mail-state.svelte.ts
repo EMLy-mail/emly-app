@@ -53,6 +53,14 @@ class MailState {
         this.tabs = [];
         this.activeTabId = null;
     }
+
+    getAllTabs() {
+        return this.tabs;
+    }
+
+    getActiveTabId() {
+        return this.activeTabId;
+    }
 }
 
 export const mailState = new MailState();

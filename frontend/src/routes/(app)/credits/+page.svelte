@@ -1,9 +1,18 @@
 <script lang="ts">
-  import { goto, preloadData } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { Separator } from "$lib/components/ui/separator";
-  import { ChevronLeft, Heart, Code, Package, Globe, Github, Mail, BadgeInfo, Music, PartyPopper } from "@lucide/svelte";
+  import {
+    ChevronLeft,
+    Heart,
+    Code,
+    Package,
+    Globe,
+    Github,
+    Mail,
+    BadgeInfo,
+  } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages";
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
 
@@ -13,13 +22,16 @@
   // Open external URL in default browser
   async function openUrl(url: string) {
     let sanitizedUrl: URL = new URL(url);
-    if(!["http:", "https:"].includes(sanitizedUrl.protocol)) {
+    if (!["http:", "https:"].includes(sanitizedUrl.protocol)) {
       console.warn("Attempted to open URL with unsupported protocol:", url);
       return;
     }
     const urlPattern = /^[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+$/;
     if (!urlPattern.test(sanitizedUrl.href)) {
-      console.warn("Attempted to open URL with potentially unsafe characters:", url);
+      console.warn(
+        "Attempted to open URL with potentially unsafe characters:",
+        url,
+      );
       return;
     }
     try {
@@ -29,48 +41,84 @@
     }
   }
 
-  const gravatarUrls: Record<string, string> = {
-    "f.fois@3git.eu": "https://gravatar.com/avatar/6a2b6cfd8ab2c36ac3eace1faa871f79084b64ad08fb6e490f050e71ee1b599c",
-    "iraci.matteo@gmail.com": "https://gravatar.com/avatar/0c17334ae886eb44b670d226e7de32ac082b9c85925ce4ed4c12239d9d8351f2",
-  };
+  let ghUsersData = $derived(data.contributorsData);
 
-  // Technology stack
+  let teamData = $derived(data.contributorsData.team ?? []);
+  let specialThanksData = $derived(data.contributorsData.specialThanks ?? []);
+
+  let gravatarUrls: Record<string, string> = $derived.by(() => {
+    const urls: Record<string, string> = {};
+    for (const [role, contributors] of [
+      ["team", teamData],
+      ["specialThanks", specialThanksData],
+    ] as const) {
+      for (const contributor of contributors) {
+        if (!contributor) continue;
+        urls[contributor.id] = contributor.avatar_url;
+      }
+    }
+    return urls;
+  });
+
   const technologies = [
-    { name: "Wails v2", description: m.credits_tech_wails(), url: "https://wails.io" },
-    { name: "Go", description: m.credits_tech_go(), url: "https://go.dev" },
-    { name: "SvelteKit", description: m.credits_tech_sveltekit(), url: "https://kit.svelte.dev" },
-    { name: "Svelte 5", description: m.credits_tech_svelte(), url: "https://svelte.dev" },
-    { name: "TypeScript", description: m.credits_tech_typescript(), url: "https://www.typescriptlang.org" },
-    { name: "Tailwind CSS", description: m.credits_tech_tailwind(), url: "https://tailwindcss.com" },
-  ];
-
-  // Libraries and packages
-  const libraries = [
-    { name: "shadcn-svelte", description: m.credits_lib_shadcn(), url: "https://www.shadcn-svelte.com" },
-    { name: "Lucide Icons", description: m.credits_lib_lucide(), url: "https://lucide.dev" },
-    { name: "ParaglideJS", description: m.credits_lib_paraglide(), url: "https://inlang.com/m/gerre34r/library-inlang-paraglideJs" },
-    { name: "svelte-sonner", description: m.credits_lib_sonner(), url: "https://svelte-sonner.vercel.app" },
-    { name: "PDF.js", description: m.credits_lib_pdfjs(), url: "https://mozilla.github.io/pdf.js" },
-    { name: "DOMPurify", description: m.credits_lib_dompurify(), url: "https://github.com/cure53/DOMPurify" },
-  ];
-
-  // Team / Contributors
-  const team = [
     {
-      username: "FOISX",
-      name: "Flavio Fois",
-      role: m.credits_role_lead_developer(),
-      description: m.credits_foisx_desc(),
-      email: "f.fois@3git.eu",
+      name: "Wails v2",
+      description: m.credits_tech_wails(),
+      url: "https://wails.io",
+    },
+    { name: "Go", description: m.credits_tech_go(), url: "https://go.dev" },
+    {
+      name: "SvelteKit",
+      description: m.credits_tech_sveltekit(),
+      url: "https://kit.svelte.dev",
+    },
+    {
+      name: "Svelte 5",
+      description: m.credits_tech_svelte(),
+      url: "https://svelte.dev",
+    },
+    {
+      name: "TypeScript",
+      description: m.credits_tech_typescript(),
+      url: "https://www.typescriptlang.org",
+    },
+    {
+      name: "Tailwind CSS",
+      description: m.credits_tech_tailwind(),
+      url: "https://tailwindcss.com",
     },
   ];
 
-  // Special thanks
-  const specialThanks = [
+  const libraries = [
     {
-      name: "Laky64",
-      contribution: m.credits_laky64_desc(),
-      email: "iraci.matteo@gmail.com",
+      name: "shadcn-svelte",
+      description: m.credits_lib_shadcn(),
+      url: "https://www.shadcn-svelte.com",
+    },
+    {
+      name: "Lucide Icons",
+      description: m.credits_lib_lucide(),
+      url: "https://lucide.dev",
+    },
+    {
+      name: "ParaglideJS",
+      description: m.credits_lib_paraglide(),
+      url: "https://inlang.com/m/gerre34r/library-inlang-paraglideJs",
+    },
+    {
+      name: "svelte-sonner",
+      description: m.credits_lib_sonner(),
+      url: "https://svelte-sonner.vercel.app",
+    },
+    {
+      name: "PDF.js",
+      description: m.credits_lib_pdfjs(),
+      url: "https://mozilla.github.io/pdf.js",
+    },
+    {
+      name: "DOMPurify",
+      description: m.credits_lib_dompurify(),
+      url: "https://github.com/cure53/DOMPurify",
     },
   ];
 </script>
@@ -106,16 +154,25 @@
           {m.credits_about_title()}
         </Card.Title>
         <Card.Description>
-          <span style="font-style: italic">{m.credits_about_description()}</span>
+          <span style="font-style: italic">{m.credits_about_description()}</span
+          >
           <span>{m.credits_about_description_2()}</span>
         </Card.Description>
       </Card.Header>
       <Card.Content>
         <div class="flex items-center gap-4 mb-4">
-          <img src="/appicon.png" alt={m.credits_logo_alt()} width="64" height="64" class="rounded-lg" />
+          <img
+            src="/appicon.png"
+            alt={m.credits_logo_alt()}
+            width="64"
+            height="64"
+            class="rounded-lg"
+          />
           <div>
             <h3 class="font-semibold text-lg">EMLy</h3>
-            <p class="text-sm text-muted-foreground">{m.credits_app_tagline()}</p>
+            <p class="text-sm text-muted-foreground">
+              {m.credits_app_tagline()}
+            </p>
             {#if config}
               <p class="text-xs text-muted-foreground mt-1">
                 v{config.GUISemver} ({config.GUIReleaseChannel})
@@ -139,35 +196,44 @@
         <Card.Description>{m.credits_team_description()}</Card.Description>
       </Card.Header>
       <Card.Content class="space-y-4">
-        {#each team as member}
-          <!-- svelte-ignore a11y_click_events_have_key_events -->
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <div 
-            class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
-          >
-            
-            <img
-              src={gravatarUrls[member.email]}
-              alt={member.name}
-              class="h-14 w-14 rounded-full border-2 border-primary/20 z-0 select-none"
-            />
-            <div class="flex-1 z-0">
-              <div class="font-medium">{member.username} ({member.name})</div>
-              <div class="text-sm text-primary/80">{member.role}</div>
-              <div class="text-sm text-muted-foreground mt-1">{member.description}</div>
-              <a
-                href="mailto:{member.email}"
-                class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
-              >
-                <Mail class="size-3" />
-                {member.email}
-              </a>
+        {#each teamData as member}
+          {#if member}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+              class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
+            >
+              <img
+                src={gravatarUrls[member.id]}
+                alt={member.name}
+                class="h-14 w-14 rounded-full border-2 border-primary/20 z-0 select-none"
+              />
+              <div class="flex-1 z-0">
+                <div class="font-medium">{member.name} ({member.login})</div>
+                {#if member.id === 278996585}
+                  <div class="text-sm text-primary/80">
+                    {m.credits_role_lead_developer()}
+                  </div>
+                  <div class="text-sm text-muted-foreground mt-1">
+                    {m.credits_foisx_desc()}
+                  </div>
+                  <a
+                    href="mailto:f.fois@3git.eu"
+                    class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
+                  >
+                    <Mail class="size-3" />
+                    f.fois@3git.eu
+                  </a>
+                {/if}
+              </div>
             </div>
-          </div>
+          {/if}
         {/each}
         <div class="text-center text-sm text-muted-foreground pt-2">
           <span class="flex items-center justify-center gap-1">
-            {m.credits_made_with()} <Heart class="size-3 text-red-500 inline" /> {m.credits_at_3git()}
+            {m.credits_made_with()}
+            <Heart class="size-3 text-red-500 inline" />
+            {m.credits_at_3git()}
           </span>
         </div>
       </Card.Content>
@@ -180,23 +246,33 @@
           <Heart class="size-5 text-pink-500" />
           {m.credits_special_thanks_title()}
         </Card.Title>
-        <Card.Description>{m.credits_special_thanks_description()}</Card.Description>
+        <Card.Description
+          >{m.credits_special_thanks_description()}</Card.Description
+        >
       </Card.Header>
       <Card.Content>
         <div class="space-y-3">
-          {#each specialThanks as contributor}
-            <div class="flex items-center gap-3 rounded-lg border bg-card p-3">
-              <img
-                src={gravatarUrls[contributor.email]}
-                alt={contributor.name}
-                class="h-10 w-10 rounded-full border-2 border-primary/20"
-              />
-              <div class="flex-1">
-                <span class="font-medium text-sm">{contributor.name}</span>
-                -
-                <span class="text-muted-foreground text-sm">{contributor.contribution}</span>
+          {#each specialThanksData as contributor}
+            {#if contributor}
+              <div
+                class="flex items-center gap-3 rounded-lg border bg-card p-3"
+              >
+                <img
+                  src={gravatarUrls[contributor.id]}
+                  alt={contributor.name}
+                  class="h-10 w-10 rounded-full border-2 border-primary/20"
+                />
+                <div class="flex-1">
+                  <span class="font-medium text-sm">{contributor.name}</span>
+                  <span class="text-muted-foreground"> - </span>
+                  {#if contributor.id === 35636667}
+                    <span class="text-muted-foreground text-sm"
+                      >{m.credits_laky64_desc()}</span
+                    >
+                  {/if}
+                </div>
               </div>
-            </div>
+            {/if}
           {/each}
         </div>
       </Card.Content>
@@ -221,7 +297,9 @@
             >
               <div class="flex-1">
                 <div class="font-medium text-sm">{tech.name}</div>
-                <div class="text-xs text-muted-foreground">{tech.description}</div>
+                <div class="text-xs text-muted-foreground">
+                  {tech.description}
+                </div>
               </div>
             </button>
           {/each}
@@ -248,7 +326,9 @@
             >
               <div class="flex-1">
                 <div class="font-medium text-sm">{lib.name}</div>
-                <div class="text-xs text-muted-foreground">{lib.description}</div>
+                <div class="text-xs text-muted-foreground">
+                  {lib.description}
+                </div>
               </div>
             </button>
           {/each}
