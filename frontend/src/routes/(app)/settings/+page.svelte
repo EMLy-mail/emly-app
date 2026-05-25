@@ -589,7 +589,19 @@
                         hintText={m.settings_reduce_motion_hint()}
                         infoText={m.settings_reduce_motion_info()}
                     />
+                </div>
+            </Card.Content>
+        </Card.Root>
 
+        <Card.Root>
+            <Card.Header class="space-y-1">
+                <Card.Title>{m.settings_mailviewer_title()}</Card.Title>
+                <Card.Description
+                    >{m.settings_mailviewer_description()}</Card.Description
+                >
+            </Card.Header>
+            <Card.Content class="space-y-4">
+                <div class="space-y-3">
                     <SettingsSwitchLabel
                         bind:featureBool={form.useDarkEmailViewer}
                         labelText={m.settings_email_dark_viewer_label()}
@@ -613,6 +625,15 @@
                         labelText={m.settings_contrast_fix_label()}
                         hintText={m.settings_contrast_fix_hint()}
                         infoText={m.settings_contrast_fix_info()}
+                    />
+
+                    <Separator />
+
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.enableTabMode}
+                        labelText={m.settings_danger_tab_mode_label()}
+                        hintText={m.settings_danger_tab_mode_hint()}
+                        infoText={m.settings_danger_tab_mode_info()}
                     />
                 </div>
             </Card.Content>
@@ -1155,16 +1176,6 @@
                         labelText={m.settings_danger_update_checker_label()}
                         hintText={m.settings_danger_update_checker_hint()}
                         infoText={m.settings_danger_update_checker_info()}
-                        type="danger"
-                    />
-
-                    <Separator />
-
-                    <SettingsSwitchLabel
-                        bind:featureBool={form.enableTabMode}
-                        labelText={m.settings_danger_tab_mode_label()}
-                        hintText={m.settings_danger_tab_mode_hint()}
-                        infoText={m.settings_danger_tab_mode_info()}
                         type="danger"
                     />
 

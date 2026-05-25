@@ -108,6 +108,8 @@
   "bugreport_text_placeholder": "Describe the bug in detail...",
   "settings_appearance_title": "Appearance",
   "settings_appearance_description": "Customize the application theme.",
+  "settings_mailviewer_title": "Mail Viewer",
+  "settings_mailviewer_description": "Configure settings related to the mail viewer.",
   "settings_theme_label": "Theme",
   "settings_theme_hint": "Choose between light and dark mode.",
   "settings_theme_light": "Light",
