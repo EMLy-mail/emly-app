@@ -298,5 +298,6 @@
   "settings_danger_tab_mode_info": "Info: When enabled, opening a new email will create a new tab instead of replacing the current view. Tabs can be closed individually.",
   "tabs_close_tab_label": "Close tab",
   "mail_link_disabled_toast": "Links in emails are disabled for security. Do you want to enable them?",
-  "mail_link_disabled_enable": "Enable"
+  "mail_link_disabled_enable": "Enable",
+  "mail_date": "Date:"
 }

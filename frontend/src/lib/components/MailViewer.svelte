@@ -426,6 +426,15 @@
                 </span>
               </span>
             {/if}
+
+            {#if activeEmail.date}
+              <span class="label">{m.mail_date()}</span>
+              {#if settingsStore.settings.selectedLanguage === 'it'}
+                <span class="value">{new Intl.DateTimeFormat('it-IT', { dateStyle: 'full', timeStyle: 'long' }).format(new Date(activeEmail.date))}</span>
+              {:else}
+              <span class="value">{new Intl.DateTimeFormat('en-GB', { dateStyle: 'full', timeStyle: 'long' }).format(new Date(activeEmail.date))}</span>
+              {/if}
+             {/if}
           </div>
         </div>
 
