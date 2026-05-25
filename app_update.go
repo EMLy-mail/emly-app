@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -27,14 +28,21 @@ import (
 // Update System Types
 // =============================================================================
 
+// DetailedReleaseNote carries per-version severity type and localized description.
+type DetailedReleaseNote struct {
+	SeverityType string            `json:"severityType"` // "patch", "feature", "breaking", "security"
+	Description  map[string]string `json:"description"`  // keyed by locale, e.g. "en", "it"
+}
+
 // UpdateManifest represents the version.json file structure on the network share
 type UpdateManifest struct {
-	StableVersion   string            `json:"stableVersion"`
-	BetaVersion     string            `json:"betaVersion"`
-	StableDownload  string            `json:"stableDownload"`
-	BetaDownload    string            `json:"betaDownload"`
-	SHA256Checksums map[string]string `json:"sha256Checksums"`
-	ReleaseNotes    map[string]string `json:"releaseNotes,omitempty"`
+	StableVersion        string                        `json:"stableVersion"`
+	BetaVersion          string                        `json:"betaVersion"`
+	StableDownload       string                        `json:"stableDownload"`
+	BetaDownload         string                        `json:"betaDownload"`
+	SHA256Checksums      map[string]string             `json:"sha256Checksums"`
+	ReleaseNotes         map[string]string             `json:"releaseNotes,omitempty"`
+	DetailedReleaseNotes map[string]DetailedReleaseNote `json:"detailedReleaseNotes,omitempty"`
 }
 
 // UpdateStatus represents the current state of the update system
@@ -49,6 +57,7 @@ type UpdateStatus struct {
 	InstallerPath    string `json:"installerPath"`
 	ErrorMessage     string `json:"errorMessage"`
 	ReleaseNotes     string `json:"releaseNotes,omitempty"`
+	SeverityType     string `json:"severityType,omitempty"`
 	LastCheckTime    string `json:"lastCheckTime"`
 	Channel          string `json:"channel,omitempty"`
 }
@@ -143,6 +152,22 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 			updateStatus.ReleaseNotes = notes
 		}
 
+		// Detailed release notes: severity type + localized description
+		if detailed, ok := manifest.DetailedReleaseNotes[targetVersion]; ok {
+			updateStatus.SeverityType = detailed.SeverityType
+			lang := "en"
+			if config.EMLy.Language != "" {
+				lang = config.EMLy.Language
+			}
+			if desc, ok := detailed.Description[lang]; ok {
+				updateStatus.ReleaseNotes = desc
+			} else if desc, ok := detailed.Description["en"]; ok {
+				updateStatus.ReleaseNotes = desc
+			}
+		} else {
+			updateStatus.SeverityType = ""
+		}
+
 		pkglogger.Info("update available",
 			"current", updateStatus.CurrentVersion,
 			"available", targetVersion,
@@ -153,6 +178,7 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 		updateStatus.InstallerPath = ""
 		updateStatus.Ready = false
 		updateStatus.ReleaseNotes = ""
+		updateStatus.SeverityType = ""
 		pkglogger.Info("already on latest version",
 			"current", updateStatus.CurrentVersion,
 			"channel", currentChannel,
@@ -178,6 +204,9 @@ func (a *App) loadUpdateManifest(updatePath string) (*UpdateManifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read manifest file: %w", err)
 	}
+
+	// Strip UTF-8 BOM if present (files saved by Windows editors may include it)
+	data = bytes.TrimPrefix(data, []byte("\xEF\xBB\xBF"))
 
 	// Parse JSON
 	var manifest UpdateManifest

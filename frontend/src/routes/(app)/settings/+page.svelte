@@ -25,6 +25,7 @@
     import * as Select from "$lib/components/ui/select/index.js";
     import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
+    import { Badge } from "$lib/components/ui/badge/index.js";
     import { Checkbox } from "$lib/components/ui/checkbox/index.js";
     import {
         dismissUnsavedChangesToast,
@@ -373,6 +374,7 @@
         installerPath: string;
         errorMessage: string;
         releaseNotes?: string;
+        severityType?: string;
         lastCheckTime: string;
         channel?: string;
     };
@@ -390,6 +392,20 @@
         lastCheckTime: "",
     });
 
+    let showSecurityAlert = $state(false);
+    let securityAlertShownForVersion = $state("");
+
+    function getSeverityConfig(severityType: string | undefined) {
+        switch (severityType) {
+            case "security": return { border: "border-red-500/50",    bg: "bg-red-500/10",    badgeVariant: "destructive" as const, label: m.settings_updates_severity_security() };
+            case "breaking": return { border: "border-amber-500/50",  bg: "bg-amber-500/10",  badgeVariant: "outline" as const,     label: m.settings_updates_severity_breaking() };
+            case "feature":  return { border: "border-emerald-500/50",bg: "bg-emerald-500/10",badgeVariant: "secondary" as const,   label: m.settings_updates_severity_feature() };
+            default:         return { border: "border-blue-500/30",   bg: "bg-blue-500/10",   badgeVariant: "outline" as const,     label: m.settings_updates_severity_patch() };
+        }
+    }
+
+    const severityConfig = $derived(getSeverityConfig(updateStatus.severityType));
+
     // Sync current version from config
     $effect(() => {
         if (config?.GUISemver) {
@@ -402,6 +418,11 @@
             const status = await CheckForUpdates();
             console.log("checkForUpdates status", status);
             updateStatus = status;
+
+            if (status.updateAvailable && status.severityType === "security" && securityAlertShownForVersion !== status.availableVersion) {
+                showSecurityAlert = true;
+                securityAlertShownForVersion = status.availableVersion;
+            }
 
             if (status.updateAvailable) {
                 toast.success(
@@ -452,6 +473,10 @@
 
         EventsOn("update:status", (status: UpdateStatus) => {
             updateStatus = status;
+            if (status.updateAvailable && status.severityType === "security" && securityAlertShownForVersion !== status.availableVersion) {
+                showSecurityAlert = true;
+                securityAlertShownForVersion = status.availableVersion;
+            }
         });
 
         return () => {
@@ -711,7 +736,17 @@
         {#if form.enableUpdateChecker}
             <Card.Root>
                 <Card.Header class="space-y-1">
-                    <Card.Title>{m.settings_updates_title()}</Card.Title>
+                    <Card.Title class="flex items-center gap-2">
+                        {m.settings_updates_title()}
+                        {#if updateStatus.updateAvailable && updateStatus.severityType}
+                            <Badge
+                                variant={severityConfig.badgeVariant}
+                                class={updateStatus.severityType === "breaking" ? "text-amber-600 dark:text-amber-400 border-amber-500/50" : updateStatus.severityType === "feature" ? "text-emerald-600 dark:text-emerald-400" : ""}
+                            >
+                                {severityConfig.label}
+                            </Badge>
+                        {/if}
+                    </Card.Title>
                     <Card.Description
                         >{m.settings_updates_description()}</Card.Description
                     >
@@ -826,7 +861,7 @@
                     {#if updateStatus.updateAvailable && !updateStatus.ready}
                         <Separator />
                         <div
-                            class="flex items-center justify-between gap-4 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4"
+                            class="flex items-center justify-between gap-4 rounded-lg border {severityConfig.border} {severityConfig.bg} p-4"
                         >
                             <div>
                                 <div class="font-medium">
@@ -926,6 +961,27 @@
                     </div>
                 </Card.Content>
             </Card.Root>
+
+            <!-- Security update alert dialog -->
+            <AlertDialog.Root bind:open={showSecurityAlert}>
+                <AlertDialog.Content>
+                    <AlertDialog.Header>
+                        <AlertDialog.Title style="color: var(--destructive); opacity: 0.7;">{m.settings_updates_security_alert_title()}</AlertDialog.Title>
+                        <AlertDialog.Description>
+                            {m.settings_updates_security_alert_description({ version: updateStatus.availableVersion })}
+                        </AlertDialog.Description>
+                    </AlertDialog.Header>
+                    <AlertDialog.Footer>
+                        <AlertDialog.Cancel>{m.settings_updates_security_alert_later()}</AlertDialog.Cancel>
+                        <AlertDialog.Action onclick={() => (
+                            downloadUpdate(),
+                            showSecurityAlert = false
+                        )}>
+                            {m.settings_updates_security_alert_update_now()}
+                        </AlertDialog.Action>
+                    </AlertDialog.Footer>
+                </AlertDialog.Content>
+            </AlertDialog.Root>
         {/if}
 
         {#if $dangerZoneEnabled || dev}

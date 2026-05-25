@@ -319,5 +319,13 @@
   "debug_info_body_html": "HTML",
   "debug_info_body_text": "Plain text",
   "debug_info_show_in_explorer": "Show in Explorer",
-  "debug_info_close": "Close"
+  "debug_info_close": "Close",
+  "settings_updates_severity_patch": "Patch",
+  "settings_updates_severity_feature": "Feature",
+  "settings_updates_severity_breaking": "Breaking",
+  "settings_updates_severity_security": "Security",
+  "settings_updates_security_alert_title": "Security Update Required",
+  "settings_updates_security_alert_description": "Version {version} contains an important security fix. We strongly recommend updating immediately.",
+  "settings_updates_security_alert_later": "Later",
+  "settings_updates_security_alert_update_now": "Download now"
 }

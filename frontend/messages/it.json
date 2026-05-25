@@ -319,5 +319,13 @@
   "debug_info_body_html": "HTML",
   "debug_info_body_text": "Testo",
   "debug_info_show_in_explorer": "Mostra in Explorer",
-  "debug_info_close": "Chiudi"
+  "debug_info_close": "Chiudi",
+  "settings_updates_severity_patch": "Patch",
+  "settings_updates_severity_feature": "Funzionalità",
+  "settings_updates_severity_breaking": "Breaking",
+  "settings_updates_severity_security": "Sicurezza",
+  "settings_updates_security_alert_title": "Aggiornamento di Sicurezza",
+  "settings_updates_security_alert_description": "La versione {version} contiene un'importante correzione di sicurezza. Si consiglia vivamente di aggiornare immediatamente.",
+  "settings_updates_security_alert_later": "Più tardi",
+  "settings_updates_security_alert_update_now": "Scarica ora"
 }

@@ -288,6 +288,7 @@ export namespace main {
 	    installerPath: string;
 	    errorMessage: string;
 	    releaseNotes?: string;
+	    severityType?: string;
 	    lastCheckTime: string;
 	    channel?: string;
 	
@@ -307,6 +308,7 @@ export namespace main {
 	        this.installerPath = source["installerPath"];
 	        this.errorMessage = source["errorMessage"];
 	        this.releaseNotes = source["releaseNotes"];
+	        this.severityType = source["severityType"];
 	        this.lastCheckTime = source["lastCheckTime"];
 	        this.channel = source["channel"];
 	    }
