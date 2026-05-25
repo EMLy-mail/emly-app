@@ -14,16 +14,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: "1.26"
+          go-version: "stable"
           cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "lts/*"
 
@@ -52,14 +52,14 @@ jobs:
         run: iscc installer\installer.iss
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: EMLy-windows-amd64
           path: build/bin/EMLy.exe
           if-no-files-found: error
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: EMLy-installer
           path: installer\Output\EMLy_Installer_*.exe
