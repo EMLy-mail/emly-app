@@ -102,77 +102,6 @@ export namespace cpu {
 
 }
 
-export namespace gpu {
-	
-	export class GraphicsCard {
-	    address: string;
-	    index: number;
-	    pci?: pci.Device;
-	    node?: topology.Node;
-	
-	    static createFrom(source: any = {}) {
-	        return new GraphicsCard(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.address = source["address"];
-	        this.index = source["index"];
-	        this.pci = this.convertValues(source["pci"], pci.Device);
-	        this.node = this.convertValues(source["node"], topology.Node);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class Info {
-	    cards: GraphicsCard[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Info(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.cards = this.convertValues(source["cards"], GraphicsCard);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
 export namespace internal {
 	
 	export class EmailAttachment {
@@ -201,6 +130,7 @@ export namespace internal {
 	    attachments: EmailAttachment[];
 	    isPec: boolean;
 	    hasInnerEmail: boolean;
+	    date: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new EmailData(source);
@@ -217,6 +147,7 @@ export namespace internal {
 	        this.attachments = this.convertValues(source["attachments"], EmailAttachment);
 	        this.isPec = source["isPec"];
 	        this.hasInnerEmail = source["hasInnerEmail"];
+	        this.date = source["date"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -329,6 +260,9 @@ export namespace main {
 	export class SubmitBugReportResult {
 	    zipPath: string;
 	    folderPath: string;
+	    uploaded: boolean;
+	    reportId: number;
+	    uploadError: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SubmitBugReportResult(source);
@@ -338,6 +272,9 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.zipPath = source["zipPath"];
 	        this.folderPath = source["folderPath"];
+	        this.uploaded = source["uploaded"];
+	        this.reportId = source["reportId"];
+	        this.uploadError = source["uploadError"];
 	    }
 	}
 	export class UpdateStatus {
@@ -352,6 +289,7 @@ export namespace main {
 	    errorMessage: string;
 	    releaseNotes?: string;
 	    lastCheckTime: string;
+	    channel?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new UpdateStatus(source);
@@ -370,6 +308,7 @@ export namespace main {
 	        this.errorMessage = source["errorMessage"];
 	        this.releaseNotes = source["releaseNotes"];
 	        this.lastCheckTime = source["lastCheckTime"];
+	        this.channel = source["channel"];
 	    }
 	}
 	export class ViewerData {
@@ -447,67 +386,6 @@ export namespace memory {
 	        this.reserved = source["reserved"];
 	    }
 	}
-	export class Area {
-	    total_physical_bytes: number;
-	    total_usable_bytes: number;
-	    supported_page_sizes: number[];
-	    default_huge_page_size: number;
-	    total_huge_page_bytes: number;
-	    huge_page_amounts_by_size: Record<number, HugePageAmounts>;
-	    modules: Module[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Area(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.total_physical_bytes = source["total_physical_bytes"];
-	        this.total_usable_bytes = source["total_usable_bytes"];
-	        this.supported_page_sizes = source["supported_page_sizes"];
-	        this.default_huge_page_size = source["default_huge_page_size"];
-	        this.total_huge_page_bytes = source["total_huge_page_bytes"];
-	        this.huge_page_amounts_by_size = this.convertValues(source["huge_page_amounts_by_size"], HugePageAmounts, true);
-	        this.modules = this.convertValues(source["modules"], Module);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class Cache {
-	    level: number;
-	    type: number;
-	    size_bytes: number;
-	    logical_processors: number[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Cache(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.level = source["level"];
-	        this.type = source["type"];
-	        this.size_bytes = source["size_bytes"];
-	        this.logical_processors = source["logical_processors"];
-	    }
-	}
-	
 	export class Info {
 	    total_physical_bytes: number;
 	    total_usable_bytes: number;
@@ -553,265 +431,6 @@ export namespace memory {
 
 }
 
-export namespace pci {
-	
-	export class Device {
-	    address: string;
-	    parent_address: string;
-	    vendor?: types.Vendor;
-	    product?: types.Product;
-	    revision: string;
-	    subsystem?: types.Product;
-	    class?: types.Class;
-	    subclass?: types.Subclass;
-	    programming_interface?: types.ProgrammingInterface;
-	    node?: topology.Node;
-	    driver: string;
-	    iommu_group: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Device(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.address = source["address"];
-	        this.parent_address = source["parent_address"];
-	        this.vendor = this.convertValues(source["vendor"], types.Vendor);
-	        this.product = this.convertValues(source["product"], types.Product);
-	        this.revision = source["revision"];
-	        this.subsystem = this.convertValues(source["subsystem"], types.Product);
-	        this.class = this.convertValues(source["class"], types.Class);
-	        this.subclass = this.convertValues(source["subclass"], types.Subclass);
-	        this.programming_interface = this.convertValues(source["programming_interface"], types.ProgrammingInterface);
-	        this.node = this.convertValues(source["node"], topology.Node);
-	        this.driver = source["driver"];
-	        this.iommu_group = source["iommu_group"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
-export namespace topology {
-	
-	export class Node {
-	    id: number;
-	    cores: cpu.ProcessorCore[];
-	    caches: memory.Cache[];
-	    distances: number[];
-	    memory?: memory.Area;
-	
-	    static createFrom(source: any = {}) {
-	        return new Node(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.cores = this.convertValues(source["cores"], cpu.ProcessorCore);
-	        this.caches = this.convertValues(source["caches"], memory.Cache);
-	        this.distances = source["distances"];
-	        this.memory = this.convertValues(source["memory"], memory.Area);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
-export namespace types {
-	
-	export class ProgrammingInterface {
-	    id: string;
-	    name: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ProgrammingInterface(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	    }
-	}
-	export class Subclass {
-	    id: string;
-	    name: string;
-	    programming_interfaces: ProgrammingInterface[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Subclass(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.programming_interfaces = this.convertValues(source["programming_interfaces"], ProgrammingInterface);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class Class {
-	    id: string;
-	    name: string;
-	    subclasses: Subclass[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Class(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.subclasses = this.convertValues(source["subclasses"], Subclass);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class Product {
-	    vendor_id: string;
-	    id: string;
-	    name: string;
-	    subsystems: Product[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Product(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.vendor_id = source["vendor_id"];
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.subsystems = this.convertValues(source["subsystems"], Product);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	
-	export class Vendor {
-	    id: string;
-	    name: string;
-	    products: Product[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Vendor(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.products = this.convertValues(source["products"], Product);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
 export namespace utils {
 	
 	export class EMLyConfig {
@@ -823,6 +442,9 @@ export namespace utils {
 	    UpdateCheckEnabled: string;
 	    UpdatePath: string;
 	    UpdateAutoCheck: string;
+	    BugReportAPIURL: string;
+	    BugReportAPIKey: string;
+	    LogLevel: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new EMLyConfig(source);
@@ -838,6 +460,9 @@ export namespace utils {
 	        this.UpdateCheckEnabled = source["UpdateCheckEnabled"];
 	        this.UpdatePath = source["UpdatePath"];
 	        this.UpdateAutoCheck = source["UpdateAutoCheck"];
+	        this.BugReportAPIURL = source["BugReportAPIURL"];
+	        this.BugReportAPIKey = source["BugReportAPIKey"];
+	        this.LogLevel = source["LogLevel"];
 	    }
 	}
 	export class Config {
@@ -876,10 +501,8 @@ export namespace utils {
 	    OS: string;
 	    Version: string;
 	    HWID: string;
-	    ExternalIP: string;
 	    CPU: cpu.Info;
 	    RAM: memory.Info;
-	    GPU: gpu.Info;
 	
 	    static createFrom(source: any = {}) {
 	        return new MachineInfo(source);
@@ -891,10 +514,8 @@ export namespace utils {
 	        this.OS = source["OS"];
 	        this.Version = source["Version"];
 	        this.HWID = source["HWID"];
-	        this.ExternalIP = source["ExternalIP"];
 	        this.CPU = this.convertValues(source["CPU"], cpu.Info);
 	        this.RAM = this.convertValues(source["RAM"], memory.Info);
-	        this.GPU = this.convertValues(source["GPU"], gpu.Info);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

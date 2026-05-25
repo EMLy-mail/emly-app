@@ -4,6 +4,8 @@ import {main} from '../models';
 import {utils} from '../models';
 import {internal} from '../models';
 
+export function CheckBugReportAPI():Promise<boolean>;
+
 export function CheckForUpdates():Promise<main.UpdateStatus>;
 
 export function CheckIsDefaultEMLHandler():Promise<boolean>;
@@ -18,7 +20,7 @@ export function DownloadUpdate():Promise<string>;
 
 export function ExportSettings(arg1:string):Promise<string>;
 
-export function FrontendLog(arg1:string,arg2:string):Promise<void>;
+export function FrontendLog(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function GetConfig():Promise<utils.Config>;
 
@@ -43,6 +45,8 @@ export function InstallUpdate(arg1:boolean):Promise<void>;
 export function InstallUpdateSilent():Promise<void>;
 
 export function InstallUpdateSilentFromPath(arg1:string):Promise<void>;
+
+export function IsAppInDebugMode():Promise<boolean>;
 
 export function IsDebuggerRunning():Promise<boolean>;
 
@@ -74,6 +78,12 @@ export function ReadMSGOSS(arg1:string):Promise<internal.EmailData>;
 
 export function ReadPEC(arg1:string):Promise<internal.EmailData>;
 
+export function ReloadConfig():Promise<utils.Config>;
+
+export function ReloadEMLyConfig():Promise<utils.EMLyConfig>;
+
+export function RestartApp():Promise<void>;
+
 export function SaveConfig(arg1:utils.Config):Promise<void>;
 
 export function SaveScreenshot():Promise<string>;
@@ -82,10 +92,14 @@ export function SaveScreenshotAs():Promise<string>;
 
 export function SetCurrentMailFilePath(arg1:string):Promise<void>;
 
+export function SetReleaseChannel(arg1:string):Promise<void>;
+
 export function SetUpdateCheckerEnabled(arg1:boolean):Promise<void>;
+
+export function SetUpdatePath(arg1:string):Promise<void>;
 
 export function ShowOpenFileDialog():Promise<string>;
 
-export function SubmitBugReport(arg1:main.BugReportInput):Promise<main.SubmitBugReportResult>;
+export function SubmitBugReport(arg1:main.BugReportInput,arg2:string):Promise<main.SubmitBugReportResult>;
 
 export function TakeScreenshot():Promise<main.ScreenshotResult>;

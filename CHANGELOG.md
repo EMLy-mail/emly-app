@@ -1,4 +1,10 @@
 # Changelog EMLy
+## 1.7.4 (2026-05-25)
+1) Riorganizzata la pagina Impostazioni raggruppando meglio le opzioni per sezione, con relative traduzioni aggiornate.
+2) Aggiornato il visualizzatore PDF per usare `@embedpdf/svelte-pdf-viewer`, con una nuova implementazione dedicata e una semplificazione della pagina PDF.
+3) Aggiunta la visualizzazione della data dell'email nel Mail Viewer.
+4) Rimossi gli asset statici OpenJPEG non piu' necessari dopo l'aggiornamento del visualizzatore PDF.
+
 ## 1.7.3 (2026-05-20)
 1) Sistemato un critico bug di avvio, quando l'utente avviava EMLy tramite un .EML, andava in crash la WebView. Causato dall'uso di $effect invece che onMount.
 
