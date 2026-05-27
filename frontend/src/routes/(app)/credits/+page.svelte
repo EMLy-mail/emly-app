@@ -255,20 +255,48 @@
           {#each specialThanksData as contributor}
             {#if contributor}
               <div
-                class="flex items-center gap-3 rounded-lg border bg-card p-3"
+                class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
               >
                 <img
                   src={gravatarUrls[contributor.id]}
                   alt={contributor.name}
-                  class="h-10 w-10 rounded-full border-2 border-primary/20"
+                  class="h-14 w-14 rounded-full border-2 border-primary/20 z-0 select-none"
                 />
-                <div class="flex-1">
-                  <span class="font-medium text-sm">{contributor.name}</span>
-                  <span class="text-muted-foreground"> - </span>
+                <div class="flex-1 z-0">
+                  <div class="font-medium">{contributor.name}</div>
                   {#if contributor.id === 35636667}
-                    <span class="text-muted-foreground text-sm"
-                      >{m.credits_laky64_desc()}</span
+                    <div class="text-sm text-primary/80">
+                      {m.credits_role_go_contributor()}
+                    </div>
+                    <div class="text-sm text-muted-foreground mt-1">
+                      {m.credits_laky64_desc()}
+                    </div>
+                    {#if contributor.email}
+                    <a
+                      href="mailto:{contributor.email}"
+                      class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
                     >
+                      <Mail class="size-3" />
+                      {contributor.email}
+                    </a>
+                  {/if}
+                  {/if}
+                  {#if contributor.id === 20886839}
+                    <div class="text-sm text-primary/80">
+                      {m.credits_role_ui_ux_feedback_advisor()}
+                    </div>
+                    <div class="text-sm text-muted-foreground mt-1">
+                      {m.credits_amber_desc()}
+                    </div>
+                    {#if contributor.email}
+                    <a
+                      href="mailto:{contributor.email}"
+                      class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
+                    >
+                      <Mail class="size-3" />
+                      {contributor.email}
+                    </a>
+                  {/if}
                   {/if}
                 </div>
               </div>

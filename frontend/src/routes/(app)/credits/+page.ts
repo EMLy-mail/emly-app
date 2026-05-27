@@ -62,6 +62,9 @@ export const load = (async ({fetch}) => {
     }, {
         id: 35636667, // Lauren
         role: "specialThanks"
+    }, {
+        id: 20886839, // Amber
+        role: "specialThanks"
     }]
 
     let configRoot: utils.Config | null = null;
