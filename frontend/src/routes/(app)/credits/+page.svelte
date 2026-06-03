@@ -15,9 +15,11 @@
   } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages";
   import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
+  import "@risadams/pride-flags/dist/pride-flags.css";
 
   let { data } = $props();
   let config = $derived(data.config);
+  let easterEgg = $derived(data.easterEgg ?? false);
 
   // Open external URL in default browser
   async function openUrl(url: string) {
@@ -232,8 +234,17 @@
         <div class="text-center text-sm text-muted-foreground pt-2">
           <span class="flex items-center justify-center gap-1">
             {m.credits_made_with()}
-            <Heart class="size-3 text-red-500 inline" />
-            {m.credits_at_3git()}
+            {#if easterEgg}
+              <Heart class="size-3 text-red-500 inline" />
+              by a
+              <div class="flag icon nonbinary" style="height: 0.75rem; width: auto;" role="img" aria-label="Non-Binary Pride Flag"></div>
+              <div class="flag icon pansexual" style="height: 0.75rem; width: auto;" role="img" aria-label="Pansexual Pride Flag"></div>
+              Protogen :3
+            {:else}
+              <Heart class="size-3 text-red-500 inline" />
+              {m.credits_at_3git()}
+            {/if}
+
           </span>
         </div>
       </Card.Content>
