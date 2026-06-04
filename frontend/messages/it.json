@@ -302,5 +302,22 @@
   "tabs_close_tab_label": "Chiudi scheda",
   "mail_link_disabled_toast": "I link nelle email sono disabilitati per sicurezza. Vuoi abilitarli?",
   "mail_link_disabled_enable": "Abilita",
-  "mail_date": "Data:"
+  "mail_date": "Data:",
+  "debug_info_title": "Debug Info",
+  "debug_info_description": "Informazioni tecniche sull'email caricata",
+  "debug_info_format": "Formato",
+  "debug_info_pec": "PEC",
+  "debug_info_inner_email": "Email interna",
+  "debug_info_attachments": "Allegati",
+  "debug_info_body": "Corpo",
+  "debug_info_date_raw": "Data (raw)",
+  "debug_info_file": "File",
+  "debug_info_format_unknown": "Sconosciuto",
+  "debug_info_yes": "Sì",
+  "debug_info_no": "No",
+  "debug_info_body_none": "Nessuno",
+  "debug_info_body_html": "HTML",
+  "debug_info_body_text": "Testo",
+  "debug_info_show_in_explorer": "Mostra in Explorer",
+  "debug_info_close": "Chiudi"
 }

@@ -302,5 +302,22 @@
   "tabs_close_tab_label": "Close tab",
   "mail_link_disabled_toast": "Links in emails are disabled for security. Do you want to enable them?",
   "mail_link_disabled_enable": "Enable",
-  "mail_date": "Date:"
+  "mail_date": "Date:",
+  "debug_info_title": "Debug Info",
+  "debug_info_description": "Technical information about the loaded email",
+  "debug_info_format": "Format",
+  "debug_info_pec": "PEC",
+  "debug_info_inner_email": "Inner email",
+  "debug_info_attachments": "Attachments",
+  "debug_info_body": "Body",
+  "debug_info_date_raw": "Date (raw)",
+  "debug_info_file": "File",
+  "debug_info_format_unknown": "Unknown",
+  "debug_info_yes": "Yes",
+  "debug_info_no": "No",
+  "debug_info_body_none": "None",
+  "debug_info_body_html": "HTML",
+  "debug_info_body_text": "Plain text",
+  "debug_info_show_in_explorer": "Show in Explorer",
+  "debug_info_close": "Close"
 }

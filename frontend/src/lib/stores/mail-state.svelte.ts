@@ -3,6 +3,7 @@ import type { internal } from "$lib/wailsjs/go/models";
 export interface EmailTab {
     id: string;
     email: internal.EmailData;
+    filePath?: string;
 }
 
 class MailState {
@@ -14,19 +15,19 @@ class MailState {
         return this.tabs.find(t => t.id === this.activeTabId)?.email ?? null;
     }
 
-    setParams(email: internal.EmailData | null) {
+    setParams(email: internal.EmailData | null, filePath?: string) {
         if (!email) {
             this.clear();
             return;
         }
         const id = crypto.randomUUID();
-        this.tabs = [{ id, email }];
+        this.tabs = [{ id, email, filePath }];
         this.activeTabId = id;
     }
 
-    addTab(email: internal.EmailData): string {
+    addTab(email: internal.EmailData, filePath?: string): string {
         const id = crypto.randomUUID();
-        this.tabs = [...this.tabs, { id, email }];
+        this.tabs = [...this.tabs, { id, email, filePath }];
         this.activeTabId = id;
         return id;
     }

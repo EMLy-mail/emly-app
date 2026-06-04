@@ -8,9 +8,13 @@
     ShieldCheck,
     Loader2,
     Download,
+    Info,
+    FolderOpen,
   } from '@lucide/svelte';
-  import { sidebarOpen } from '$lib/stores/app';
+  import { dev } from '$app/environment';
+  import { sidebarOpen, runningInDebugMode } from '$lib/stores/app';
   import { onDestroy, onMount } from 'svelte';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
   import { toast } from 'svelte-sonner';
   import { EventsOn, WindowShow, WindowUnminimise, BrowserOpenURL } from '$lib/wailsjs/runtime/runtime';
   import { mailState } from '$lib/stores/mail-state.svelte';
@@ -19,6 +23,11 @@
   import { showDefaultAttachmentToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
   import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 
+  import {
+    DetectEmailFormat,
+    OpenFolderInExplorer,
+  } from '$lib/wailsjs/go/main/App';
+  import { Button } from '$lib/components/ui/button/index.js';
   import {
     IFRAME_UTIL_HTML_DARK,
     IFRAME_UTIL_HTML_DARK_NO_LINKS,
@@ -63,6 +72,9 @@
   let linkDialogOpen = $state(false);
   let pendingLinkUrl = $state('');
   let disabledLinkClickCount = $state(0);
+  let debugModalOpen = $state(false);
+  let debugFormat = $state('');
+  let debugFormatLoading = $state(false);
 
   const LINK_HINT_TOAST_ID = 'emly-link-hint';
 
@@ -72,6 +84,12 @@
     tabId !== null
       ? (mailState.tabs.find(t => t.id === tabId)?.email ?? null)
       : mailState.currentEmail
+  );
+
+  let activeFilePath = $derived<string | undefined>(
+    tabId !== null
+      ? mailState.tabs.find(t => t.id === tabId)?.filePath
+      : mailState.tabs.find(t => t.id === mailState.activeTabId)?.filePath
   );
 
   let iframeUtilHtml = $derived(
@@ -87,6 +105,45 @@
   // ============================================================================
   // Event Handlers
   // ============================================================================
+
+  async function openDebugModal() {
+    debugModalOpen = true;
+    debugFormat = '';
+    const fp = activeFilePath;
+    if (fp) {
+      debugFormatLoading = true;
+      try {
+        debugFormat = await DetectEmailFormat(fp) as string;
+      } catch {
+        debugFormat = 'unknown';
+      }
+      debugFormatLoading = false;
+    }
+  }
+
+  function getDebugFolderPath(filePath: string): string {
+    const lastSep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+    return lastSep >= 0 ? filePath.substring(0, lastSep) : filePath;
+  }
+
+  function getDebugFormatLabel(): string {
+    if (debugFormatLoading) return '…';
+    if (!activeFilePath && !activeEmail?.isPec) return activeEmail ? 'EML' : '—';
+    const fmt = debugFormat.toLowerCase();
+    if (fmt === 'msg') return 'MSG';
+    if (fmt === 'eml' || fmt === '') return activeEmail?.isPec ? 'EML (PEC)' : 'EML';
+    if (fmt === 'unknown') return m.debug_info_format_unknown();
+    return fmt.toUpperCase();
+  }
+
+  function getBodyInfo(): string {
+    const body = activeEmail?.body;
+    if (!body) return m.debug_info_body_none();
+    const trimmed = body.trimStart();
+    const isHtmlBody = trimmed.startsWith('<') || /<!doctype html/i.test(trimmed) || /<html/i.test(trimmed);
+    const kb = (body.length / 1024).toFixed(1);
+    return `${isHtmlBody ? m.debug_info_body_html() : m.debug_info_body_text()}, ${kb} KB`;
+  }
 
   function onClear() {
     cancelCurrentToast();
@@ -127,10 +184,9 @@
 
     if (result.success && result.email) {
       if (tabId !== null) {
-        const newTabId = mailState.addTab(result.email);
-        mailState.updateTabEmail(newTabId, result.email);
+        mailState.addTab(result.email, result.filePath);
       } else {
-        mailState.setParams(result.email);
+        mailState.setParams(result.email, result.filePath);
         sidebarOpen.set(false);
       }
     } else if (result.error) {
@@ -265,10 +321,10 @@
           if (result.success && result.email) {
             if (tabId !== null) {
               // In tab mode: open in a new tab
-              mailState.addTab(result.email);
+              mailState.addTab(result.email, result.filePath);
               sidebarOpen.set(false);
             } else {
-              mailState.setParams(result.email);
+              mailState.setParams(result.email, result.filePath);
               sidebarOpen.set(false);
             }
             WindowUnminimise();
@@ -334,6 +390,77 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
+{#if dev || $runningInDebugMode}
+  <Dialog.Root bind:open={debugModalOpen}>
+    <Dialog.Content class="debug-dialog-content">
+      <Dialog.Header>
+        <Dialog.Title class="debug-dialog-title">
+          <Info size="16" />
+          {m.debug_info_title()}
+        </Dialog.Title>
+        <Dialog.Description>{m.debug_info_description()}</Dialog.Description>
+      </Dialog.Header>
+
+      <div class="debug-grid">
+        <span class="debug-label">{m.debug_info_format()}</span>
+        <span class="debug-value">
+          {#if debugFormatLoading}
+            <Loader2 size="12" class="spinner" />
+          {:else}
+            {getDebugFormatLabel()}
+          {/if}
+        </span>
+
+        <span class="debug-label">{m.debug_info_pec()}</span>
+        <span class="debug-value">
+          {#if activeEmail?.isPec}
+            <span class="pec-badge"><ShieldCheck size="11" /> PEC</span>
+          {:else}
+            {m.debug_info_no()}
+          {/if}
+        </span>
+
+        <span class="debug-label">{m.debug_info_inner_email()}</span>
+        <span class="debug-value">{activeEmail?.hasInnerEmail ? m.debug_info_yes() : m.debug_info_no()}</span>
+
+        <span class="debug-label">{m.debug_info_attachments()}</span>
+        <span class="debug-value">
+          {activeEmail?.attachments?.length ?? 0}
+          {#if activeEmail?.attachments && activeEmail.attachments.length > 0}
+            <ul class="debug-att-list">
+              {#each activeEmail.attachments as att}
+                <li><span class="mono">{att.filename}</span> <span class="debug-content-type">{att.contentType}</span></li>
+              {/each}
+            </ul>
+          {/if}
+        </span>
+
+        <span class="debug-label">{m.debug_info_body()}</span>
+        <span class="debug-value">{getBodyInfo()}</span>
+
+        <span class="debug-label">{m.debug_info_date_raw()}</span>
+        <span class="debug-value mono">{activeEmail?.date || '—'}</span>
+
+        <span class="debug-label">{m.debug_info_file()}</span>
+        <span class="debug-value mono debug-filepath">{activeFilePath || '—'}</span>
+      </div>
+
+      <Dialog.Footer>
+        {#if activeFilePath}
+          <Button
+            variant="outline"
+            onclick={() => OpenFolderInExplorer(getDebugFolderPath(activeFilePath!))}
+          >
+            <FolderOpen size="14" />
+            {m.debug_info_show_in_explorer()}
+          </Button>
+        {/if}
+        <Button onclick={() => (debugModalOpen = false)}>{m.debug_info_close()}</Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Root>
+{/if}
+
 <div class="panel fill" class:embedded aria-label={m.mail_panel_label()}>
   {#if isLoading}
     <div class="loading-overlay">
@@ -360,8 +487,20 @@
         <!-- Header -->
         <div class="email-header-content">
           <div class="subject-row">
-            <div class="email-subject">
-              {activeEmail.subject || m.mail_subject_no_subject()}
+            <div class="subject-left">
+              <div class="email-subject">
+                {activeEmail.subject || m.mail_subject_no_subject()}
+              </div>
+              {#if dev || $runningInDebugMode}
+                <button
+                  class="debug-info-btn"
+                  onclick={openDebugModal}
+                  title="Debug Info"
+                  aria-label="Mostra info di debug"
+                >
+                  <Info size="13" />
+                </button>
+              {/if}
             </div>
             <div class="controls">
               <button
@@ -842,6 +981,98 @@
     vertical-align: middle;
     user-select: none;
     width: fit-content;
+  }
+
+  .subject-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .debug-info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 3px;
+    opacity: 0.6;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+
+  .debug-info-btn:hover {
+    opacity: 1;
+    background: var(--muted);
+    color: var(--foreground);
+  }
+
+  :global(.debug-dialog-content) {
+    max-width: 520px !important;
+  }
+
+  :global(.debug-dialog-title) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .debug-grid {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 12px;
+    font-size: 13px;
+    padding: 4px 0;
+  }
+
+  .debug-label {
+    color: var(--muted-foreground);
+    font-weight: 500;
+    text-align: right;
+    padding-top: 1px;
+  }
+
+  .debug-value {
+    color: var(--foreground);
+    word-break: break-all;
+  }
+
+  .debug-filepath {
+    word-break: break-all;
+    user-select: all;
+  }
+
+  .mono {
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  .debug-att-list {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .debug-att-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .debug-content-type {
+    font-size: 11px;
+    color: var(--muted-foreground);
   }
 
   .link-url-box {
