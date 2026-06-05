@@ -327,8 +327,7 @@
   "settings_updates_security_alert_title": "Aggiornamento di Sicurezza",
   "settings_updates_security_alert_description": "La versione {version} contiene un'importante correzione di sicurezza. Si consiglia vivamente di aggiornare immediatamente.",
   "settings_updates_security_alert_later": "Più tardi",
-  "settings_updates_security_alert_update_now": "Scarica ora"
-  "mail_date": "Data:",
+  "settings_updates_security_alert_update_now": "Scarica ora",
   "settings_update_source_label": "Sorgente aggiornamenti",
   "settings_update_source_description": "Scegli se recuperare gli aggiornamenti dall'API o da un percorso di rete UNC.",
   "settings_update_source_option_api": "API",
