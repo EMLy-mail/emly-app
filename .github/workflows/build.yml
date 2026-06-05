@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: Build (Windows)
-    runs-on: blacksmith-4vcpu-windows-2025
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
