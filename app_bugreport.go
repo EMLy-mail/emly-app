@@ -195,10 +195,10 @@ func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugR
 		}
 	}
 
-	// Save config data if provided
+	// Save config data if provided, with sensitive fields redacted.
 	if input.ConfigData != "" {
 		configPath := filepath.Join(bugReportFolder, "config.json")
-		if err := os.WriteFile(configPath, []byte(input.ConfigData), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(redactConfigData(input.ConfigData)), 0644); err != nil {
 			pkglogger.Warn("failed to save config data", "error", err.Error())
 		}
 	}
@@ -494,4 +494,31 @@ func zipFolder(sourceFolder, destZip string) error {
 		_, err = writer.Write(fileContent)
 		return err
 	})
+}
+
+// redactConfigData removes sensitive fields (API key) from a JSON config snapshot
+// before it is written to disk or uploaded with a bug report.
+func redactConfigData(configJSON string) string {
+	var m map[string]interface{}
+	if err := json.Unmarshal([]byte(configJSON), &m); err != nil {
+		// If the payload is not valid JSON return it unmodified rather than
+		// dropping it entirely; the calling code logs a separate warning.
+		return configJSON
+	}
+
+	// Redact at the top level (flat config snapshot from the frontend)
+	delete(m, "BugReportAPIKey")
+	delete(m, "BUGREPORT_API_KEY")
+
+	// Also redact inside a nested "EMLy" section if the full Config struct is serialised
+	if emly, ok := m["EMLy"].(map[string]interface{}); ok {
+		delete(emly, "BugReportAPIKey")
+		delete(emly, "BUGREPORT_API_KEY")
+	}
+
+	redacted, err := json.Marshal(m)
+	if err != nil {
+		return configJSON
+	}
+	return string(redacted)
 }
