@@ -635,7 +635,7 @@
             srcdoc={activeEmail.body + iframeUtilHtml + contrastFixScript}
             title={m.mail_email_body_title()}
             class="email-iframe"
-            sandbox="allow-same-origin allow-scripts"
+            sandbox="allow-scripts"
             onwheel={handleWheel}
           ></iframe>
         </div>
