@@ -148,14 +148,21 @@ func (a *App) OpenFolderInExplorer(folderPath string) error {
 }
 
 // OpenURLInBrowser opens the specified URL in the system's default web browser.
-// Uses the Windows "start" command to launch the default browser.
+// Only http://, https://, and mailto: schemes are accepted to prevent
+// command injection via cmd /c start.
 //
 // Parameters:
-//   - url: The URL to open (must be a valid http/https URL)
+//   - url: The URL to open (must start with http://, https://, or mailto:)
 //
 // Returns:
-//   - error: Error if launching the browser fails
+//   - error: Error if the scheme is not allowed or launching the browser fails
 func (a *App) OpenURLInBrowser(url string) error {
+	lower := strings.ToLower(url)
+	if !strings.HasPrefix(lower, "http://") &&
+		!strings.HasPrefix(lower, "https://") &&
+		!strings.HasPrefix(lower, "mailto:") {
+		return fmt.Errorf("URL scheme not allowed: %s", url)
+	}
 	cmd := exec.Command("cmd", "/c", "start", "", url)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	return cmd.Start()
