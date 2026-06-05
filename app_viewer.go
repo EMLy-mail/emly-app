@@ -221,9 +221,11 @@ func (a *App) OpenPDFWindow(base64Data string, filename string) error {
 		return fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	// Save to temp file
+	// Save to temp file with timestamp to avoid collisions when multiple PDFs
+	// share the same filename (mirrors the pattern used by OpenImageWindow).
 	tempDir := os.TempDir()
-	tempFile := filepath.Join(tempDir, filename)
+	timestamp := time.Now().Format("20060102_150405")
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s_%s", timestamp, filename))
 	if err := os.WriteFile(tempFile, data, 0644); err != nil {
 		a.openPDFsMux.Lock()
 		delete(a.openPDFs, filename)
