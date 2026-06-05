@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -65,7 +66,12 @@ type UpdateStatus struct {
 	Channel          string `json:"channel,omitempty"`
 }
 
-// Global update state
+// updateMu guards updateStatus, cachedManifest, and cachedManifestIsAPI.
+// The auto-update goroutine (startup) and manual frontend calls (CheckForUpdates,
+// DownloadUpdate) can run concurrently; all reads/writes go through this mutex.
+var updateMu sync.Mutex
+
+// Global update state — always access under updateMu.
 var updateStatus = UpdateStatus{
 	CurrentVersion:   "",
 	AvailableVersion: "",
@@ -82,6 +88,7 @@ var updateStatus = UpdateStatus{
 // cachedManifest holds the last successfully loaded manifest so DownloadUpdate
 // can reuse it without re-fetching. cachedManifestIsAPI is true when the manifest
 // came from the HTTP API (download URLs are full URLs, checksums keyed by version).
+// Always access under updateMu.
 var cachedManifest *UpdateManifest
 var cachedManifestIsAPI bool
 
@@ -96,6 +103,9 @@ var cachedManifestIsAPI bool
 //   - UpdateStatus: Current update state including available version
 //   - error: Error if check fails (network, parsing, etc.)
 func (a *App) CheckForUpdates() (UpdateStatus, error) {
+	updateMu.Lock()
+	defer updateMu.Unlock()
+
 	// Reset status
 	updateStatus.Checking = true
 	updateStatus.ErrorMessage = ""
@@ -324,6 +334,9 @@ func resolveReleaseNotes(manifest *UpdateManifest, version, lang string) string 
 //   - string: Path to the downloaded installer
 //   - error: Error if download or verification fails
 func (a *App) DownloadUpdate() (string, error) {
+	updateMu.Lock()
+	defer updateMu.Unlock()
+
 	if !updateStatus.UpdateAvailable {
 		return "", fmt.Errorf("no update available")
 	}
@@ -829,7 +842,10 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string, expectedSHA256 string)
 // Returns:
 //   - UpdateStatus: Current state of the update system
 func (a *App) GetUpdateStatus() UpdateStatus {
-	return updateStatus
+	updateMu.Lock()
+	s := updateStatus
+	updateMu.Unlock()
+	return s
 }
 
 // =============================================================================
