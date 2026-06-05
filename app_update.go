@@ -728,12 +728,19 @@ func (a *App) InstallUpdateSilent() error {
 // to check the version.json manifest.
 //
 // Parameters:
-//   - smbPath: Full UNC path or local path to the installer (e.g., \\server\share\EMLy.exe)
+//   - smbPath:         Full UNC path or local path to the installer (e.g., \\server\share\EMLy.exe)
+//   - expectedSHA256:  Expected SHA-256 hex digest of the installer. Pass an empty string to
+//                      skip verification (not recommended for production deployments).
 //
 // Returns:
-//   - error: Error if download or launch fails
-func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
+//   - error: Error if download, integrity check, or launch fails
+func (a *App) InstallUpdateSilentFromPath(smbPath string, expectedSHA256 string) error {
 	pkglogger.Info("starting silent installation from custom path", "path", smbPath)
+
+	// Only .exe files are accepted to limit the attack surface.
+	if !strings.HasSuffix(strings.ToLower(smbPath), ".exe") {
+		return fmt.Errorf("installer path must point to a .exe file: %s", smbPath)
+	}
 
 	// Verify source installer exists and is accessible
 	if _, err := os.Stat(smbPath); os.IsNotExist(err) {
@@ -771,6 +778,20 @@ func (a *App) InstallUpdateSilentFromPath(smbPath string) error {
 	}
 
 	pkglogger.Info("installer copied", "bytes", bytesWritten)
+
+	// Verify integrity of the local copy against the caller-supplied digest.
+	// If no digest is provided, emit a warning but continue (backwards-compatible path).
+	if expectedSHA256 != "" {
+		pkglogger.Info("verifying installer checksum", "path", tempInstallerPath)
+		if err := verifyChecksum(tempInstallerPath, expectedSHA256); err != nil {
+			os.Remove(tempInstallerPath)
+			pkglogger.Error("checksum verification failed", "error", err.Error())
+			return fmt.Errorf("checksum verification failed: %w", err)
+		}
+		pkglogger.Info("installer checksum verified")
+	} else {
+		pkglogger.Warn("no expectedSHA256 provided — skipping integrity check for installer from custom path")
+	}
 
 	logPath := filepath.Join(os.TempDir(), "emly_install.log")
 	args := []string{

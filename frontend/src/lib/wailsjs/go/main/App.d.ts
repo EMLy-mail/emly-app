@@ -44,7 +44,7 @@ export function InstallUpdate(arg1:boolean):Promise<void>;
 
 export function InstallUpdateSilent():Promise<void>;
 
-export function InstallUpdateSilentFromPath(arg1:string):Promise<void>;
+export function InstallUpdateSilentFromPath(arg1:string,arg2:string):Promise<void>;
 
 export function IsAppInDebugMode():Promise<boolean>;
 

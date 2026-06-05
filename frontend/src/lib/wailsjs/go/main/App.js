@@ -82,8 +82,8 @@ export function InstallUpdateSilent() {
   return window['go']['main']['App']['InstallUpdateSilent']();
 }
 
-export function InstallUpdateSilentFromPath(arg1) {
-  return window['go']['main']['App']['InstallUpdateSilentFromPath'](arg1);
+export function InstallUpdateSilentFromPath(arg1, arg2) {
+  return window['go']['main']['App']['InstallUpdateSilentFromPath'](arg1, arg2);
 }
 
 export function IsAppInDebugMode() {
