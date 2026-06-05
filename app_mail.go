@@ -43,7 +43,7 @@ func (a *App) ReadPEC(filePath string) (data *internal.EmailData, err error) {
 }
 
 // ReadMSG reads a Microsoft Outlook .msg file and returns the email data.
-func (a *App) ReadMSG(filePath string, useExternalConverter bool) (data *internal.EmailData, err error) {
+func (a *App) ReadMSG(filePath string) (data *internal.EmailData, err error) {
 	start := time.Now()
 	defer func() { canonicalLog("ReadMSG", start, err) }()
 
@@ -51,19 +51,6 @@ func (a *App) ReadMSG(filePath string, useExternalConverter bool) (data *interna
 	data, err = internal.ReadMsgFile(filePath)
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadMSG", data)
-	}
-	return data, err
-}
-
-// ReadMSGOSS reads a .msg file using the open-source parser.
-func (a *App) ReadMSGOSS(filePath string) (data *internal.EmailData, err error) {
-	start := time.Now()
-	defer func() { canonicalLog("ReadMSGOSS", start, err) }()
-
-	logMailFileInfo("ReadMSGOSS", filePath)
-	data, err = internal.ReadMsgFile(filePath)
-	if err == nil && data != nil {
-		logParsedMailInfo("ReadMSGOSS", data)
 	}
 	return data, err
 }

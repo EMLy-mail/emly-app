@@ -100,7 +100,7 @@ export async function loadEmailFromPathLegacy(filePath: string): Promise<LoadEma
     let email: internal.EmailData;
 
     if (fileType === 'msg') {
-      email = await ReadMSG(filePath, true);
+      email = await ReadMSG(filePath);
     } else {
       try {
         email = await ReadPEC(filePath);
