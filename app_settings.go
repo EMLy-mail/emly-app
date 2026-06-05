@@ -155,6 +155,20 @@ func (a *App) SetReleaseChannel(channel string) error {
 	return a.SaveConfig(config)
 }
 
+// SetUpdateSource updates the UPDATE_SOURCE setting in config.ini.
+// Valid values are "api" (HTTP API) and "unc" (network share).
+func (a *App) SetUpdateSource(source string) error {
+	if source != "api" && source != "unc" {
+		return fmt.Errorf("invalid update source: %s (must be 'api' or 'unc')", source)
+	}
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.UpdateSource = source
+	return a.SaveConfig(config)
+}
+
 // SetUpdateCheckerEnabled updates the UPDATE_CHECK_ENABLED setting in config.ini
 // based on the user's preference from the GUI settings.
 //

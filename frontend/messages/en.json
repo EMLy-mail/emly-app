@@ -328,4 +328,12 @@
   "settings_updates_security_alert_description": "Version {version} contains an important security fix. We strongly recommend updating immediately.",
   "settings_updates_security_alert_later": "Later",
   "settings_updates_security_alert_update_now": "Download now"
+  "mail_date": "Date:",
+  "settings_update_source_label": "Update Source",
+  "settings_update_source_description": "Choose whether to fetch updates from the API or a UNC network path.",
+  "settings_update_source_option_api": "API",
+  "settings_update_source_option_unc": "Network Path (UNC)",
+  "settings_update_source_saved_api": "Update source: API",
+  "settings_update_source_saved_unc": "Update source: Network Path",
+  "settings_update_source_error": "Error saving update source"
 }

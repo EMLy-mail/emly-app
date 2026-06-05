@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -28,21 +29,22 @@ import (
 // Update System Types
 // =============================================================================
 
-// DetailedReleaseNote carries per-version severity type and localized description.
-type DetailedReleaseNote struct {
-	SeverityType string            `json:"severityType"` // "patch", "feature", "breaking", "security"
-	Description  map[string]string `json:"description"`  // keyed by locale, e.g. "en", "it"
+// DetailedNote holds per-version structured release note data from the API manifest
+type DetailedNote struct {
+	SeverityType string            `json:"severityType"`
+	Description  map[string]string `json:"description"`
 }
 
-// UpdateManifest represents the version.json file structure on the network share
+// UpdateManifest represents the version.json / API manifest structure
 type UpdateManifest struct {
-	StableVersion        string                        `json:"stableVersion"`
-	BetaVersion          string                        `json:"betaVersion"`
-	StableDownload       string                        `json:"stableDownload"`
-	BetaDownload         string                        `json:"betaDownload"`
-	SHA256Checksums      map[string]string             `json:"sha256Checksums"`
-	ReleaseNotes         map[string]string             `json:"releaseNotes,omitempty"`
-	DetailedReleaseNotes map[string]DetailedReleaseNote `json:"detailedReleaseNotes,omitempty"`
+	StableVersion        string                  `json:"stableVersion"`
+	BetaVersion          string                  `json:"betaVersion"`
+	StableDownload       string                  `json:"stableDownload"`
+	BetaDownload         string                  `json:"betaDownload"`
+	IsCritical           bool                    `json:"isCritical"`
+	SHA256Checksums      map[string]string       `json:"sha256Checksums"`
+	ReleaseNotes         map[string]string       `json:"releaseNotes,omitempty"`
+	DetailedReleaseNotes map[string]DetailedNote `json:"detailedReleaseNotes,omitempty"`
 }
 
 // UpdateStatus represents the current state of the update system
@@ -50,6 +52,7 @@ type UpdateStatus struct {
 	CurrentVersion   string `json:"currentVersion"`
 	AvailableVersion string `json:"availableVersion"`
 	UpdateAvailable  bool   `json:"updateAvailable"`
+	IsCritical       bool   `json:"isCritical"`
 	Checking         bool   `json:"checking"`
 	Downloading      bool   `json:"downloading"`
 	DownloadProgress int    `json:"downloadProgress"`
@@ -67,6 +70,7 @@ var updateStatus = UpdateStatus{
 	CurrentVersion:   "",
 	AvailableVersion: "",
 	UpdateAvailable:  false,
+	IsCritical:       false,
 	Checking:         false,
 	Downloading:      false,
 	DownloadProgress: 0,
@@ -74,6 +78,12 @@ var updateStatus = UpdateStatus{
 	InstallerPath:    "",
 	ErrorMessage:     "",
 }
+
+// cachedManifest holds the last successfully loaded manifest so DownloadUpdate
+// can reuse it without re-fetching. cachedManifestIsAPI is true when the manifest
+// came from the HTTP API (download URLs are full URLs, checksums keyed by version).
+var cachedManifest *UpdateManifest
+var cachedManifestIsAPI bool
 
 // =============================================================================
 // Update Check Methods
@@ -110,23 +120,50 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 		return updateStatus, fmt.Errorf("update checking is disabled in config")
 	}
 
-	// Validate update path
-	updatePath := strings.TrimSpace(config.EMLy.UpdatePath)
-	if updatePath == "" {
-		updateStatus.ErrorMessage = "Update path not configured"
-		updateStatus.Checking = false
-		return updateStatus, fmt.Errorf("UPDATE_PATH is empty in config.ini")
+	// Determine update source: "api" uses the HTTP API, anything else uses the network share.
+	// An empty UPDATE_SOURCE defaults to "unc" for backwards compatibility.
+	updateSource := strings.ToLower(strings.TrimSpace(config.EMLy.UpdateSource))
+	if updateSource == "" {
+		updateSource = "unc"
 	}
 
-	// Load manifest from network share
-	manifest, err := a.loadUpdateManifest(updatePath)
-	pkglogger.Debug("loadUpdateManifest result", "error", fmt.Sprintf("%v", err))
-	if err != nil {
-		updateStatus.ErrorMessage = fmt.Sprintf("Failed to load manifest: %v", err)
-		updateStatus.Checking = false
-		pkglogger.Debug("update status", "status", updateStatus)
-		return updateStatus, err
+	var manifest *UpdateManifest
+	var manifestErr error
+	isAPI := false
+
+	switch updateSource {
+	case "api":
+		apiBaseURL := strings.TrimSpace(config.EMLy.BugReportAPIURL)
+		if apiBaseURL == "" {
+			updateStatus.ErrorMessage = "BUGREPORT_API_URL not configured"
+			updateStatus.Checking = false
+			return updateStatus, fmt.Errorf("UPDATE_SOURCE is 'api' but BUGREPORT_API_URL is empty")
+		}
+		manifest, manifestErr = a.loadUpdateManifestFromAPI(apiBaseURL)
+		if manifestErr != nil {
+			updateStatus.ErrorMessage = fmt.Sprintf("API manifest failed: %v", manifestErr)
+			updateStatus.Checking = false
+			return updateStatus, manifestErr
+		}
+		isAPI = true
+	default: // "unc"
+		updatePath := strings.TrimSpace(config.EMLy.UpdatePath)
+		if updatePath == "" {
+			updateStatus.ErrorMessage = "UPDATE_PATH not configured"
+			updateStatus.Checking = false
+			return updateStatus, fmt.Errorf("UPDATE_PATH is empty in config.ini")
+		}
+		manifest, manifestErr = a.loadUpdateManifest(updatePath)
+		pkglogger.Debug("loadUpdateManifest result", "error", fmt.Sprintf("%v", manifestErr))
+		if manifestErr != nil {
+			updateStatus.ErrorMessage = fmt.Sprintf("Failed to load manifest: %v", manifestErr)
+			updateStatus.Checking = false
+			return updateStatus, manifestErr
+		}
 	}
+
+	cachedManifest = manifest
+	cachedManifestIsAPI = isAPI
 
 	// Determine target version based on release channel
 	var targetVersion string
@@ -144,13 +181,12 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 	if comparison < 0 {
 		// New version available
 		updateStatus.UpdateAvailable = true
+		updateStatus.IsCritical = manifest.IsCritical
 		updateStatus.InstallerPath = "" // Reset installer path
 		updateStatus.Ready = false
 
-		// Get release notes if available
-		if notes, ok := manifest.ReleaseNotes[targetVersion]; ok {
-			updateStatus.ReleaseNotes = notes
-		}
+		// Get release notes: prefer detailed (current language), then simple string
+		updateStatus.ReleaseNotes = resolveReleaseNotes(manifest, targetVersion, config.EMLy.Language)
 
 		// Detailed release notes: severity type + localized description
 		if detailed, ok := manifest.DetailedReleaseNotes[targetVersion]; ok {
@@ -172,9 +208,11 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 			"current", updateStatus.CurrentVersion,
 			"available", targetVersion,
 			"channel", currentChannel,
+			"critical", manifest.IsCritical,
 		)
 	} else {
 		updateStatus.UpdateAvailable = false
+		updateStatus.IsCritical = false
 		updateStatus.InstallerPath = ""
 		updateStatus.Ready = false
 		updateStatus.ReleaseNotes = ""
@@ -222,6 +260,59 @@ func (a *App) loadUpdateManifest(updatePath string) (*UpdateManifest, error) {
 	return &manifest, nil
 }
 
+// loadUpdateManifestFromAPI fetches the update manifest from the API endpoint.
+// The path portion of apiBaseURL is stripped so the request always targets
+// {scheme}://{host}/v2/updates/manifest regardless of the URL stored in config.
+func (a *App) loadUpdateManifestFromAPI(apiBaseURL string) (*UpdateManifest, error) {
+	u, err := url.Parse(apiBaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid API base URL: %w", err)
+	}
+	manifestURL := fmt.Sprintf("%s://%s/v2/updates/manifest", u.Scheme, u.Host)
+	pkglogger.Info("fetching update manifest from API", "url", manifestURL)
+
+	resp, err := a.httpClient.Get(manifestURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch manifest: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("manifest API returned HTTP %d", resp.StatusCode)
+	}
+
+	var manifest UpdateManifest
+	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
+		return nil, fmt.Errorf("failed to parse manifest JSON: %w", err)
+	}
+
+	if manifest.StableVersion == "" || manifest.StableDownload == "" {
+		return nil, fmt.Errorf("invalid manifest: missing stable version or download")
+	}
+
+	return &manifest, nil
+}
+
+// resolveReleaseNotes picks the best available release note string for a given version.
+// Priority: detailed notes in the configured language → detailed notes in English →
+// simple release note string.
+func resolveReleaseNotes(manifest *UpdateManifest, version, lang string) string {
+	if detailed, ok := manifest.DetailedReleaseNotes[version]; ok {
+		if lang != "" {
+			if desc, ok := detailed.Description[lang]; ok && desc != "" {
+				return desc
+			}
+		}
+		if desc, ok := detailed.Description["en"]; ok && desc != "" {
+			return desc
+		}
+	}
+	if notes, ok := manifest.ReleaseNotes[version]; ok {
+		return notes
+	}
+	return ""
+}
+
 // =============================================================================
 // Download Methods
 // =============================================================================
@@ -254,32 +345,37 @@ func (a *App) DownloadUpdate() (string, error) {
 		return "", fmt.Errorf("failed to load config")
 	}
 
-	updatePath := strings.TrimSpace(config.EMLy.UpdatePath)
 	currentChannel := config.EMLy.GUIReleaseChannel
 
-	// Reload manifest to get download filename
-	manifest, err := a.loadUpdateManifest(updatePath)
-	if err != nil {
-		updateStatus.ErrorMessage = "Failed to load manifest"
-		return "", err
+	// Use cached manifest if available; otherwise reload from the appropriate source
+	manifest := cachedManifest
+	isAPI := cachedManifestIsAPI
+	if manifest == nil {
+		var reloadErr error
+		updatePath := strings.TrimSpace(config.EMLy.UpdatePath)
+		apiBaseURL := strings.TrimSpace(config.EMLy.BugReportAPIURL)
+		if apiBaseURL != "" {
+			manifest, reloadErr = a.loadUpdateManifestFromAPI(apiBaseURL)
+			if reloadErr == nil {
+				isAPI = true
+			}
+		}
+		if manifest == nil && updatePath != "" {
+			manifest, reloadErr = a.loadUpdateManifest(updatePath)
+		}
+		if manifest == nil {
+			updateStatus.ErrorMessage = "Failed to load manifest"
+			return "", fmt.Errorf("failed to load manifest: %w", reloadErr)
+		}
 	}
 
-	// Determine download filename
-	var downloadFilename string
+	// Determine download URL/filename
+	var downloadRef string
 	if currentChannel == "beta" {
-		downloadFilename = manifest.BetaDownload
+		downloadRef = manifest.BetaDownload
 	} else {
-		downloadFilename = manifest.StableDownload
+		downloadRef = manifest.StableDownload
 	}
-
-	// Resolve source path
-	sourcePath, err := resolveUpdatePath(updatePath, downloadFilename)
-	if err != nil {
-		updateStatus.ErrorMessage = "Failed to resolve installer path"
-		return "", fmt.Errorf("failed to resolve installer path: %w", err)
-	}
-
-	pkglogger.Info("downloading installer", "source", sourcePath)
 
 	// Create temp directory for download
 	tempDir := filepath.Join(os.TempDir(), "emly_update")
@@ -288,27 +384,70 @@ func (a *App) DownloadUpdate() (string, error) {
 		return "", fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
-	// Destination path
-	destPath := filepath.Join(tempDir, downloadFilename)
+	var destPath string
 
-	// Copy file with progress
-	if err := a.copyFileWithProgress(sourcePath, destPath); err != nil {
-		updateStatus.ErrorMessage = "Download failed"
-		return "", fmt.Errorf("failed to copy installer: %w", err)
-	}
-
-	// Verify checksum if available
-	if checksum, ok := manifest.SHA256Checksums[downloadFilename]; ok {
-		pkglogger.Info("verifying checksum", "file", downloadFilename)
-		if err := verifyChecksum(destPath, checksum); err != nil {
-			updateStatus.ErrorMessage = "Checksum verification failed"
-			// Delete corrupted file
-			os.Remove(destPath)
-			return "", fmt.Errorf("checksum verification failed: %w", err)
+	isHTTP := strings.HasPrefix(downloadRef, "http://") || strings.HasPrefix(downloadRef, "https://")
+	if isAPI || isHTTP {
+		// HTTP download from API
+		pkglogger.Info("downloading installer via HTTP", "url", downloadRef)
+		parsedURL, parseErr := url.Parse(downloadRef)
+		if parseErr != nil {
+			updateStatus.ErrorMessage = "Invalid download URL"
+			return "", fmt.Errorf("invalid download URL: %w", parseErr)
 		}
-		pkglogger.Info("checksum verified")
+		downloadFilename := filepath.Base(parsedURL.Path)
+		if downloadFilename == "" || downloadFilename == "." {
+			downloadFilename = fmt.Sprintf("EMLy_Installer_%s.exe", updateStatus.AvailableVersion)
+		}
+		destPath = filepath.Join(tempDir, downloadFilename)
+		if err := a.downloadFileFromHTTP(downloadRef, destPath); err != nil {
+			updateStatus.ErrorMessage = "Download failed"
+			return "", fmt.Errorf("failed to download installer: %w", err)
+		}
+		// Verify checksum: API manifest keys checksums by version string
+		checksumKey := updateStatus.AvailableVersion
+		if checksum, ok := manifest.SHA256Checksums[checksumKey]; ok {
+			pkglogger.Info("verifying checksum", "version", checksumKey)
+			if err := verifyChecksum(destPath, checksum); err != nil {
+				updateStatus.ErrorMessage = "Checksum verification failed"
+				os.Remove(destPath)
+				return "", fmt.Errorf("checksum verification failed: %w", err)
+			}
+			pkglogger.Info("checksum verified")
+		} else {
+			pkglogger.Warn("no checksum available", "version", checksumKey)
+		}
 	} else {
-		pkglogger.Warn("no checksum available", "file", downloadFilename)
+		// Network share copy
+		updatePath := strings.TrimSpace(config.EMLy.UpdatePath)
+		downloadFilename := downloadRef
+
+		sourcePath, resolveErr := resolveUpdatePath(updatePath, downloadFilename)
+		if resolveErr != nil {
+			updateStatus.ErrorMessage = "Failed to resolve installer path"
+			return "", fmt.Errorf("failed to resolve installer path: %w", resolveErr)
+		}
+
+		pkglogger.Info("downloading installer from share", "source", sourcePath)
+		destPath = filepath.Join(tempDir, downloadFilename)
+
+		if err := a.copyFileWithProgress(sourcePath, destPath); err != nil {
+			updateStatus.ErrorMessage = "Download failed"
+			return "", fmt.Errorf("failed to copy installer: %w", err)
+		}
+
+		// Network share manifest keys checksums by filename
+		if checksum, ok := manifest.SHA256Checksums[downloadFilename]; ok {
+			pkglogger.Info("verifying checksum", "file", downloadFilename)
+			if err := verifyChecksum(destPath, checksum); err != nil {
+				updateStatus.ErrorMessage = "Checksum verification failed"
+				os.Remove(destPath)
+				return "", fmt.Errorf("checksum verification failed: %w", err)
+			}
+			pkglogger.Info("checksum verified")
+		} else {
+			pkglogger.Warn("no checksum available", "file", downloadFilename)
+		}
 	}
 
 	updateStatus.InstallerPath = destPath
@@ -364,6 +503,56 @@ func (a *App) copyFileWithProgress(src, dst string) error {
 		}
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// downloadFileFromHTTP downloads a file via HTTP/HTTPS and emits progress events.
+func (a *App) downloadFileFromHTTP(downloadURL, destPath string) error {
+	resp, err := a.httpClient.Get(downloadURL)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned HTTP %d", resp.StatusCode)
+	}
+
+	totalSize := resp.ContentLength
+
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	buffer := make([]byte, 1024*1024) // 1MB buffer
+	var copiedSize int64 = 0
+
+	for {
+		n, readErr := resp.Body.Read(buffer)
+		if n > 0 {
+			if _, writeErr := destFile.Write(buffer[:n]); writeErr != nil {
+				return writeErr
+			}
+			copiedSize += int64(n)
+
+			if totalSize > 0 {
+				progress := int((copiedSize * 100) / totalSize)
+				if progress != updateStatus.DownloadProgress {
+					updateStatus.DownloadProgress = progress
+					runtime.EventsEmit(a.ctx, "update:status", updateStatus)
+				}
+			}
+		}
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return readErr
 		}
 	}
 

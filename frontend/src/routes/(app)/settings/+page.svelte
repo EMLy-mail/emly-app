@@ -43,6 +43,7 @@
         DownloadUpdate,
         InstallUpdate,
         SetUpdateCheckerEnabled,
+        SetUpdateSource,
         ReloadConfig,
         SetUpdatePath,
         SetReleaseChannel,
@@ -68,7 +69,13 @@
     let updatePathSelection = $state<UpdatePathOption>("DC-RM2");
     let customUpdatePath = $state("");
     let savingUpdatePath = $state(false);
+    let savingUpdateSource = $state(false);
     let savingChannel = $state(false);
+
+    // Derived update source from config: default to "unc" if not set
+    let updateSourceSelection = $derived<"api" | "unc">(
+        (config?.UpdateSource?.toLowerCase() as "api" | "unc") === "api" ? "api" : "unc"
+    );
     let reloadingConfig = $state(false);
     let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
     
@@ -362,11 +369,27 @@
         }
     }
 
+    async function saveUpdateSource(source: "api" | "unc") {
+        savingUpdateSource = true;
+        try {
+            await SetUpdateSource(source);
+            const freshConfig = await ReloadConfig();
+            config = freshConfig.EMLy;
+            toast.success(source === "api" ? m.settings_update_source_saved_api() : m.settings_update_source_saved_unc());
+        } catch (err) {
+            console.error("Failed to set update source:", err);
+            toast.error(m.settings_update_source_error());
+        } finally {
+            savingUpdateSource = false;
+        }
+    }
+
     // Update System State
     type UpdateStatus = {
         currentVersion: string;
         availableVersion: string;
         updateAvailable: boolean;
+        isCritical: boolean;
         checking: boolean;
         downloading: boolean;
         downloadProgress: number;
@@ -383,6 +406,7 @@
         currentVersion: "Unknown",
         availableVersion: "",
         updateAvailable: false,
+        isCritical: false,
         checking: false,
         downloading: false,
         downloadProgress: 0,
@@ -1065,97 +1089,120 @@
                     {#if form.enableUpdateChecker}
                         <Separator />
 
-                        <!-- Update location selector -->
+                        <!-- Update source selector -->
                         <div
                             class="rounded-lg border border-destructive/30 bg-card p-4 space-y-3"
                         >
                             <div class="space-y-1">
-                                <Label class="text-sm"
-                                    >{m.settings_update_path_label()}</Label
-                                >
+                                <Label class="text-sm">{m.settings_update_source_label()}</Label>
                                 <div class="text-sm text-muted-foreground">
-                                    {m.settings_update_path_description()}
-                                    <code
-                                        class="text-xs bg-muted px-1 py-0.5 rounded"
-                                        >config.ini</code
-                                    >.
+                                    {m.settings_update_source_description()}
                                 </div>
                             </div>
-                            <div class="flex items-end gap-2">
-                                <div class="flex flex-col gap-1.5 flex-1">
-                                    <Label class="text-xs text-muted-foreground"
-                                        >Server</Label
+                            <RadioGroup.Root
+                                value={updateSourceSelection}
+                                onValueChange={(v) => saveUpdateSource(v as "api" | "unc")}
+                                disabled={savingUpdateSource}
+                                class="flex gap-4"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <RadioGroup.Item value="api" id="source-api" />
+                                    <Label for="source-api" class="cursor-pointer font-normal">
+                                        {m.settings_update_source_option_api()}
+                                        {#if config?.BugReportAPIURL}
+                                            <code class="text-xs bg-muted px-1 py-0.5 rounded ml-1">{config.BugReportAPIURL}</code>
+                                        {/if}
+                                    </Label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <RadioGroup.Item value="unc" id="source-unc" />
+                                    <Label for="source-unc" class="cursor-pointer font-normal">{m.settings_update_source_option_unc()}</Label>
+                                </div>
+                            </RadioGroup.Root>
+
+                            {#if updateSourceSelection === "unc"}
+                                <Separator />
+                                <div class="space-y-1">
+                                    <Label class="text-sm"
+                                        >{m.settings_update_path_label()}</Label
                                     >
-                                    <Select.Root
-                                        type="single"
-                                        bind:value={updatePathSelection}
-                                    >
-                                        <Select.Trigger
-                                            class="w-full cursor-pointer hover:cursor-pointer"
+                                    <div class="text-sm text-muted-foreground">
+                                        {m.settings_update_path_description()}
+                                        <code
+                                            class="text-xs bg-muted px-1 py-0.5 rounded"
+                                            >config.ini</code
+                                        >.
+                                    </div>
+                                </div>
+                                <div class="flex items-end gap-2">
+                                    <div class="flex flex-col gap-1.5 flex-1">
+                                        <Label class="text-xs text-muted-foreground"
+                                            >Server</Label
                                         >
-                                            {updatePathLabel}
-                                        </Select.Trigger>
-                                        <Select.Content>
-                                            <Select.Item
-                                                value="DC-RM2"
-                                                label={UPDATE_PATH_LABELS[
-                                                    "DC-RM2"
-                                                ]}
-                                            />
-                                            <Select.Item
-                                                value="DC-CB"
-                                                label={UPDATE_PATH_LABELS[
-                                                    "DC-CB"
-                                                ]}
-                                            />
-                                            <Select.Item
-                                                value="Other"
-                                                label={UPDATE_PATH_LABELS[
-                                                    "Other"
-                                                ]}
-                                            />
-                                        </Select.Content>
-                                    </Select.Root>
-                                </div>
-                                <Button
-                                    variant="destructive"
-                                    class="cursor-pointer hover:cursor-pointer"
-                                    onclick={saveUpdatePath}
-                                    disabled={savingUpdatePath ||
-                                        !customPathValid}
-                                >
-                                    <Save class="size-4 mr-2" />
-                                    {m.settings_update_path_btn()}
-                                </Button>
-                            </div>
-                            {#if updatePathSelection === "Other"}
-                                <div class="flex flex-col gap-1.5">
-                                    <Label class="text-xs text-muted-foreground"
-                                        >{m.settings_update_unc_label()}</Label
+                                        <Select.Root
+                                            type="single"
+                                            bind:value={updatePathSelection}
+                                        >
+                                            <Select.Trigger
+                                                class="w-full cursor-pointer hover:cursor-pointer"
+                                            >
+                                                {updatePathLabel}
+                                            </Select.Trigger>
+                                            <Select.Content>
+                                                <Select.Item
+                                                    value="DC-RM2"
+                                                    label={UPDATE_PATH_LABELS["DC-RM2"]}
+                                                />
+                                                <Select.Item
+                                                    value="DC-CB"
+                                                    label={UPDATE_PATH_LABELS["DC-CB"]}
+                                                />
+                                                <Select.Item
+                                                    value="Other"
+                                                    label={UPDATE_PATH_LABELS["Other"]}
+                                                />
+                                            </Select.Content>
+                                        </Select.Root>
+                                    </div>
+                                    <Button
+                                        variant="destructive"
+                                        class="cursor-pointer hover:cursor-pointer"
+                                        onclick={saveUpdatePath}
+                                        disabled={savingUpdatePath || !customPathValid}
                                     >
-                                    <Input
-                                        bind:value={customUpdatePath}
-                                        placeholder={m.settings_update_unc_placeholder()}
-                                        class="font-mono text-sm {customUpdatePath.trim() &&
-                                        !customPathValid
-                                            ? 'border-destructive focus-visible:ring-destructive'
-                                            : ''}"
-                                    />
-                                    {#if customUpdatePath.trim() && !customPathValid}
-                                        <p class="text-xs text-destructive">
-                                            {m.settings_update_unc_invalid()}
-                                        </p>
-                                    {/if}
+                                        <Save class="size-4 mr-2" />
+                                        {m.settings_update_path_btn()}
+                                    </Button>
                                 </div>
-                            {/if}
-                            {#if config?.UpdatePath}
-                                <div class="text-xs text-muted-foreground">
-                                    {m.settings_update_path_hint()}
-                                    <code
-                                        class="text-xs bg-muted px-1 py-0.5 rounded"
-                                        >{config?.UpdatePath}</code
-                                    >
-                                </div>
+                                {#if updatePathSelection === "Other"}
+                                    <div class="flex flex-col gap-1.5">
+                                        <Label class="text-xs text-muted-foreground"
+                                            >{m.settings_update_unc_label()}</Label
+                                        >
+                                        <Input
+                                            bind:value={customUpdatePath}
+                                            placeholder={m.settings_update_unc_placeholder()}
+                                            class="font-mono text-sm {customUpdatePath.trim() &&
+                                            !customPathValid
+                                                ? 'border-destructive focus-visible:ring-destructive'
+                                                : ''}"
+                                        />
+                                        {#if customUpdatePath.trim() && !customPathValid}
+                                            <p class="text-xs text-destructive">
+                                                {m.settings_update_unc_invalid()}
+                                            </p>
+                                        {/if}
+                                    </div>
+                                {/if}
+                                {#if config?.UpdatePath}
+                                    <div class="text-xs text-muted-foreground">
+                                        {m.settings_update_path_hint()}
+                                        <code
+                                            class="text-xs bg-muted px-1 py-0.5 rounded"
+                                            >{config?.UpdatePath}</code
+                                        >
+                                    </div>
+                                {/if}
                             {/if}
                         </div>
                     {/if}

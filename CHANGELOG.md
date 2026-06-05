@@ -1,4 +1,11 @@
 # Changelog EMLy
+## 1.7.5 (2026-06-05)
+1) Aggiunto supporto al controllo aggiornamenti tramite API HTTP (`/v2/updates/manifest`), con download diretto dell'installer tramite URL completo restituito dal manifest.
+2) Aggiunto campo `UPDATE_SOURCE` in `config.ini` (`api` o `unc`) per scegliere esplicitamente la sorgente degli aggiornamenti.
+3) Aggiunto toggle nella pagina Impostazioni (Danger Zone) per commutare tra sorgente API e percorso di rete UNC, senza dover modificare il file di configurazione manualmente.
+4) Il manifest API supporta ora il campo `isCritical` e le note di rilascio dettagliate (`detailedReleaseNotes`) con descrizione multilingua (IT/EN); le note vengono selezionate automaticamente in base alla lingua configurata.
+5) Aggiornata la Action CI/CD per usare Node 24.
+
 ## 1.7.4 (2026-05-25)
 1) Riorganizzata la pagina Impostazioni raggruppando meglio le opzioni per sezione, con relative traduzioni aggiornate.
 2) Aggiornato il visualizzatore PDF per usare `@embedpdf/svelte-pdf-viewer`, con una nuova implementazione dedicata e una semplificazione della pagina PDF.
