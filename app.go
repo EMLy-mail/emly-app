@@ -140,6 +140,21 @@ func (a *App) startup(ctx context.Context) {
 				return
 			}
 
+			// Heartbeat: if the update source is "api", verify the API is reachable.
+			// On failure, disable API updates for this session and fall back to UNC.
+			if strings.ToLower(strings.TrimSpace(config.EMLy.UpdateSource)) == "api" {
+				pkglogger.Info("heartbeat: checking API update source availability")
+				if !a.CheckBugReportAPI() {
+					pkglogger.Warn("heartbeat: API update source offline, disabling for this session")
+					updateMu.Lock()
+					apiSessionDisabled = true
+					updateMu.Unlock()
+					runtime.EventsEmit(ctx, "update:api-offline", nil)
+				} else {
+					pkglogger.Info("heartbeat: API update source is online")
+				}
+			}
+
 			// Check if auto-update is enabled
 			if config.EMLy.UpdateAutoCheck == "true" && config.EMLy.UpdateCheckEnabled == "true" {
 				pkglogger.Info("performing automatic update check")

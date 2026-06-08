@@ -281,6 +281,7 @@ export namespace main {
 	    currentVersion: string;
 	    availableVersion: string;
 	    updateAvailable: boolean;
+	    isCritical: boolean;
 	    checking: boolean;
 	    downloading: boolean;
 	    downloadProgress: number;
@@ -291,6 +292,8 @@ export namespace main {
 	    severityType?: string;
 	    lastCheckTime: string;
 	    channel?: string;
+	    manifestStableVersion?: string;
+	    manifestBetaVersion?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new UpdateStatus(source);
@@ -301,6 +304,7 @@ export namespace main {
 	        this.currentVersion = source["currentVersion"];
 	        this.availableVersion = source["availableVersion"];
 	        this.updateAvailable = source["updateAvailable"];
+	        this.isCritical = source["isCritical"];
 	        this.checking = source["checking"];
 	        this.downloading = source["downloading"];
 	        this.downloadProgress = source["downloadProgress"];
@@ -311,6 +315,8 @@ export namespace main {
 	        this.severityType = source["severityType"];
 	        this.lastCheckTime = source["lastCheckTime"];
 	        this.channel = source["channel"];
+	        this.manifestStableVersion = source["manifestStableVersion"];
+	        this.manifestBetaVersion = source["manifestBetaVersion"];
 	    }
 	}
 	export class ViewerData {
@@ -442,6 +448,7 @@ export namespace utils {
 	    GUIReleaseChannel: string;
 	    Language: string;
 	    UpdateCheckEnabled: string;
+	    UpdateSource: string;
 	    UpdatePath: string;
 	    UpdateAutoCheck: string;
 	    BugReportAPIURL: string;
@@ -460,6 +467,7 @@ export namespace utils {
 	        this.GUIReleaseChannel = source["GUIReleaseChannel"];
 	        this.Language = source["Language"];
 	        this.UpdateCheckEnabled = source["UpdateCheckEnabled"];
+	        this.UpdateSource = source["UpdateSource"];
 	        this.UpdatePath = source["UpdatePath"];
 	        this.UpdateAutoCheck = source["UpdateAutoCheck"];
 	        this.BugReportAPIURL = source["BugReportAPIURL"];

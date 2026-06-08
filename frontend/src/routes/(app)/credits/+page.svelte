@@ -9,7 +9,7 @@
     Code,
     Package,
     Globe,
-    Github,
+    GitMerge,
     Mail,
     BadgeInfo,
   } from "@lucide/svelte";
@@ -379,7 +379,7 @@
     <Card.Root>
       <Card.Header class="space-y-1">
         <Card.Title class="flex items-center gap-2">
-          <Github class="size-5" />
+          <GitMerge class="size-5" />
           {m.credits_license_title()}
         </Card.Title>
       </Card.Header>

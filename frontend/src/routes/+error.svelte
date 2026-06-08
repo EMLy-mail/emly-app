@@ -54,10 +54,15 @@
 
     <div class="page">
         <div class="error-container">
-            <h1 class="error-code">{page.status}</h1>
-            <p class="error-message">
-                {page.error?.message || m.error_unexpected()}
-            </p>
+            <h1 class="error-code">:/</h1>
+            {#if page.status === 500}
+                <p class="error-title">{m.error_500_title()} :(</p>
+                <p class="error-message">{m.error_500_message()}</p>
+            {:else}
+                <p class="error-message">
+                    {page.error?.message || m.error_unexpected()}
+                </p>
+            {/if}
         </div>
     </div>
 </div>
@@ -145,6 +150,13 @@
         margin: 0 0 8px 0;
         opacity: 0.9;
         line-height: 1;
+    }
+
+    .error-title {
+        font-size: 18px;
+        font-weight: 600;
+        opacity: 0.85;
+        margin: 0 0 8px 0;
     }
 
     .error-message {

@@ -1,18 +1,21 @@
 import type { internal } from "$lib/wailsjs/go/models";
 
-export interface EmailTab {
-    id: string;
-    email: internal.EmailData;
-    filePath?: string;
-}
+export type AppTab =
+    | { id: string; type: "email"; email: internal.EmailData; filePath?: string }
+    | { id: string; type: "pdf";   filename: string; base64Data: string }
+    | { id: string; type: "image"; filename: string; base64Data: string };
+
+// Keep EmailTab exported for any existing consumers
+export type EmailTab = Extract<AppTab, { type: "email" }>;
 
 class MailState {
-    tabs = $state<EmailTab[]>([]);
+    tabs = $state<AppTab[]>([]);
     activeTabId = $state<string | null>(null);
 
     get currentEmail(): internal.EmailData | null {
         if (this.tabs.length === 0 || !this.activeTabId) return null;
-        return this.tabs.find(t => t.id === this.activeTabId)?.email ?? null;
+        const tab = this.tabs.find(t => t.id === this.activeTabId);
+        return tab?.type === "email" ? tab.email : null;
     }
 
     setParams(email: internal.EmailData | null, filePath?: string) {
@@ -21,19 +24,35 @@ class MailState {
             return;
         }
         const id = crypto.randomUUID();
-        this.tabs = [{ id, email, filePath }];
+        this.tabs = [{ id, type: "email", email, filePath }];
         this.activeTabId = id;
     }
 
     addTab(email: internal.EmailData, filePath?: string): string {
         const id = crypto.randomUUID();
-        this.tabs = [...this.tabs, { id, email, filePath }];
+        this.tabs = [...this.tabs, { id, type: "email", email, filePath }];
+        this.activeTabId = id;
+        return id;
+    }
+
+    addPDFTab(filename: string, base64Data: string): string {
+        const id = crypto.randomUUID();
+        this.tabs = [...this.tabs, { id, type: "pdf", filename, base64Data }];
+        this.activeTabId = id;
+        return id;
+    }
+
+    addImageTab(filename: string, base64Data: string): string {
+        const id = crypto.randomUUID();
+        this.tabs = [...this.tabs, { id, type: "image", filename, base64Data }];
         this.activeTabId = id;
         return id;
     }
 
     updateTabEmail(tabId: string, email: internal.EmailData) {
-        this.tabs = this.tabs.map(t => t.id === tabId ? { ...t, email } : t);
+        this.tabs = this.tabs.map(t =>
+            t.id === tabId && t.type === "email" ? { ...t, email } : t
+        );
     }
 
     removeTab(id: string) {

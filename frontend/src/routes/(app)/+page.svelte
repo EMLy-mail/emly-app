@@ -1,11 +1,14 @@
 <script lang="ts">
   import MailViewer from "$lib/components/MailViewer.svelte";
+  import PDFTabContent from "$lib/components/PDFTabContent.svelte";
+  import ImageViewer from "$lib/components/ImageViewer.svelte";
   import { mailState } from "$lib/stores/mail-state.svelte";
+  import type { AppTab } from "$lib/stores/mail-state.svelte";
   import { settingsStore } from "$lib/stores/settings.svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import * as m from "$lib/paraglide/messages.js";
   import { toast } from "svelte-sonner";
-  import { X, Plus } from "@lucide/svelte";
+  import { X, Plus, Mail, FileText, Image } from "@lucide/svelte";
   import { openAndLoadEmail } from "$lib/utils/mail";
   import { onDestroy, onMount } from "svelte";
 
@@ -36,8 +39,12 @@
     }
   });
 
-  function truncateSubject(subject: string | undefined): string {
-    const s = subject || m.mail_subject_no_subject();
+  function getTabLabel(tab: AppTab): string {
+    if (tab.type === "email") {
+      const s = tab.email.subject || m.mail_subject_no_subject();
+      return s.length > 24 ? s.slice(0, 24) + "…" : s;
+    }
+    const s = tab.filename;
     return s.length > 24 ? s.slice(0, 24) + "…" : s;
   }
 
@@ -90,8 +97,16 @@
               onkeydown={(e) =>
                 e.key === "Enter" && mailState.setActiveTab(tab.id)}
             >
-              <span class="tab-label">{truncateSubject(tab.email.subject)}</span
-              >
+              <span class="tab-icon">
+                {#if tab.type === "pdf"}
+                  <FileText size="11" strokeWidth={2} />
+                {:else if tab.type === "image"}
+                  <Image size="11" strokeWidth={2} />
+                {:else}
+                  <Mail size="11" strokeWidth={2} />
+                {/if}
+              </span>
+              <span class="tab-label">{getTabLabel(tab)}</span>
               <button
                 class="tab-close"
                 tabindex={-1}
@@ -122,11 +137,17 @@
               role="tabpanel"
               style:display={tab.id === mailState.activeTabId ? "flex" : "none"}
             >
-              <MailViewer
-                emailData={tab.email}
-                tabId={tab.id}
-                embedded={true}
-              />
+              {#if tab.type === "email"}
+                <MailViewer
+                  emailData={tab.email}
+                  tabId={tab.id}
+                  embedded={true}
+                />
+              {:else if tab.type === "pdf" && tab.id === mailState.activeTabId}
+                <PDFTabContent base64Data={tab.base64Data} filename={tab.filename} />
+              {:else if tab.type === "image" && tab.id === mailState.activeTabId}
+                <ImageViewer base64Data={tab.base64Data} filename={tab.filename} />
+              {/if}
             </div>
           {/each}
         </div>
@@ -225,6 +246,13 @@
     border-color: var(--border);
     color: var(--foreground);
     z-index: 1;
+  }
+
+  .tab-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    opacity: 0.6;
   }
 
   .tab-label {

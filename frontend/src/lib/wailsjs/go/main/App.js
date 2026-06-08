@@ -138,12 +138,8 @@ export function ReadEML(arg1) {
   return window['go']['main']['App']['ReadEML'](arg1);
 }
 
-export function ReadMSG(arg1, arg2) {
-  return window['go']['main']['App']['ReadMSG'](arg1, arg2);
-}
-
-export function ReadMSGOSS(arg1) {
-  return window['go']['main']['App']['ReadMSGOSS'](arg1);
+export function ReadMSG(arg1) {
+  return window['go']['main']['App']['ReadMSG'](arg1);
 }
 
 export function ReadPEC(arg1) {
@@ -188,6 +184,10 @@ export function SetUpdateCheckerEnabled(arg1) {
 
 export function SetUpdatePath(arg1) {
   return window['go']['main']['App']['SetUpdatePath'](arg1);
+}
+
+export function SetUpdateSource(arg1) {
+  return window['go']['main']['App']['SetUpdateSource'](arg1);
 }
 
 export function ShowOpenFileDialog() {

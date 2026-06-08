@@ -10,6 +10,7 @@ import {
   OpenEMLWindow,
 } from '$lib/wailsjs/go/main/App';
 import { settingsStore } from '$lib/stores/settings.svelte';
+import { mailState } from '$lib/stores/mail-state.svelte';
 import { toast } from 'svelte-sonner';
 import * as m from '$lib/paraglide/messages';
 
@@ -28,6 +29,10 @@ export async function openPDFAttachment(
   filename: string
 ): Promise<AttachmentHandlerResult> {
   try {
+    if (settingsStore.settings.openAttachmentsAsTab && settingsStore.settings.enableTabMode) {
+      mailState.addPDFTab(filename, base64Data);
+      return { success: true };
+    }
     if (settingsStore.settings.useBuiltinPDFViewer) {
       await OpenPDFWindow(base64Data, filename);
     } else {
@@ -59,6 +64,10 @@ export async function openImageAttachment(
   filename: string
 ): Promise<AttachmentHandlerResult> {
   try {
+    if (settingsStore.settings.openAttachmentsAsTab && settingsStore.settings.enableTabMode) {
+      mailState.addImageTab(filename, base64Data);
+      return { success: true };
+    }
     if (settingsStore.settings.useBuiltinPreview) {
       await OpenImageWindow(base64Data, filename);
     } else {

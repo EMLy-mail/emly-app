@@ -72,9 +72,7 @@ export function ReadAuto(arg1:string):Promise<internal.EmailData>;
 
 export function ReadEML(arg1:string):Promise<internal.EmailData>;
 
-export function ReadMSG(arg1:string,arg2:boolean):Promise<internal.EmailData>;
-
-export function ReadMSGOSS(arg1:string):Promise<internal.EmailData>;
+export function ReadMSG(arg1:string):Promise<internal.EmailData>;
 
 export function ReadPEC(arg1:string):Promise<internal.EmailData>;
 
@@ -97,6 +95,8 @@ export function SetReleaseChannel(arg1:string):Promise<void>;
 export function SetUpdateCheckerEnabled(arg1:boolean):Promise<void>;
 
 export function SetUpdatePath(arg1:string):Promise<void>;
+
+export function SetUpdateSource(arg1:string):Promise<void>;
 
 export function ShowOpenFileDialog():Promise<string>;
 

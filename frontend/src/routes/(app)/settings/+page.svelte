@@ -109,6 +109,7 @@
         theme: "dark",
         enableLinkClickConfirmation: false,
         enableTabMode: false,
+        openAttachmentsAsTab: false,
         fixEmailTextContrast: true,
     };
 
@@ -155,6 +156,10 @@
             enableTabMode:
                 s.enableTabMode ??
                 defaults.enableTabMode ??
+                false,
+            openAttachmentsAsTab:
+                s.openAttachmentsAsTab ??
+                defaults.openAttachmentsAsTab ??
                 false,
             fixEmailTextContrast:
                 s.fixEmailTextContrast ??
@@ -336,7 +341,9 @@
                 releaseNotes: undefined,
                 lastCheckTime: "",
                 channel,
+                isCritical: false,
             };
+
             toast.success(m.settings_update_channel_saved({ channel }));
         } catch (err) {
             console.error("Failed to set release channel:", err);
@@ -400,6 +407,8 @@
         severityType?: string;
         lastCheckTime: string;
         channel?: string;
+        manifestStableVersion?: string;
+        manifestBetaVersion?: string;
     };
 
     let updateStatus = $state<UpdateStatus>({
@@ -418,6 +427,7 @@
 
     let showSecurityAlert = $state(false);
     let securityAlertShownForVersion = $state("");
+    let apiOffline = $state(false);
 
     function getSeverityConfig(severityType: string | undefined) {
         switch (severityType) {
@@ -503,8 +513,13 @@
             }
         });
 
+        EventsOn("update:api-offline", () => {
+            apiOffline = true;
+        });
+
         return () => {
             EventsOff("update:status");
+            EventsOff("update:api-offline");
         };
     });
 </script>
@@ -683,6 +698,15 @@
                         labelText={m.settings_danger_tab_mode_label()}
                         hintText={m.settings_danger_tab_mode_hint()}
                         infoText={m.settings_danger_tab_mode_info()}
+                    />
+
+                    <Separator />
+
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.openAttachmentsAsTab}
+                        labelText={m.settings_attachments_tab_label()}
+                        hintText={m.settings_attachments_tab_hint()}
+                        infoText={m.settings_attachments_tab_info()}
                     />
                 </div>
             </Card.Content>
@@ -966,6 +990,38 @@
                                 </div>
                             </div>
                         </div>
+                    {/if}
+
+                    <!-- API offline warning -->
+                    {#if apiOffline && updateSourceSelection === "api"}
+                        <div class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+                            <div class="flex items-start gap-2">
+                                <AlertCircle class="size-4 text-amber-600 dark:text-amber-400 mt-0.5" />
+                                <div class="text-sm text-amber-700 dark:text-amber-300">
+                                    API update source is offline. Using UNC path fallback for this session.
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+
+                    <!-- Manifest versions (shown after a check when API source is active) -->
+                    {#if updateSourceSelection === "api" && !apiOffline && (updateStatus.manifestStableVersion || updateStatus.manifestBetaVersion)}
+                        
+                    <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
+                        <div>
+                            <div class="font-medium">
+                                Manifest versions
+                            </div>
+                            <div class="text-sm text-muted-foreground flex flex-col mt-0.5 gap-1">
+                                {#if updateStatus.manifestStableVersion}
+                                    <span>Stable: <code class="bg-muted px-1 py-0.5 rounded">{updateStatus.manifestStableVersion}</code></span>
+                                {/if}
+                                {#if updateStatus.manifestBetaVersion}
+                                    <span>Beta: <code class="bg-muted px-1 py-0.5 rounded">{updateStatus.manifestBetaVersion}</code></span>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
                     {/if}
 
                     <!-- Info about update path -->

@@ -50,20 +50,22 @@ type UpdateManifest struct {
 
 // UpdateStatus represents the current state of the update system
 type UpdateStatus struct {
-	CurrentVersion   string `json:"currentVersion"`
-	AvailableVersion string `json:"availableVersion"`
-	UpdateAvailable  bool   `json:"updateAvailable"`
-	IsCritical       bool   `json:"isCritical"`
-	Checking         bool   `json:"checking"`
-	Downloading      bool   `json:"downloading"`
-	DownloadProgress int    `json:"downloadProgress"`
-	Ready            bool   `json:"ready"`
-	InstallerPath    string `json:"installerPath"`
-	ErrorMessage     string `json:"errorMessage"`
-	ReleaseNotes     string `json:"releaseNotes,omitempty"`
-	SeverityType     string `json:"severityType,omitempty"`
-	LastCheckTime    string `json:"lastCheckTime"`
-	Channel          string `json:"channel,omitempty"`
+	CurrentVersion        string `json:"currentVersion"`
+	AvailableVersion      string `json:"availableVersion"`
+	UpdateAvailable       bool   `json:"updateAvailable"`
+	IsCritical            bool   `json:"isCritical"`
+	Checking              bool   `json:"checking"`
+	Downloading           bool   `json:"downloading"`
+	DownloadProgress      int    `json:"downloadProgress"`
+	Ready                 bool   `json:"ready"`
+	InstallerPath         string `json:"installerPath"`
+	ErrorMessage          string `json:"errorMessage"`
+	ReleaseNotes          string `json:"releaseNotes,omitempty"`
+	SeverityType          string `json:"severityType,omitempty"`
+	LastCheckTime         string `json:"lastCheckTime"`
+	Channel               string `json:"channel,omitempty"`
+	ManifestStableVersion string `json:"manifestStableVersion,omitempty"`
+	ManifestBetaVersion   string `json:"manifestBetaVersion,omitempty"`
 }
 
 // updateMu guards updateStatus, cachedManifest, and cachedManifestIsAPI.
@@ -91,6 +93,11 @@ var updateStatus = UpdateStatus{
 // Always access under updateMu.
 var cachedManifest *UpdateManifest
 var cachedManifestIsAPI bool
+
+// apiSessionDisabled is set to true when the startup heartbeat determines that the
+// API update source is unreachable. While true, CheckForUpdates falls back to the
+// UNC path for this session without modifying config.ini. Access under updateMu.
+var apiSessionDisabled bool
 
 // =============================================================================
 // Update Check Methods
@@ -137,6 +144,13 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 		updateSource = "unc"
 	}
 
+	// If the startup heartbeat found the API unreachable, fall back to UNC for this session.
+	if updateSource == "api" && apiSessionDisabled {
+		pkglogger.Warn("API update source disabled for session (heartbeat failed), falling back to UNC")
+		runtime.EventsEmit(a.ctx, "update:api-offline", nil)
+		updateSource = "unc"
+	}
+
 	var manifest *UpdateManifest
 	var manifestErr error
 	isAPI := false
@@ -174,6 +188,10 @@ func (a *App) CheckForUpdates() (UpdateStatus, error) {
 
 	cachedManifest = manifest
 	cachedManifestIsAPI = isAPI
+
+	// Expose manifest versions so the frontend can display them when API source is active.
+	updateStatus.ManifestStableVersion = manifest.StableVersion
+	updateStatus.ManifestBetaVersion = manifest.BetaVersion
 
 	// Determine target version based on release channel
 	var targetVersion string

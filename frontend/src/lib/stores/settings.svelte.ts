@@ -18,6 +18,7 @@ const defaults: EMLy_GUI_Settings = {
     theme: "dark",
     enableLinkClickConfirmation: false,
     enableTabMode: false,
+    openAttachmentsAsTab: false,
     fixEmailTextContrast: false,
 };
 
