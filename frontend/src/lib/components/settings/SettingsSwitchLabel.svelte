@@ -12,6 +12,7 @@
     infoText = null,
     type = "normal",
     runningInDevMode = false,
+    disabled = false,
   }: {
     featureBool?: boolean;
     labelText: string | null;
@@ -19,6 +20,7 @@
     infoText: string | null;
     type?: SwitchLabelType;
     runningInDevMode?: boolean;
+    disabled?: boolean;
   } = $props();
 </script>
 
@@ -45,6 +47,7 @@
   <div class="space-y-3">
     <div
       class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
+      class:opacity-50={disabled}
     >
       <div>
         <div class="font-medium">
@@ -57,6 +60,7 @@
       <Switch
         bind:checked={featureBool}
         class="cursor-pointer hover:cursor-pointer"
+        {disabled}
       />
     </div>
     <p class="text-xs text-muted-foreground mt-2">

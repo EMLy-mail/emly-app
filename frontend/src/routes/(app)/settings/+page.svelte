@@ -307,6 +307,13 @@
         previousTheme = form.theme;
     });
 
+    // Auto-disable openAttachmentsAsTab when tab mode is turned off
+    $effect(() => {
+        if (!form.enableTabMode) {
+            form.openAttachmentsAsTab = false;
+        }
+    });
+
     async function reloadConfig() {
         reloadingConfig = true;
         try {
@@ -699,15 +706,6 @@
                         hintText={m.settings_danger_tab_mode_hint()}
                         infoText={m.settings_danger_tab_mode_info()}
                     />
-
-                    <Separator />
-
-                    <SettingsSwitchLabel
-                        bind:featureBool={form.openAttachmentsAsTab}
-                        labelText={m.settings_attachments_tab_label()}
-                        hintText={m.settings_attachments_tab_hint()}
-                        infoText={m.settings_attachments_tab_info()}
-                    />
                 </div>
             </Card.Content>
         </Card.Root>
@@ -769,12 +767,24 @@
                 <Separator />
 
                 <div class="space-y-3">
-                    
+
                     <SettingsSwitchLabel
                         bind:featureBool={form.useBuiltinPDFViewer}
                         labelText={m.settings_preview_pdf_builtin_label()}
-                        hintText={m.settings_preview_pdf_builtin_hint()}    
+                        hintText={m.settings_preview_pdf_builtin_hint()}
                         infoText={m.settings_preview_pdf_builtin_info()}
+                    />
+                </div>
+
+                <Separator />
+
+                <div class="space-y-3">
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.openAttachmentsAsTab}
+                        labelText={m.settings_attachments_tab_label()}
+                        hintText={m.settings_attachments_tab_hint()}
+                        infoText={m.settings_attachments_tab_info()}
+                        disabled={!form.enableTabMode}
                     />
                 </div>
             </Card.Content>
@@ -1005,7 +1015,7 @@
                     {/if}
 
                     <!-- Manifest versions (shown after a check when API source is active) -->
-                    {#if updateSourceSelection === "api" && !apiOffline && (updateStatus.manifestStableVersion || updateStatus.manifestBetaVersion)}
+                    {#if updateSourceSelection === "api" && !apiOffline && (updateStatus.manifestStableVersion || updateStatus.manifestBetaVersion) && dangerZoneEnabled}
                         
                     <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
                         <div>
