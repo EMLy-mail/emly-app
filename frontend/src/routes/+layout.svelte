@@ -24,6 +24,9 @@
 
 		if (loadingEl) loadingEl.textContent = t('Caricamento...', 'Loading...');
 
+		// Clear the pre-Svelte crash hint timeout now that JS has loaded
+		clearTimeout((window as any).__emlyLoadTimeout);
+
 		// Fase 1 – Recupero dati macchina
 		if (stepEl) stepEl.textContent = t('Recupero dati...', 'Fetching data...');
 		try {

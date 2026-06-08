@@ -7,7 +7,7 @@
         unsavedChanges,
         sidebarOpen,
         bugReportDialogOpen,
-        dangerZosneEnabled,
+        dangerZoneEnabled,
         runningInDebugMode,
     } from "$lib/stores/app";
     import { onMount } from "svelte";

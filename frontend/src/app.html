@@ -69,6 +69,7 @@
 			<div class="loader-spinner"></div>
 			<div id="loading-text">Loading...</div>
 			<div id="loading-step" style="font-size: 0.75rem; opacity: 0.5; margin-top: 0.25rem;"></div>
+			<div id="loading-timeout-msg" style="display:none; font-size: 0.72rem; opacity: 0.45; margin-top: 1.25rem; max-width: 320px; text-align: center; line-height: 1.5;"></div>
 		</div>
 		<script>
 			(() => {
@@ -78,6 +79,15 @@
 					const text = lang === "it" ? "Inizializzazione..." : "Initialization...";
 					const el = document.getElementById("loading-text");
 					if (el) el.textContent = text;
+
+					const hint = lang === "it"
+						? "Se l'app è ferma su questa schermata da più di qualche secondo, EMLy potrebbe aver subito un crash interno grave. Prova a chiuderla e riaprirla."
+						: "If the app has been stuck on this screen for more than a few seconds, EMLy may have suffered a serious internal crash. Try closing and reopening it.";
+
+					window.__emlyLoadTimeout = setTimeout(() => {
+						const msg = document.getElementById("loading-timeout-msg");
+						if (msg) { msg.textContent = hint; msg.style.display = "block"; }
+					}, 3000);
 				} catch (e) {
 					console.error("Failed to localize loading text", e);
 				}

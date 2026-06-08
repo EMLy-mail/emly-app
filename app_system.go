@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 	"strings"
+	"syscall"
 	"unicode/utf8"
 
 	"golang.org/x/sys/windows/registry"
@@ -145,6 +145,15 @@ func (a *App) ConvertToUTF8(s string) string {
 func (a *App) OpenFolderInExplorer(folderPath string) error {
 	cmd := exec.Command("explorer", folderPath)
 	return cmd.Start()
+}
+
+// GetLogsDir returns the path to the EMLy logs directory.
+func (a *App) GetLogsDir() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("GetLogsDir: %w", err)
+	}
+	return filepath.Join(configDir, "EMLy", "logs"), nil
 }
 
 // OpenURLInBrowser opens the specified URL in the system's default web browser.

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { page } from "$app/state";
     import * as m from "$lib/paraglide/messages.js";
+    import { dev } from "$app/environment";
     import { onMount } from "svelte";
     import {
         WindowMinimise,
@@ -9,6 +10,16 @@
         WindowIsMaximised,
         Quit,
     } from "$lib/wailsjs/runtime/runtime";
+    import { GetLogsDir, OpenFolderInExplorer } from "$lib/wailsjs/go/main/App";
+
+    async function openLogs() {
+        try {
+            const dir = await GetLogsDir();
+            await OpenFolderInExplorer(dir);
+        } catch (e) {
+            console.error("Failed to open logs folder", e);
+        }
+    }
 
     let isMaximized = $state(false);
     let windowFocused = $state(true);
@@ -54,11 +65,23 @@
 
     <div class="page">
         <div class="error-container">
-            <h1 class="error-code">:/</h1>
             {#if page.status === 500}
-                <p class="error-title">{m.error_500_title()} :(</p>
+                {#if dev}
+                    <div class="error-icon crash">{page.status}</div>
+                {/if}
+                <p class="error-title">{m.error_500_title()}</p>
+                <hr class="divider" />
                 <p class="error-message">{m.error_500_message()}</p>
+                <div class="btn-row">
+                    <button class="quit-btn secondary" onclick={openLogs}>
+                        {m.error_open_logs()}
+                    </button>
+                    <button class="quit-btn" onclick={() => Quit()}>
+                        {m.error_close_app()}
+                    </button>
+                </div>
             {:else}
+                <div class="error-icon">{page.status}</div>
                 <p class="error-message">
                     {page.error?.message || m.error_unexpected()}
                 </p>
@@ -140,29 +163,86 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        max-width: 400px;
+        max-width: 420px;
         width: 100%;
     }
 
-    .error-code {
+    .error-icon {
         font-size: 64px;
-        font-weight: 700;
-        margin: 0 0 8px 0;
-        opacity: 0.9;
         line-height: 1;
+        margin: 0 0 12px 0;
+        opacity: 0.85;
+    }
+
+
+    .status-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #e05555;
+        background: rgba(220, 50, 50, 0.15);
+        border: 1px solid rgba(220, 50, 50, 0.3);
+        border-radius: 999px;
+        padding: 2px 10px;
+        margin: 0 0 14px 0;
     }
 
     .error-title {
-        font-size: 18px;
-        font-weight: 600;
-        opacity: 0.85;
-        margin: 0 0 8px 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #e07070;
+        margin: 0 0 12px 0;
+        line-height: 1.3;
+    }
+
+    .divider {
+        width: 48px;
+        border: none;
+        border-top: 1px solid rgba(220, 50, 50, 0.25);
+        margin: 0 0 14px 0;
     }
 
     .error-message {
-        font-size: 16px;
+        font-size: 14px;
         opacity: 0.6;
-        margin: 0 0 32px 0;
-        line-height: 1.5;
+        margin: 0 0 28px 0;
+        line-height: 1.6;
+    }
+
+    .btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .quit-btn {
+        padding: 8px 24px;
+        border-radius: 6px;
+        border: 1px solid rgba(220, 50, 50, 0.4);
+        background: rgba(220, 50, 50, 0.15);
+        color: #e07070;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+    .quit-btn:hover {
+        background: rgba(220, 50, 50, 0.28);
+        border-color: rgba(220, 50, 50, 0.65);
+    }
+
+    .quit-btn.secondary {
+        border-color: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted-foreground, #888);
+    }
+
+    .quit-btn.secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
     }
 </style>
