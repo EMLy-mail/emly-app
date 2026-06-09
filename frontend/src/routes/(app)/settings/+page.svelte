@@ -319,10 +319,10 @@
         try {
             const freshConfig = await ReloadConfig();
             config = freshConfig.EMLy;
-            toast.success("Config ricaricato da config.ini");
+            toast.success(m.settings_reload_config_success());
         } catch (err) {
             console.error("Failed to reload config:", err);
-            toast.error("Errore durante il ricaricamento del config");
+            toast.error(m.settings_reload_config_error());
         } finally {
             reloadingConfig = false;
         }
@@ -366,7 +366,7 @@
                 ? customUpdatePath.trim()
                 : UPDATE_PATH_OPTIONS[updatePathSelection];
         if (!path) {
-            toast.error("Inserire un percorso valido");
+            toast.error(m.settings_update_path_invalid());
             return;
         }
         savingUpdatePath = true;
@@ -374,10 +374,10 @@
             await SetUpdatePath(path);
             const freshConfig = await ReloadConfig();
             config = freshConfig.EMLy;
-            toast.success(`Percorso aggiornamento salvato: ${path}`);
+            toast.success(m.settings_update_path_saved({ path }));
         } catch (err) {
             console.error("Failed to set update path:", err);
-            toast.error("Errore durante il salvataggio del percorso");
+            toast.error(m.settings_update_path_save_error());
         } finally {
             savingUpdatePath = false;
         }

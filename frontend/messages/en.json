@@ -164,6 +164,7 @@
   "credits_amber_desc": "Provided valuable feedback and testing to improve the user experience.",
   "credits_special_thanks_title": "Special Thanks",
   "credits_special_thanks_description": "Contributors who helped make EMLy better in a significant way.",
+  "credits_special_thanks_description_alt": "Special people in my heart who not only helped me make EMLy significantly better, but, most importantly, helped me become a better person. You know who you are. You guys rock!",
   "credits_made_with": "Made with",
   "credits_at_3git": "at 3gIT",
   "credits_tech_title": "Built With",
@@ -180,7 +181,7 @@
   "credits_lib_lucide": "Beautiful & consistent icon set",
   "credits_lib_paraglide": "Type-safe internationalization",
   "credits_lib_sonner": "Toast notifications for Svelte",
-  "credits_lib_pdfjs": "PDF rendering library by Mozilla",
+  "credits_lib_pdfjs": "Generic framework-agnostic PDF rendering library",
   "credits_lib_dompurify": "XSS sanitizer for HTML content",
   "credits_license_title": "License & Source",
   "credits_license_text": "EMLy is proprietary software developed by 3gIT. All rights reserved. The application uses various open source libraries, each governed by their respective licenses.",
@@ -342,5 +343,10 @@
   "settings_update_source_option_unc": "Network Path (UNC)",
   "settings_update_source_saved_api": "Update source: API",
   "settings_update_source_saved_unc": "Update source: Network Path",
-  "settings_update_source_error": "Error saving update source"
+  "settings_update_source_error": "Error saving update source",
+  "settings_reload_config_success": "Config reloaded from config.ini",
+  "settings_reload_config_error": "Error while reloading config",
+  "settings_update_path_invalid": "Please enter a valid path",
+  "settings_update_path_saved": "Update path saved: {path}",
+  "settings_update_path_save_error": "Error while saving update path"
 }

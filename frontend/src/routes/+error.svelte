@@ -67,7 +67,7 @@
         <div class="error-container">
             {#if page.status === 500}
                 {#if dev}
-                    <div class="error-icon crash">{page.status}</div>
+                    <img class="error-img" src="/uhoh-proot.webp" alt="uh oh" />
                 {/if}
                 <p class="error-title">{m.error_500_title()}</p>
                 <hr class="divider" />
@@ -172,6 +172,13 @@
         line-height: 1;
         margin: 0 0 12px 0;
         opacity: 0.85;
+    }
+
+    .error-img {
+        width: 180px;
+        height: auto;
+        margin: 0 0 16px 0;
+        border-radius: 8px;
     }
 
 

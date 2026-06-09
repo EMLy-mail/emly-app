@@ -113,9 +113,9 @@
       url: "https://svelte-sonner.vercel.app",
     },
     {
-      name: "PDF.js",
+      name: "EmbedPDF",
       description: m.credits_lib_pdfjs(),
-      url: "https://mozilla.github.io/pdf.js",
+      url: "https://github.com/embedpdf/embed-pdf-viewer",
     },
     {
       name: "DOMPurify",
@@ -257,9 +257,13 @@
           <Heart class="size-5 text-pink-500" />
           {m.credits_special_thanks_title()}
         </Card.Title>
-        <Card.Description
-          >{m.credits_special_thanks_description()}</Card.Description
-        >
+        <Card.Description>
+          {#if easterEgg}
+            {m.credits_special_thanks_description_alt()}
+          {:else}
+            {m.credits_special_thanks_description()}
+          {/if}
+        </Card.Description>
       </Card.Header>
       <Card.Content>
         <div class="space-y-3">

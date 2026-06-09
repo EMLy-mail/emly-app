@@ -161,6 +161,7 @@
   "credits_amber_desc": "Ha fornito preziosi feedback e test per migliorare l'esperienza utente.",
   "credits_special_thanks_title": "Ringraziamenti Speciali",
   "credits_special_thanks_description": "Contributori che hanno aiutato a migliorare EMLy in modo significativo.",
+  "credits_special_thanks_description_alt": "Persone speciali nel mio cuore che non solo hanno aiutato a migliorare EMLy in modo significativo, ma soprattutto, mi hanno reso una persona migliore. Voi sapete chi siete. Continuate cosi!",
   "credits_made_with": "Fatto con",
   "credits_at_3git": "presso 3gIT",
   "credits_tech_title": "Costruito Con",
@@ -177,7 +178,7 @@
   "credits_lib_lucide": "Set di icone belle e coerenti",
   "credits_lib_paraglide": "Internazionalizzazione type-safe",
   "credits_lib_sonner": "Notifiche toast per Svelte",
-  "credits_lib_pdfjs": "Libreria di rendering PDF di Mozilla",
+  "credits_lib_pdfjs": "Libreria di rendering PDF generica e agnostica al framework",
   "credits_lib_dompurify": "Sanitizzatore XSS per contenuti HTML",
   "credits_license_title": "Licenza e Sorgente",
   "credits_license_text": "EMLy è un software proprietario sviluppato da 3gIT. Tutti i diritti riservati. L'applicazione utilizza varie librerie open source, ciascuna governata dalle rispettive licenze.",
@@ -342,5 +343,10 @@
   "settings_update_source_option_unc": "Percorso di rete (UNC)",
   "settings_update_source_saved_api": "Sorgente aggiornamenti: API",
   "settings_update_source_saved_unc": "Sorgente aggiornamenti: Percorso di rete",
-  "settings_update_source_error": "Errore durante il salvataggio della sorgente aggiornamenti"
+  "settings_update_source_error": "Errore durante il salvataggio della sorgente aggiornamenti",
+  "settings_reload_config_success": "Config ricaricato da config.ini",
+  "settings_reload_config_error": "Errore durante il ricaricamento del config",
+  "settings_update_path_invalid": "Inserire un percorso valido",
+  "settings_update_path_saved": "Percorso aggiornamento salvato: {path}",
+  "settings_update_path_save_error": "Errore durante il salvataggio del percorso"
 }
