@@ -6,6 +6,8 @@
   "loading_timeout_hint": "Se il caricamento è bloccato da molto tempo, EMLy potrebbe aver subito un crash interno grave. Prova a chiudere e riaprire l'applicazione.",
   "error_500_title": "EMLy ha subito un crash :/",
   "error_500_message": "EMLy ha incontrato un errore imprevisto e non è riuscita a recuperare. Si prega di segnalare il problema al proprio TL/RDS.",
+  "error_500_title_alt": "Oh heck!- EMLy hurty hurty TwT",
+  "error_500_message_alt": "\"me angy, me no worky\" - some shifuck JS code",
   "error_close_app": "Chiudi applicazione",
   "error_open_logs": "Apri cartella log",
   "sidebar_overview": "Visualizza Mail",
@@ -348,5 +350,7 @@
   "settings_reload_config_error": "Errore durante il ricaricamento del config",
   "settings_update_path_invalid": "Inserire un percorso valido",
   "settings_update_path_saved": "Percorso aggiornamento salvato: {path}",
-  "settings_update_path_save_error": "Errore durante il salvataggio del percorso"
+  "settings_update_path_save_error": "Errore durante il salvataggio del percorso",
+  "settings_danger_test_crash_label": "Test gestore crash",
+  "settings_danger_test_crash_hint": "Attiva un errore HTTP 500 o 404 per testare la pagina di errore di EMLy."
 }

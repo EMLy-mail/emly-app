@@ -76,9 +76,12 @@
     });
 
     async function toggleMaximize() {
+        console.log("isMaximized: ", isMaximized);
         if (isMaximized) {
+            console.log("Unmaximizing window");
             WindowUnmaximise();
         } else {
+            console.log("Maximizing window");
             WindowMaximise();
         }
         isMaximized = !isMaximized;

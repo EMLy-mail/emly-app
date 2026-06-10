@@ -67,11 +67,26 @@
         <div class="error-container">
             {#if page.status === 500}
                 {#if dev}
-                    <img class="error-img" src="/uhoh-proot.webp" alt="uh oh" />
+                    <img class="error-img" src="https://c.tenor.com/TU01yVsRDYIAAAAC/tenor.gif" alt="uh oh" />
                 {/if}
+                {#if dev}
+                <p class="error-title">{m.error_500_title_alt()}</p>
+                {:else}
                 <p class="error-title">{m.error_500_title()}</p>
+                {/if}
                 <hr class="divider" />
+                {#if dev}
+                    <p class="error-message">{m.error_500_message_alt()}</p>
+                {:else}
                 <p class="error-message">{m.error_500_message()}</p>
+                {/if}
+                
+            {:else}
+                <div class="error-icon">{page.status}</div>
+                <p class="error-message">
+                    {page.error?.message || m.error_unexpected()}
+                </p>
+            {/if}
                 <div class="btn-row">
                     <button class="quit-btn secondary" onclick={openLogs}>
                         {m.error_open_logs()}
@@ -80,12 +95,6 @@
                         {m.error_close_app()}
                     </button>
                 </div>
-            {:else}
-                <div class="error-icon">{page.status}</div>
-                <p class="error-message">
-                    {page.error?.message || m.error_unexpected()}
-                </p>
-            {/if}
         </div>
     </div>
 </div>
@@ -179,6 +188,7 @@
         height: auto;
         margin: 0 0 16px 0;
         border-radius: 8px;
+        opacity: 0.7;
     }
 
 
@@ -199,9 +209,10 @@
     .error-title {
         font-size: 20px;
         font-weight: 700;
-        color: #e07070;
+        color: #a31c1c;
         margin: 0 0 12px 0;
         line-height: 1.3;
+        
     }
 
     .divider {

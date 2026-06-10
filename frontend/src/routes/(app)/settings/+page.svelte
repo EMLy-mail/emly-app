@@ -1350,6 +1350,36 @@
 
                     <Separator />
 
+                    <!-- Test crash handler buttons -->
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+                    >
+                        <div class="space-y-1">
+                            <Label class="text-sm">{m.settings_danger_test_crash_label()}</Label>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_danger_test_crash_hint()}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Button
+                                variant="destructive"
+                                class="cursor-pointer hover:cursor-pointer"
+                                onclick={() => goto("/test-500")}
+                            >
+                                500
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                class="cursor-pointer hover:cursor-pointer"
+                                onclick={() => goto("/emly-test-404-nonexistent")}
+                            >
+                                404
+                            </Button>
+                        </div>
+                    </div>
+
+                    <Separator />
+
                     <div class="text-xs text-muted-foreground">
                         GUI: {config
                             ? `${config.GUISemver} (${config.GUIReleaseChannel})`
