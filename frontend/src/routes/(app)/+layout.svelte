@@ -40,8 +40,6 @@
         WindowUnmaximise,
         WindowIsMaximised,
         Quit,
-        EventsOn,
-        EventsOff,
     } from "$lib/wailsjs/runtime/runtime";
     import { RefreshCcwDot } from "@lucide/svelte";
     import {
@@ -168,31 +166,6 @@
         if(page.url.pathname !== "/") {
             sidebarOpen.set(true);
         }
-    });
-
-    // Listen for automatic update notifications
-    $effect(() => {
-        if (!browser) return;
-
-        EventsOn("update:available", (status: any) => {
-            toast.info(
-                m.layout_update_toast_title({
-                    version: status.availableVersion,
-                }),
-                {
-                    description: m.layout_update_toast_description(),
-                    duration: 10000,
-                    action: {
-                        label: m.layout_update_toast_action(),
-                        onClick: () => goto("/settings"),
-                    },
-                },
-            );
-        });
-
-        return () => {
-            EventsOff("update:available");
-        };
     });
 
     syncMaxState();
@@ -395,7 +368,6 @@
                     <ul class="mt-2 list-disc pl-5 space-y-1">
                         <li>{m.layout_config_missing_item_settings()}</li>
                         <li>{m.layout_config_missing_item_bugreport()}</li>
-                        <li>{m.layout_config_missing_item_updates()}</li>
                         <li>{m.layout_config_missing_item_features()}</li>
                     </ul>
                 </AlertDialog.Description>

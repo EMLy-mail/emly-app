@@ -6,8 +6,6 @@ import {internal} from '../models';
 
 export function CheckBugReportAPI():Promise<boolean>;
 
-export function CheckForUpdates():Promise<main.UpdateStatus>;
-
 export function CheckIsDefaultEMLHandler():Promise<boolean>;
 
 export function ConvertToUTF8(arg1:string):Promise<string>;
@@ -15,8 +13,6 @@ export function ConvertToUTF8(arg1:string):Promise<string>;
 export function CreateBugReportFolder():Promise<main.BugReportResult>;
 
 export function DetectEmailFormat(arg1:string):Promise<string>;
-
-export function DownloadUpdate():Promise<string>;
 
 export function ExportSettings(arg1:string):Promise<string>;
 
@@ -38,17 +34,9 @@ export function GetPDFViewerData():Promise<main.PDFViewerData>;
 
 export function GetStartupFile():Promise<string>;
 
-export function GetUpdateStatus():Promise<main.UpdateStatus>;
-
 export function GetViewerData():Promise<main.ViewerData>;
 
 export function ImportSettings():Promise<string>;
-
-export function InstallUpdate(arg1:boolean):Promise<void>;
-
-export function InstallUpdateSilent():Promise<void>;
-
-export function InstallUpdateSilentFromPath(arg1:string,arg2:string):Promise<void>;
 
 export function IsAppInDebugMode():Promise<boolean>;
 
@@ -101,14 +89,6 @@ export function SaveScreenshotAs():Promise<string>;
 export function SetCurrentMailFilePath(arg1:string):Promise<void>;
 
 export function SetExportAttachmentFolder(arg1:string):Promise<void>;
-
-export function SetReleaseChannel(arg1:string):Promise<void>;
-
-export function SetUpdateCheckerEnabled(arg1:boolean):Promise<void>;
-
-export function SetUpdatePath(arg1:string):Promise<void>;
-
-export function SetUpdateSource(arg1:string):Promise<void>;
 
 export function ShowOpenFileDialog():Promise<string>;
 

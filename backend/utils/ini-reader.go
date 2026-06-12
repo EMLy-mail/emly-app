@@ -20,10 +20,6 @@ type EMLyConfig struct {
 	GUISemver                string `ini:"GUI_SEMVER"`
 	GUIReleaseChannel        string `ini:"GUI_RELEASE_CHANNEL"`
 	Language                 string `ini:"LANGUAGE"`
-	UpdateCheckEnabled       string `ini:"UPDATE_CHECK_ENABLED"`
-	UpdateSource             string `ini:"UPDATE_SOURCE"`
-	UpdatePath               string `ini:"UPDATE_PATH"`
-	UpdateAutoCheck          string `ini:"UPDATE_AUTO_CHECK"`
 	BugReportAPIURL          string `ini:"BUGREPORT_API_URL"`
 	BugReportAPIKey          string `ini:"BUGREPORT_API_KEY"`
 	LogLevel                 string `ini:"LOG_LEVEL"`

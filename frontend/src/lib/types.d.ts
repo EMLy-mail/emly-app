@@ -9,7 +9,6 @@ interface EMLy_GUI_Settings {
     previewFileSupportedTypes?: SupportedFileTypePreview[];
     enableAttachedDebuggerProtection?: boolean;
     useDarkEmailViewer?: boolean;
-    enableUpdateChecker?: boolean;
     musicInspirationEnabled?: boolean;
     reduceMotion?: boolean;
     theme?: "light" | "dark";

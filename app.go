@@ -128,54 +128,6 @@ func (a *App) startup(ctx context.Context) {
 		pkglogger.Info("viewer instance started")
 	} else {
 		pkglogger.Info("EMLy main application started")
-
-		// Automatic update check on startup (if enabled)
-		go func() {
-			// Wait 5 seconds after startup to avoid blocking the UI
-			time.Sleep(5 * time.Second)
-
-			config := a.GetConfig()
-			if config == nil {
-				pkglogger.Warn("failed to load config for auto-update check")
-				return
-			}
-
-			// Heartbeat: if the update source is "api", verify the API is reachable.
-			// On failure, disable API updates for this session and fall back to UNC.
-			if strings.ToLower(strings.TrimSpace(config.EMLy.UpdateSource)) == "api" {
-				pkglogger.Info("heartbeat: checking API update source availability")
-				if !a.CheckBugReportAPI() {
-					pkglogger.Warn("heartbeat: API update source offline, disabling for this session")
-					updateMu.Lock()
-					apiSessionDisabled = true
-					updateMu.Unlock()
-					runtime.EventsEmit(ctx, "update:api-offline", nil)
-				} else {
-					pkglogger.Info("heartbeat: API update source is online")
-				}
-			}
-
-			// Check if auto-update is enabled
-			if config.EMLy.UpdateAutoCheck == "true" && config.EMLy.UpdateCheckEnabled == "true" {
-				pkglogger.Info("performing automatic update check")
-				status, err := a.CheckForUpdates()
-				if err != nil {
-					pkglogger.Error("auto-update check failed", "error", err.Error())
-					return
-				}
-
-				// Emit event if update is available
-				if status.UpdateAvailable {
-					pkglogger.Info("update available",
-						"current", status.CurrentVersion,
-						"available", status.AvailableVersion,
-					)
-					runtime.EventsEmit(ctx, "update:available", status)
-				} else {
-					pkglogger.Info("no updates available")
-				}
-			}
-		}()
 	}
 }
 

@@ -239,11 +239,10 @@ EMLy Configuration
 SDK Version: %s
 GUI Version: %s
 Language: %s
-Update Check Enabled: %s
 `, machineInfo.Hostname, machineInfo.OS, machineInfo.Version, machineInfo.HWID,
 			machineInfo.InternalIP, machineInfo.ADDomain,
 			machineInfo.EMLyConfig.SDKDecoderSemver, machineInfo.EMLyConfig.GUISemver,
-			machineInfo.EMLyConfig.Language, machineInfo.EMLyConfig.UpdateCheckEnabled)
+			machineInfo.EMLyConfig.Language)
 
 		sysInfoPath := filepath.Join(bugReportFolder, "system_info.txt")
 		if err := os.WriteFile(sysInfoPath, []byte(sysInfoContent), 0644); err != nil {

@@ -13,7 +13,6 @@ const defaults: EMLy_GUI_Settings = {
     previewFileSupportedTypes: ["jpg", "jpeg", "png"],
     enableAttachedDebuggerProtection: true,
     useDarkEmailViewer: true,
-    enableUpdateChecker: false,
     reduceMotion: false,
     theme: "dark",
     enableLinkClickConfirmation: false,

@@ -9,24 +9,16 @@
     import {
         ChevronLeft,
         Flame,
-        Download,
-        RefreshCw,
-        CheckCircle2,
-        AlertCircle,
         Sun,
         Moon,
-        Save,
         FolderOpen,
     } from "@lucide/svelte";
-    import { Input } from "$lib/components/ui/input";
     import type { EMLy_GUI_Settings } from "$lib/types";
     import { toast } from "svelte-sonner";
     import { It, Us } from "svelte-flags";
     import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
-    import * as Select from "$lib/components/ui/select/index.js";
     import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
-    import { Badge } from "$lib/components/ui/badge/index.js";
     import { Checkbox } from "$lib/components/ui/checkbox/index.js";
     import {
         dismissUnsavedChangesToast,
@@ -40,19 +32,10 @@
     import { mailState } from "$lib/stores/mail-state.svelte.js";
     import { dev } from "$app/environment";
     import {
-        CheckForUpdates,
-        DownloadUpdate,
-        InstallUpdate,
-        SetUpdateCheckerEnabled,
-        SetUpdateSource,
         ReloadConfig,
-        SetUpdatePath,
-        SetReleaseChannel,
         ShowOpenFolderDialog,
         SetExportAttachmentFolder,
     } from "$lib/wailsjs/go/main/App";
-    import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
-    import { UPDATE_PATH_OPTIONS, type UpdatePathOption, UNC_PATH_RE, LOCAL_PATH_RE, UPDATE_PATH_LABELS } from "$lib/utils/settingsHelper";
     import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
 
     let { data } = $props();
@@ -69,18 +52,7 @@
         normalizeSettings(settingsStore.settings),
     );
     let dangerWarningOpen = $state(false);
-    let updatePathSelection = $state<UpdatePathOption>("DC-RM2");
-    let customUpdatePath = $state("");
-    let savingUpdatePath = $state(false);
-    let savingUpdateSource = $state(false);
-    let savingChannel = $state(false);
-
-    // Derived update source from config: default to "unc" if not set
-    let updateSourceSelection = $derived<"api" | "unc">(
-        (config?.UpdateSource?.toLowerCase() as "api" | "unc") === "api" ? "api" : "unc"
-    );
     let reloadingConfig = $state(false);
-    let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
     let exportFolder = $state("");
     let savingExportFolder = $state(false);
 
@@ -117,12 +89,6 @@
             savingExportFolder = false;
         }
     }
-    
-    const customPathValid = $derived(
-        updatePathSelection !== "Other" ||
-            UNC_PATH_RE.test(customUpdatePath.trim()) ||
-            (runningInDevMode && LOCAL_PATH_RE.test(customUpdatePath.trim())),
-    );
 
     $effect(() => {
         if (!config) {
@@ -143,7 +109,6 @@
         previewFileSupportedTypes: ["jpg", "jpeg", "png"],
         enableAttachedDebuggerProtection: true,
         useDarkEmailViewer: true,
-        enableUpdateChecker: true,
         reduceMotion: false,
         theme: "dark",
         enableLinkClickConfirmation: false,
@@ -181,11 +146,6 @@
                 true,
             useDarkEmailViewer:
                 s.useDarkEmailViewer ?? defaults.useDarkEmailViewer ?? true,
-            enableUpdateChecker: runningInDevMode
-                ? false
-                : (s.enableUpdateChecker ??
-                  defaults.enableUpdateChecker ??
-                  true),
             reduceMotion: s.reduceMotion ?? defaults.reduceMotion ?? false,
             theme: s.theme || defaults.theme || "light",
             enableLinkClickConfirmation:
@@ -309,34 +269,6 @@
         })();
     });
 
-    // Sync update checker setting to backend config.ini
-    let previousUpdateCheckerEnabled = $state<boolean | undefined>(undefined);
-    $effect(() => {
-        (async () => {
-            if (!browser) return;
-            if (previousUpdateCheckerEnabled === undefined) {
-                previousUpdateCheckerEnabled = form.enableUpdateChecker;
-                return;
-            }
-            if (form.enableUpdateChecker !== previousUpdateCheckerEnabled) {
-                try {
-                    await SetUpdateCheckerEnabled(
-                        form.enableUpdateChecker ?? true,
-                    );
-                    LogDebug(
-                        `Update checker ${form.enableUpdateChecker ? "enabled" : "disabled"}`,
-                    );
-                } catch (err) {
-                    console.error(
-                        "Failed to sync update checker setting:",
-                        err,
-                    );
-                }
-                previousUpdateCheckerEnabled = form.enableUpdateChecker;
-            }
-        })();
-    });
-
     // Sync theme with email viewer dark mode
     $effect(() => {
         if (!browser) return;
@@ -367,207 +299,6 @@
         }
     }
 
-    async function saveReleaseChannel(channel: string) {
-        savingChannel = true;
-        try {
-            await SetReleaseChannel(channel);
-            const freshConfig = await ReloadConfig();
-            config = freshConfig.EMLy;
-            // Reset update status: changing channel invalidates the previous check
-            updateStatus = {
-                currentVersion: updateStatus.currentVersion,
-                availableVersion: "",
-                updateAvailable: false,
-                checking: false,
-                downloading: false,
-                downloadProgress: 0,
-                ready: false,
-                installerPath: "",
-                errorMessage: "",
-                releaseNotes: undefined,
-                lastCheckTime: "",
-                channel,
-                isCritical: false,
-            };
-
-            toast.success(m.settings_update_channel_saved({ channel }));
-        } catch (err) {
-            console.error("Failed to set release channel:", err);
-            toast.error(m.settings_update_channel_error());
-        } finally {
-            savingChannel = false;
-        }
-    }
-
-    async function saveUpdatePath() {
-        const path =
-            updatePathSelection === "Other"
-                ? customUpdatePath.trim()
-                : UPDATE_PATH_OPTIONS[updatePathSelection];
-        if (!path) {
-            toast.error(m.settings_update_path_invalid());
-            return;
-        }
-        savingUpdatePath = true;
-        try {
-            await SetUpdatePath(path);
-            const freshConfig = await ReloadConfig();
-            config = freshConfig.EMLy;
-            toast.success(m.settings_update_path_saved({ path }));
-        } catch (err) {
-            console.error("Failed to set update path:", err);
-            toast.error(m.settings_update_path_save_error());
-        } finally {
-            savingUpdatePath = false;
-        }
-    }
-
-    async function saveUpdateSource(source: "api" | "unc") {
-        savingUpdateSource = true;
-        try {
-            await SetUpdateSource(source);
-            const freshConfig = await ReloadConfig();
-            config = freshConfig.EMLy;
-            toast.success(source === "api" ? m.settings_update_source_saved_api() : m.settings_update_source_saved_unc());
-        } catch (err) {
-            console.error("Failed to set update source:", err);
-            toast.error(m.settings_update_source_error());
-        } finally {
-            savingUpdateSource = false;
-        }
-    }
-
-    // Update System State
-    type UpdateStatus = {
-        currentVersion: string;
-        availableVersion: string;
-        updateAvailable: boolean;
-        isCritical: boolean;
-        checking: boolean;
-        downloading: boolean;
-        downloadProgress: number;
-        ready: boolean;
-        installerPath: string;
-        errorMessage: string;
-        releaseNotes?: string;
-        severityType?: string;
-        lastCheckTime: string;
-        channel?: string;
-        manifestStableVersion?: string;
-        manifestBetaVersion?: string;
-    };
-
-    let updateStatus = $state<UpdateStatus>({
-        currentVersion: "Unknown",
-        availableVersion: "",
-        updateAvailable: false,
-        isCritical: false,
-        checking: false,
-        downloading: false,
-        downloadProgress: 0,
-        ready: false,
-        installerPath: "",
-        errorMessage: "",
-        lastCheckTime: "",
-    });
-
-    let showSecurityAlert = $state(false);
-    let securityAlertShownForVersion = $state("");
-    let apiOffline = $state(false);
-
-    function getSeverityConfig(severityType: string | undefined) {
-        switch (severityType) {
-            case "security": return { border: "border-red-500/50",    bg: "bg-red-500/10",    badgeVariant: "destructive" as const, label: m.settings_updates_severity_security() };
-            case "breaking": return { border: "border-amber-500/50",  bg: "bg-amber-500/10",  badgeVariant: "outline" as const,     label: m.settings_updates_severity_breaking() };
-            case "feature":  return { border: "border-emerald-500/50",bg: "bg-emerald-500/10",badgeVariant: "secondary" as const,   label: m.settings_updates_severity_feature() };
-            default:         return { border: "border-blue-500/30",   bg: "bg-blue-500/10",   badgeVariant: "outline" as const,     label: m.settings_updates_severity_patch() };
-        }
-    }
-
-    const severityConfig = $derived(getSeverityConfig(updateStatus.severityType));
-
-    // Sync current version from config
-    $effect(() => {
-        if (config?.GUISemver) {
-            updateStatus.currentVersion = config.GUISemver;
-        }
-    });
-
-    async function checkForUpdates() {
-        try {
-            const status = await CheckForUpdates();
-            console.log("checkForUpdates status", status);
-            updateStatus = status;
-
-            if (status.updateAvailable && status.severityType === "security" && securityAlertShownForVersion !== status.availableVersion) {
-                showSecurityAlert = true;
-                securityAlertShownForVersion = status.availableVersion;
-            }
-
-            if (status.updateAvailable) {
-                toast.success(
-                    m.settings_toast_update_available({
-                        version: status.availableVersion,
-                    }),
-                );
-            } else if (!status.errorMessage) {
-                toast.info(m.settings_toast_latest_version());
-            } else {
-                toast.error(status.errorMessage);
-            }
-        } catch (err) {
-            console.error("Failed to check for updates:", err);
-            updateStatus.checking = false;
-            updateStatus.errorMessage = String(err);
-            if(updateStatus.errorMessage.includes("failed to resolve manifest path: path not accessible: GetFileAttributesEx")) {
-                updateStatus.errorMessage = m.settings_update_path_inaccessible();
-            }
-            updateStatus.lastCheckTime = new Date().toISOString();
-            toast.error(m.settings_toast_check_failed());
-        }
-    }
-
-    async function downloadUpdate() {
-        try {
-            await DownloadUpdate();
-            toast.success(m.settings_toast_download_success());
-        } catch (err) {
-            console.error("Failed to download update:", err);
-            toast.error(m.settings_toast_download_failed());
-        }
-    }
-
-    async function installUpdate() {
-        try {
-            await InstallUpdate(true); // true = quit after launch
-            // App will quit, so no toast needed
-        } catch (err) {
-            console.error("Failed to install update:", err);
-            toast.error(m.settings_toast_install_failed());
-        }
-    }
-
-    // Listen for update status events
-    $effect(() => {
-        if (!browser) return;
-
-        EventsOn("update:status", (status: UpdateStatus) => {
-            updateStatus = status;
-            if (status.updateAvailable && status.severityType === "security" && securityAlertShownForVersion !== status.availableVersion) {
-                showSecurityAlert = true;
-                securityAlertShownForVersion = status.availableVersion;
-            }
-        });
-
-        EventsOn("update:api-offline", () => {
-            apiOffline = true;
-        });
-
-        return () => {
-            EventsOff("update:status");
-            EventsOff("update:api-offline");
-        };
-    });
 </script>
 
 <div
@@ -874,290 +605,6 @@
             </Card.Content>
         </Card.Root>
 
-        <!-- Update Section -->
-        {#if form.enableUpdateChecker}
-            <Card.Root>
-                <Card.Header class="space-y-1">
-                    <Card.Title class="flex items-center gap-2">
-                        {m.settings_updates_title()}
-                        {#if updateStatus.updateAvailable && updateStatus.severityType}
-                            <Badge
-                                variant={severityConfig.badgeVariant}
-                                class={updateStatus.severityType === "breaking" ? "text-amber-600 dark:text-amber-400 border-amber-500/50" : updateStatus.severityType === "feature" ? "text-emerald-600 dark:text-emerald-400" : ""}
-                            >
-                                {severityConfig.label}
-                            </Badge>
-                        {/if}
-                    </Card.Title>
-                    <Card.Description
-                        >{m.settings_updates_description()}</Card.Description
-                    >
-                </Card.Header>
-                <Card.Content class="space-y-4">
-                    <!-- Release Channel -->
-                    <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
-                        <div>
-                            <div class="font-medium">{m.settings_update_channel_label()}</div>
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_update_channel_description()}
-                            </div>
-                        </div>
-                        <RadioGroup.Root
-                            value={config?.GUIReleaseChannel || "stable"}
-                            onValueChange={saveReleaseChannel}
-                            class="flex gap-4"
-                            disabled={savingChannel}
-                        >
-                            <div class="flex items-center gap-2">
-                                <RadioGroup.Item value="stable" id="ch-stable" class="cursor-pointer" />
-                                <Label for="ch-stable" class="cursor-pointer">{m.settings_update_channel_stable()}</Label>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <RadioGroup.Item value="beta" id="ch-beta" class="cursor-pointer" />
-                                <Label for="ch-beta" class="cursor-pointer">{m.settings_update_channel_beta()}</Label>
-                            </div>
-                        </RadioGroup.Root>
-                    </div>
-                    <p class="text-xs text-muted-foreground">
-                        {m.settings_update_channel_recheck_hint()}
-                    </p>
-
-                    <Separator />
-
-                    <!-- Current Version -->
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_updates_current_version()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {updateStatus.currentVersion} ({config?.GUIReleaseChannel ||
-                                    "stable"})
-                            </div>
-                        </div>
-                        {#if updateStatus.updateAvailable}
-                            <div
-                                class="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400"
-                            >
-                                <AlertCircle class="size-4" />
-                                {m.settings_updates_available()}
-                            </div>
-                        {:else if updateStatus.errorMessage && updateStatus.lastCheckTime}
-                            <div
-                                class="flex items-center gap-2 text-sm text-destructive"
-                            >
-                                <AlertCircle class="size-4" />
-                                {m.settings_updates_check_failed()}
-                            </div>
-                        {:else if updateStatus.lastCheckTime}
-                            <div
-                                class="flex items-center gap-2 text-sm text-muted-foreground"
-                            >
-                                <CheckCircle2 class="size-4" />
-                                {m.settings_updates_no_updates()}
-                            </div>
-                        {/if}
-                    </div>
-
-                    <Separator />
-
-                    <!-- Check for Updates -->
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4"
-                    >
-                        <div>
-                            <div class="font-medium">
-                                {m.settings_updates_check_label()}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                {#if updateStatus.lastCheckTime}
-                                    {m.settings_updates_last_checked({
-                                        time: updateStatus.lastCheckTime,
-                                    })}
-                                {:else}
-                                    {m.settings_updates_click_check()}
-                                {/if}
-                            </div>
-                        </div>
-                        <Button
-                            variant="outline"
-                            class="cursor-pointer hover:cursor-pointer"
-                            onclick={checkForUpdates}
-                            disabled={updateStatus.checking ||
-                                updateStatus.downloading}
-                        >
-                            <RefreshCw
-                                class="size-4 mr-2 {updateStatus.checking
-                                    ? 'animate-spin'
-                                    : ''}"
-                            />
-                            {updateStatus.checking
-                                ? m.settings_updates_checking()
-                                : m.settings_updates_check_now()}
-                        </Button>
-                    </div>
-
-                    <!-- Download Update (shown when update available) -->
-                    {#if updateStatus.updateAvailable && !updateStatus.ready}
-                        <Separator />
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-lg border {severityConfig.border} {severityConfig.bg} p-4"
-                        >
-                            <div>
-                                <div class="font-medium">
-                                    {m.settings_updates_version_available({
-                                        version: updateStatus.availableVersion,
-                                    })}
-                                </div>
-                                <div class="text-sm text-muted-foreground">
-                                    {#if updateStatus.downloading}
-                                        {m.settings_updates_downloading({
-                                            progress:
-                                                updateStatus.downloadProgress,
-                                        })}
-                                    {:else}
-                                        {m.settings_updates_click_download()}
-                                    {/if}
-                                </div>
-                                {#if updateStatus.releaseNotes}
-                                    <div
-                                        class="text-xs text-muted-foreground mt-2"
-                                    >
-                                        {updateStatus.releaseNotes}
-                                    </div>
-                                {/if}
-                            </div>
-                            <Button
-                                variant="default"
-                                class="cursor-pointer hover:cursor-pointer"
-                                onclick={downloadUpdate}
-                                disabled={updateStatus.downloading}
-                            >
-                                <Download class="size-4 mr-2" />
-                                {updateStatus.downloading
-                                    ? `${updateStatus.downloadProgress}%`
-                                    : m.settings_updates_download_button()}
-                            </Button>
-                        </div>
-                    {/if}
-
-                    <!-- Install Update (shown when download ready) -->
-                    {#if updateStatus.ready}
-                        <Separator />
-                        <div
-                            class="flex items-center justify-between gap-4 rounded-lg border border-green-500/30 bg-green-500/10 p-4"
-                        >
-                            <div>
-                                <div class="font-medium">
-                                    {m.settings_updates_ready_title()}
-                                </div>
-                                <div class="text-sm text-muted-foreground">
-                                    {m.settings_updates_ready_ref({
-                                        version: updateStatus.availableVersion,
-                                    })}
-                                </div>
-                            </div>
-                            <Button
-                                variant="default"
-                                class="cursor-pointer hover:cursor-pointer bg-green-600 hover:bg-green-700"
-                                onclick={installUpdate}
-                            >
-                                <CheckCircle2 class="size-4 mr-2" />
-                                {m.settings_updates_install_button()}
-                            </Button>
-                        </div>
-                    {/if}
-
-                    <!-- Error Message -->
-                    {#if updateStatus.errorMessage}
-                        <div
-                            class="rounded-lg border border-destructive/50 bg-destructive/10 p-3"
-                        >
-                            <div class="flex items-start gap-2">
-                                <AlertCircle
-                                    class="size-4 text-destructive mt-0.5"
-                                />
-                                <div class="text-sm text-destructive">
-                                    {updateStatus.errorMessage}
-                                </div>
-                            </div>
-                        </div>
-                    {/if}
-
-                    <!-- API offline warning -->
-                    {#if apiOffline && updateSourceSelection === "api"}
-                        <div class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
-                            <div class="flex items-start gap-2">
-                                <AlertCircle class="size-4 text-amber-600 dark:text-amber-400 mt-0.5" />
-                                <div class="text-sm text-amber-700 dark:text-amber-300">
-                                    API update source is offline. Using UNC path fallback for this session.
-                                </div>
-                            </div>
-                        </div>
-                    {/if}
-
-                    <!-- Manifest versions (shown after a check when API source is active) -->
-                    {#if updateSourceSelection === "api" && !apiOffline && (updateStatus.manifestStableVersion || updateStatus.manifestBetaVersion) && dangerZoneEnabled}
-                        
-                    <div class="flex items-center justify-between gap-4 rounded-lg border bg-card p-4">
-                        <div>
-                            <div class="font-medium">
-                                Manifest versions
-                            </div>
-                            <div class="text-sm text-muted-foreground flex flex-col mt-0.5 gap-1">
-                                {#if updateStatus.manifestStableVersion}
-                                    <span>Stable: <code class="bg-muted px-1 py-0.5 rounded">{updateStatus.manifestStableVersion}</code></span>
-                                {/if}
-                                {#if updateStatus.manifestBetaVersion}
-                                    <span>Beta: <code class="bg-muted px-1 py-0.5 rounded">{updateStatus.manifestBetaVersion}</code></span>
-                                {/if}
-                            </div>
-                        </div>
-                    </div>
-                    {/if}
-
-                    <!-- Info about update path -->
-                    <div class="text-xs text-muted-foreground">
-                        <strong>{m.settings_info_label()}</strong>
-                        {m.settings_updates_info_message()}
-                        {#if config?.UpdatePath}
-                            {m.settings_updates_current_path()}
-                            <code class="text-xs bg-muted px-1 py-0.5 rounded"
-                                >{config?.UpdatePath}</code
-                            >
-                        {:else}
-                            <span class="text-amber-600 dark:text-amber-400"
-                                >{m.settings_updates_no_path()}</span
-                            >
-                        {/if}
-                    </div>
-                </Card.Content>
-            </Card.Root>
-
-            <!-- Security update alert dialog -->
-            <AlertDialog.Root bind:open={showSecurityAlert}>
-                <AlertDialog.Content>
-                    <AlertDialog.Header>
-                        <AlertDialog.Title style="color: var(--destructive); opacity: 0.7;">{m.settings_updates_security_alert_title()}</AlertDialog.Title>
-                        <AlertDialog.Description>
-                            {m.settings_updates_security_alert_description({ version: updateStatus.availableVersion })}
-                        </AlertDialog.Description>
-                    </AlertDialog.Header>
-                    <AlertDialog.Footer>
-                        <AlertDialog.Cancel>{m.settings_updates_security_alert_later()}</AlertDialog.Cancel>
-                        <AlertDialog.Action onclick={() => (
-                            downloadUpdate(),
-                            showSecurityAlert = false
-                        )}>
-                            {m.settings_updates_security_alert_update_now()}
-                        </AlertDialog.Action>
-                    </AlertDialog.Footer>
-                </AlertDialog.Content>
-            </AlertDialog.Root>
-        {/if}
-
         {#if $dangerZoneEnabled || dev}
             <Card.Root class="border-destructive/50 bg-destructive/15">
                 <Card.Header class="space-y-1">
@@ -1236,127 +683,6 @@
                         </Button>
                     </div>
 
-                    {#if form.enableUpdateChecker}
-                        <Separator />
-
-                        <!-- Update source selector -->
-                        <div
-                            class="rounded-lg border border-destructive/30 bg-card p-4 space-y-3"
-                        >
-                            <div class="space-y-1">
-                                <Label class="text-sm">{m.settings_update_source_label()}</Label>
-                                <div class="text-sm text-muted-foreground">
-                                    {m.settings_update_source_description()}
-                                </div>
-                            </div>
-                            <RadioGroup.Root
-                                value={updateSourceSelection}
-                                onValueChange={(v) => saveUpdateSource(v as "api" | "unc")}
-                                disabled={savingUpdateSource}
-                                class="flex gap-4"
-                            >
-                                <div class="flex items-center gap-2">
-                                    <RadioGroup.Item value="api" id="source-api" />
-                                    <Label for="source-api" class="cursor-pointer font-normal">
-                                        {m.settings_update_source_option_api()}
-                                        {#if config?.BugReportAPIURL}
-                                            <code class="text-xs bg-muted px-1 py-0.5 rounded ml-1">{config.BugReportAPIURL}</code>
-                                        {/if}
-                                    </Label>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <RadioGroup.Item value="unc" id="source-unc" />
-                                    <Label for="source-unc" class="cursor-pointer font-normal">{m.settings_update_source_option_unc()}</Label>
-                                </div>
-                            </RadioGroup.Root>
-
-                            {#if updateSourceSelection === "unc"}
-                                <Separator />
-                                <div class="space-y-1">
-                                    <Label class="text-sm"
-                                        >{m.settings_update_path_label()}</Label
-                                    >
-                                    <div class="text-sm text-muted-foreground">
-                                        {m.settings_update_path_description()}
-                                        <code
-                                            class="text-xs bg-muted px-1 py-0.5 rounded"
-                                            >config.ini</code
-                                        >.
-                                    </div>
-                                </div>
-                                <div class="flex items-end gap-2">
-                                    <div class="flex flex-col gap-1.5 flex-1">
-                                        <Label class="text-xs text-muted-foreground"
-                                            >Server</Label
-                                        >
-                                        <Select.Root
-                                            type="single"
-                                            bind:value={updatePathSelection}
-                                        >
-                                            <Select.Trigger
-                                                class="w-full cursor-pointer hover:cursor-pointer"
-                                            >
-                                                {updatePathLabel}
-                                            </Select.Trigger>
-                                            <Select.Content>
-                                                <Select.Item
-                                                    value="DC-RM2"
-                                                    label={UPDATE_PATH_LABELS["DC-RM2"]}
-                                                />
-                                                <Select.Item
-                                                    value="DC-CB"
-                                                    label={UPDATE_PATH_LABELS["DC-CB"]}
-                                                />
-                                                <Select.Item
-                                                    value="Other"
-                                                    label={UPDATE_PATH_LABELS["Other"]}
-                                                />
-                                            </Select.Content>
-                                        </Select.Root>
-                                    </div>
-                                    <Button
-                                        variant="destructive"
-                                        class="cursor-pointer hover:cursor-pointer"
-                                        onclick={saveUpdatePath}
-                                        disabled={savingUpdatePath || !customPathValid}
-                                    >
-                                        <Save class="size-4 mr-2" />
-                                        {m.settings_update_path_btn()}
-                                    </Button>
-                                </div>
-                                {#if updatePathSelection === "Other"}
-                                    <div class="flex flex-col gap-1.5">
-                                        <Label class="text-xs text-muted-foreground"
-                                            >{m.settings_update_unc_label()}</Label
-                                        >
-                                        <Input
-                                            bind:value={customUpdatePath}
-                                            placeholder={m.settings_update_unc_placeholder()}
-                                            class="font-mono text-sm {customUpdatePath.trim() &&
-                                            !customPathValid
-                                                ? 'border-destructive focus-visible:ring-destructive'
-                                                : ''}"
-                                        />
-                                        {#if customUpdatePath.trim() && !customPathValid}
-                                            <p class="text-xs text-destructive">
-                                                {m.settings_update_unc_invalid()}
-                                            </p>
-                                        {/if}
-                                    </div>
-                                {/if}
-                                {#if config?.UpdatePath}
-                                    <div class="text-xs text-muted-foreground">
-                                        {m.settings_update_path_hint()}
-                                        <code
-                                            class="text-xs bg-muted px-1 py-0.5 rounded"
-                                            >{config?.UpdatePath}</code
-                                        >
-                                    </div>
-                                {/if}
-                            {/if}
-                        </div>
-                    {/if}
-
                     <Separator />
 
                     <div
@@ -1421,15 +747,6 @@
                         infoText={m.settings_danger_debugger_protection_info()}
                         type="danger"
                         runningInDevMode={!runningInDevMode}
-                    />
-                    <Separator />
-                    
-                    <SettingsSwitchLabel
-                        bind:featureBool={form.enableUpdateChecker}
-                        labelText={m.settings_danger_update_checker_label()}
-                        hintText={m.settings_danger_update_checker_hint()}
-                        infoText={m.settings_danger_update_checker_info()}
-                        type="danger"
                     />
 
                     <Separator />

@@ -277,48 +277,6 @@ export namespace main {
 	        this.uploadError = source["uploadError"];
 	    }
 	}
-	export class UpdateStatus {
-	    currentVersion: string;
-	    availableVersion: string;
-	    updateAvailable: boolean;
-	    isCritical: boolean;
-	    checking: boolean;
-	    downloading: boolean;
-	    downloadProgress: number;
-	    ready: boolean;
-	    installerPath: string;
-	    errorMessage: string;
-	    releaseNotes?: string;
-	    severityType?: string;
-	    lastCheckTime: string;
-	    channel?: string;
-	    manifestStableVersion?: string;
-	    manifestBetaVersion?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateStatus(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.currentVersion = source["currentVersion"];
-	        this.availableVersion = source["availableVersion"];
-	        this.updateAvailable = source["updateAvailable"];
-	        this.isCritical = source["isCritical"];
-	        this.checking = source["checking"];
-	        this.downloading = source["downloading"];
-	        this.downloadProgress = source["downloadProgress"];
-	        this.ready = source["ready"];
-	        this.installerPath = source["installerPath"];
-	        this.errorMessage = source["errorMessage"];
-	        this.releaseNotes = source["releaseNotes"];
-	        this.severityType = source["severityType"];
-	        this.lastCheckTime = source["lastCheckTime"];
-	        this.channel = source["channel"];
-	        this.manifestStableVersion = source["manifestStableVersion"];
-	        this.manifestBetaVersion = source["manifestBetaVersion"];
-	    }
-	}
 	export class ViewerData {
 	    imageData?: ImageViewerData;
 	    pdfData?: PDFViewerData;
@@ -447,10 +405,6 @@ export namespace utils {
 	    GUISemver: string;
 	    GUIReleaseChannel: string;
 	    Language: string;
-	    UpdateCheckEnabled: string;
-	    UpdateSource: string;
-	    UpdatePath: string;
-	    UpdateAutoCheck: string;
 	    BugReportAPIURL: string;
 	    BugReportAPIKey: string;
 	    LogLevel: string;
@@ -467,10 +421,6 @@ export namespace utils {
 	        this.GUISemver = source["GUISemver"];
 	        this.GUIReleaseChannel = source["GUIReleaseChannel"];
 	        this.Language = source["Language"];
-	        this.UpdateCheckEnabled = source["UpdateCheckEnabled"];
-	        this.UpdateSource = source["UpdateSource"];
-	        this.UpdatePath = source["UpdatePath"];
-	        this.UpdateAutoCheck = source["UpdateAutoCheck"];
 	        this.BugReportAPIURL = source["BugReportAPIURL"];
 	        this.BugReportAPIKey = source["BugReportAPIKey"];
 	        this.LogLevel = source["LogLevel"];

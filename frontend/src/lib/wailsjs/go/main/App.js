@@ -6,10 +6,6 @@ export function CheckBugReportAPI() {
   return window['go']['main']['App']['CheckBugReportAPI']();
 }
 
-export function CheckForUpdates() {
-  return window['go']['main']['App']['CheckForUpdates']();
-}
-
 export function CheckIsDefaultEMLHandler() {
   return window['go']['main']['App']['CheckIsDefaultEMLHandler']();
 }
@@ -24,10 +20,6 @@ export function CreateBugReportFolder() {
 
 export function DetectEmailFormat(arg1) {
   return window['go']['main']['App']['DetectEmailFormat'](arg1);
-}
-
-export function DownloadUpdate() {
-  return window['go']['main']['App']['DownloadUpdate']();
 }
 
 export function ExportSettings(arg1) {
@@ -70,28 +62,12 @@ export function GetStartupFile() {
   return window['go']['main']['App']['GetStartupFile']();
 }
 
-export function GetUpdateStatus() {
-  return window['go']['main']['App']['GetUpdateStatus']();
-}
-
 export function GetViewerData() {
   return window['go']['main']['App']['GetViewerData']();
 }
 
 export function ImportSettings() {
   return window['go']['main']['App']['ImportSettings']();
-}
-
-export function InstallUpdate(arg1) {
-  return window['go']['main']['App']['InstallUpdate'](arg1);
-}
-
-export function InstallUpdateSilent() {
-  return window['go']['main']['App']['InstallUpdateSilent']();
-}
-
-export function InstallUpdateSilentFromPath(arg1, arg2) {
-  return window['go']['main']['App']['InstallUpdateSilentFromPath'](arg1, arg2);
 }
 
 export function IsAppInDebugMode() {
@@ -196,22 +172,6 @@ export function SetCurrentMailFilePath(arg1) {
 
 export function SetExportAttachmentFolder(arg1) {
   return window['go']['main']['App']['SetExportAttachmentFolder'](arg1);
-}
-
-export function SetReleaseChannel(arg1) {
-  return window['go']['main']['App']['SetReleaseChannel'](arg1);
-}
-
-export function SetUpdateCheckerEnabled(arg1) {
-  return window['go']['main']['App']['SetUpdateCheckerEnabled'](arg1);
-}
-
-export function SetUpdatePath(arg1) {
-  return window['go']['main']['App']['SetUpdatePath'](arg1);
-}
-
-export function SetUpdateSource(arg1) {
-  return window['go']['main']['App']['SetUpdateSource'](arg1);
 }
 
 export function ShowOpenFileDialog() {
