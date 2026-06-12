@@ -612,22 +612,22 @@
                     class="att-btn image"
                     onclick={() => handleOpenImage(base64, att.filename)}
                   >
-                    <Image size="14" />
+                    <Image size="16" />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {:else if isPdf}
                   <button class="att-btn pdf" onclick={() => handleOpenPDF(base64, att.filename)}>
-                    <FileText size="14" />
+                    <FileText size="16" />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {:else if isEml}
                   <button class="att-btn eml" onclick={() => handleOpenEML(base64, att.filename)}>
-                    <MailOpen size="14" />
+                    <MailOpen size="16" />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {:else if isDoc}
                   <button class="att-btn doc" onclick={() => handleOpenDoc(base64, att.filename)}>
-                    <FileText size="14" />
+                    <FileText size="16" />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {:else}
@@ -638,7 +638,7 @@
                       onReset: () => {},
                     })}
                   >
-                    <File size="14" />
+                    <File size="16" />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {/if}
@@ -893,6 +893,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .att-btn :global(svg) {
+    flex-shrink: 0;
   }
 
   .email-body-wrapper {
