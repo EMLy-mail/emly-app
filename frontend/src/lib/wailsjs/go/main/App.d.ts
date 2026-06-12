@@ -56,6 +56,8 @@ export function IsDebuggerRunning():Promise<boolean>;
 
 export function OpenDefaultAppsSettings():Promise<void>;
 
+export function OpenDocument(arg1:string,arg2:string):Promise<void>;
+
 export function OpenEMLWindow(arg1:string,arg2:string):Promise<void>;
 
 export function OpenExplorerForPath(arg1:string):Promise<void>;

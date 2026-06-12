@@ -41,6 +41,7 @@
     openPDFAttachment,
     openImageAttachment,
     openEMLAttachment,
+    openDocAttachment,
     openAndLoadEmail,
     loadEmailFromPath,
     processEmailBody,
@@ -213,6 +214,10 @@
 
   async function handleOpenEML(base64Data: string, filename: string) {
     await openEMLAttachment(base64Data, filename);
+  }
+
+  async function handleOpenDoc(base64Data: string, filename: string) {
+    await openDocAttachment(base64Data, filename);
   }
 
   function handleWheel(event: WheelEvent) {
@@ -594,6 +599,11 @@
                   att.contentType === CONTENT_TYPES.PDF ||
                   att.filename.toLowerCase().endsWith('.pdf')}
                 {@const isEml = att.filename.toLowerCase().endsWith('.eml')}
+                {@const isDoc =
+                  att.contentType === CONTENT_TYPES.DOCX ||
+                  att.contentType === CONTENT_TYPES.DOC ||
+                  att.filename.toLowerCase().endsWith('.docx') ||
+                  att.filename.toLowerCase().endsWith('.doc')}
                 {@const isPecSig = isPecSignature(att.filename, activeEmail.isPec)}
                 {@const isPecCert = isPecCertificate(att.filename, activeEmail.isPec)}
 
@@ -613,6 +623,11 @@
                 {:else if isEml}
                   <button class="att-btn eml" onclick={() => handleOpenEML(base64, att.filename)}>
                     <MailOpen size="14" />
+                    <span class="att-name">{att.filename}</span>
+                  </button>
+                {:else if isDoc}
+                  <button class="att-btn doc" onclick={() => handleOpenDoc(base64, att.filename)}>
+                    <FileText size="14" />
                     <span class="att-name">{att.filename}</span>
                   </button>
                 {:else}
@@ -864,6 +879,14 @@
   }
   .att-btn.eml:hover {
     color: hsl(49, 80%, 65%);
+  }
+
+  .att-btn.doc {
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.3);
+  }
+  .att-btn.doc:hover {
+    color: #86efac;
   }
 
   .att-name {

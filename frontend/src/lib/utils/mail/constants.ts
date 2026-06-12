@@ -209,6 +209,8 @@ export const EMAIL_EXTENSIONS = {
 export const CONTENT_TYPES = {
   IMAGE: 'image/',
   PDF: 'application/pdf',
+  DOCX: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  DOC: 'application/msword',
 } as const;
 
 /**

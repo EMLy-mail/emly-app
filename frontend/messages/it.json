@@ -87,6 +87,7 @@
   "mail_no_attachments": "Nessun allegato presente",
   "mail_error_pdf": "Impossibile aprire il file PDF.",
   "mail_error_image": "Impossibile aprire il file immagine.",
+  "mail_error_doc": "Impossibile aprire il documento.",
   "settings_toast_language_changed": "Lingua cambiata con successo!",
   "settings_toast_language_change_failed": "Impossibile cambiare lingua.",
   "mail_open_btn_text": "Apri file",

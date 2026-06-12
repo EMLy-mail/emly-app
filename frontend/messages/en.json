@@ -89,6 +89,7 @@
   "mail_no_attachments": "No attachments found",
   "mail_error_pdf": "Failed to open PDF file.",
   "mail_error_image": "Failed to open image file.",
+  "mail_error_doc": "Failed to open document file.",
   "settings_toast_language_changed": "Language changed successfully!",
   "settings_toast_language_change_failed": "Failed to change language.",
   "mail_open_btn_text": "Open File",

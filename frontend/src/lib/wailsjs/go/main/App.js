@@ -106,6 +106,10 @@ export function OpenDefaultAppsSettings() {
   return window['go']['main']['App']['OpenDefaultAppsSettings']();
 }
 
+export function OpenDocument(arg1, arg2) {
+  return window['go']['main']['App']['OpenDocument'](arg1, arg2);
+}
+
 export function OpenEMLWindow(arg1, arg2) {
   return window['go']['main']['App']['OpenEMLWindow'](arg1, arg2);
 }

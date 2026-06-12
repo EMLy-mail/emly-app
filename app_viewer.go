@@ -339,6 +339,40 @@ func (a *App) OpenImage(base64Data string, filename string) error {
 	return nil
 }
 
+// OpenDocument saves a DOC/DOCX (or any Office document) to temp and opens it
+// with the system's default application for that file type.
+//
+// Parameters:
+//   - base64Data: Base64-encoded document data
+//   - filename: The original filename of the document
+//
+// Returns:
+//   - error: Error if saving or launching fails
+func (a *App) OpenDocument(base64Data string, filename string) error {
+	if base64Data == "" {
+		return fmt.Errorf("no data provided")
+	}
+
+	data, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	tempDir := os.TempDir()
+	timestamp := time.Now().Format("20060102_150405")
+	tempFile := filepath.Join(tempDir, fmt.Sprintf("%s_%s", timestamp, filename))
+	if err := os.WriteFile(tempFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	cmd := exec.Command("cmd", "/c", "start", "", tempFile)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	return nil
+}
+
 // =============================================================================
 // Viewer Mode Detection
 // =============================================================================

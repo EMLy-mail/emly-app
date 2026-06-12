@@ -28,6 +28,7 @@ export {
   openPDFAttachment,
   openImageAttachment,
   openEMLAttachment,
+  openDocAttachment,
   type AttachmentHandlerResult,
 } from './attachment-handlers';
 

@@ -8,6 +8,7 @@ import {
   OpenImage,
   OpenImageWindow,
   OpenEMLWindow,
+  OpenDocument,
 } from '$lib/wailsjs/go/main/App';
 import { settingsStore } from '$lib/stores/settings.svelte';
 import { mailState } from '$lib/stores/mail-state.svelte';
@@ -78,6 +79,26 @@ export async function openImageAttachment(
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Failed to open image:', error);
     toast.error(m.mail_error_image());
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Opens a DOC/DOCX attachment with the system's default application
+ * @param base64Data - Base64 encoded document data
+ * @param filename - Name of the document file
+ */
+export async function openDocAttachment(
+  base64Data: string,
+  filename: string
+): Promise<AttachmentHandlerResult> {
+  try {
+    await OpenDocument(base64Data, filename);
+    return { success: true };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Failed to open document:', error);
+    toast.error(m.mail_error_doc());
     return { success: false, error: errorMessage };
   }
 }
