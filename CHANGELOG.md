@@ -1,4 +1,16 @@
 # Changelog EMLy
+
+# 1.7.7 (2026-06-12)
+1) Aggiunto un error handling per errori 404.
+2) Cambiato algortimo di HWID con offuscamento per privacy.
+3) Cambiamenti i colori dei pulsanti degli allegati.
+4) Aggiunta la possibilità di resettare a default la path di download degli allegati.
+5) Aggiunto lo scrolling tra le tab (se in modalità tab).
+6) Fixato un bug dove le icone degli allegati erano più piccole più il nome del file era più lungo.
+7) Fixato lo scrolling nel Bug Report Dialog.
+8) Cambiate le default delle impostazioni per attivare i link cliccabili e la correzione automatica del contrasto testo.
+9) Bump SDK Decoder da Beta a Stable.
+
 ## 1.7.6 (2026-06-12)
 1) Implementato un nuovo sistema di download nativo degli allegati che non passa più dal download manager di Edge/WebView2: i file vengono salvati direttamente su disco dal backend Go. Risolve il bug critico dove, scaricando un allegato non supportato e cliccando "Mantieni" sul prompt di sicurezza di Edge, una parte della WebView rimaneva freezata in modo permanente.
 2) Aggiunta nelle Impostazioni (sezione Anteprima) la possibilità di scegliere la cartella di destinazione per gli allegati scaricati (default: cartella Download). Dopo ogni salvataggio viene mostrata una toast con il pulsante "Apri cartella" che apre Esplora Risorse con il file selezionato.
