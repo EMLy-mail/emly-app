@@ -38,7 +38,7 @@
     <span class="error">{error}</span>
   </div>
 {:else if blobUrl}
-  <PDFViewer src={blobUrl} {filename} height="100%" />
+  <PDFViewer src={blobUrl} {filename} {base64Data} height="100%" />
 {:else}
   <div class="state">
     <div class="spinner"></div>

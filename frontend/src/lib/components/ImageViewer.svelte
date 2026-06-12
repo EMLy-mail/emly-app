@@ -9,6 +9,7 @@
     Download,
   } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages.js";
+  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
 
   interface Props {
     base64Data: string;
@@ -63,12 +64,7 @@
 
   function downloadImage() {
     if (!base64Data || !filename) return;
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${base64Data}`;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    void saveAttachmentNatively(base64Data, filename);
   }
 
   function handleWheel(e: WheelEvent) {

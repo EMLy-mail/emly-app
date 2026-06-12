@@ -18,20 +18,26 @@
   import { useRotate } from "@embedpdf/plugin-rotate/svelte";
   import * as m from "$lib/paraglide/messages.js";
   import { Rotate } from "@embedpdf/plugin-rotate/svelte";
+  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
 
   let readerCSSStylesheet = `height: 100%; width: 100%; overflow: auto; background: var(--muted); ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:var(--muted-foreground)}::-webkit-scrollbar-corner{background:transparent}`;
 
   interface Props {
     documentId: string;
     filename?: string;
-    src: string;
+    base64Data?: string;
   }
 
-  let { documentId, filename = "", src }: Props = $props();
+  let { documentId, filename = "", base64Data = "" }: Props = $props();
 
   const zoom = useZoom(() => documentId);
   const scroll = useScroll(() => documentId);
   const rotate = useRotate(() => documentId);
+
+  function downloadPdf() {
+    if (!base64Data) return;
+    void saveAttachmentNatively(base64Data, filename || "document.pdf");
+  }
 </script>
 
 {#snippet renderPage(page: PageLayout)}
@@ -51,14 +57,14 @@
     <h1 class="title" title={filename}>{filename || m.pdf_viewer_title()}</h1>
 
     <div class="controls">
-      <a
+      <button
         class="btn"
-        href={src}
-        download={filename || "document.pdf"}
+        onclick={downloadPdf}
+        disabled={!base64Data}
         title={m.mail_download_btn_title()}
       >
         <Download size="16" />
-      </a>
+      </button>
       <div class="separator"></div>
       <button
         class="btn"

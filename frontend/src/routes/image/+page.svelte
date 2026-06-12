@@ -13,6 +13,7 @@
   import { toast } from "svelte-sonner";
   import * as m from "$lib/paraglide/messages.js";
   import { logger } from "$lib/utils/logger";
+  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
 
   let { data }: { data: PageData } = $props();
 
@@ -100,12 +101,7 @@
   function downloadImage() {
     if (!imageData || !filename) return;
     logger.info("image_viewer: download initiated", { filename });
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${imageData}`;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    void saveAttachmentNatively(imageData, filename);
   }
 
   function handleWheel(e: WheelEvent) {

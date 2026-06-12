@@ -10,28 +10,6 @@ export type OpenDefaultAttachmentToastHandlers = {
   onReset: () => void;
 };
 
-/**
- * Triggers a browser download for a base64-encoded file.
- * Call this from the parent page, e.g. as the `onSave` closure:
- *   onSave: () => downloadFileFromBase64(myBase64, myFilename)
- */
-export function downloadFileFromBase64(base64Content: string, filename: string): void {
-  const byteCharacters = atob(base64Content);
-  const byteArray = new Uint8Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteArray[i] = byteCharacters.charCodeAt(i);
-  }
-  const blob = new Blob([byteArray]);
-  const url = URL.createObjectURL(blob);
-
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-
-  URL.revokeObjectURL(url);
-}
-
 let currentResetHandler: (() => void) | null = null;
 
 export function cancelCurrentToast() {

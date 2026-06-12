@@ -20,7 +20,8 @@
   import { mailState } from '$lib/stores/mail-state.svelte';
   import type { internal } from '$lib/wailsjs/go/models';
   import * as m from '$lib/paraglide/messages';
-  import { showDefaultAttachmentToast, downloadFileFromBase64, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
+  import { showDefaultAttachmentToast, cancelCurrentToast } from '$lib/utils/open-default-attachment-toast';
+  import { saveAttachmentNatively, saveAllAttachmentsNatively } from '$lib/utils/attachment-download';
   import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
 
   import {
@@ -37,7 +38,6 @@
     CONTENT_TYPES,
     PEC_FILES,
     arrayBufferToBase64,
-    createDataUrl,
     openPDFAttachment,
     openImageAttachment,
     openEMLAttachment,
@@ -82,14 +82,23 @@
   // In non-tab mode, read from mailState.currentEmail (which reads the active tab).
   let activeEmail = $derived<internal.EmailData | null>(
     tabId !== null
-      ? (mailState.tabs.find(t => t.id === tabId)?.email ?? null)
+      ? (() => {
+          const tab = mailState.tabs.find(t => t.id === tabId);
+          return tab?.type === 'email' ? (tab.email ?? null) : null;
+        })()
       : mailState.currentEmail
   );
 
   let activeFilePath = $derived<string | undefined>(
     tabId !== null
-      ? mailState.tabs.find(t => t.id === tabId)?.filePath
-      : mailState.tabs.find(t => t.id === mailState.activeTabId)?.filePath
+      ? (() => {
+          const tab = mailState.tabs.find(t => t.id === tabId);
+          return tab?.type === 'email' ? tab.filePath : undefined;
+        })()
+      : (() => {
+          const tab = mailState.tabs.find(t => t.id === mailState.activeTabId);
+          return tab?.type === 'email' ? tab.filePath : undefined;
+        })()
   );
 
   let iframeUtilHtml = $derived(
@@ -155,19 +164,15 @@
     }
   }
 
-  function onDownloadAttachments() {
+  async function onDownloadAttachments() {
     if (!activeEmail || !activeEmail.attachments) return;
 
-    activeEmail.attachments.forEach((att) => {
-      const base64 = arrayBufferToBase64(att.data);
-      const dataUrl = createDataUrl(att.contentType, base64);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = att.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
+    await saveAllAttachmentsNatively(
+      activeEmail.attachments.map((att) => ({
+        filename: att.filename,
+        base64: arrayBufferToBase64(att.data),
+      }))
+    );
   }
 
   async function onOpenMail() {
@@ -614,7 +619,7 @@
                   <button
                     class="att-btn file"
                     onclick={() => showDefaultAttachmentToast({
-                      onSave: () => downloadFileFromBase64(base64, att.filename),
+                      onSave: () => void saveAttachmentNatively(base64, att.filename),
                       onReset: () => {},
                     })}
                   >

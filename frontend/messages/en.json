@@ -350,5 +350,17 @@
   "settings_reload_config_error": "Error while reloading config",
   "settings_update_path_invalid": "Please enter a valid path",
   "settings_update_path_saved": "Update path saved: {path}",
-  "settings_update_path_save_error": "Error while saving update path"
+  "settings_update_path_save_error": "Error while saving update path",
+  "attachment_saved_toast": "Attachment saved: {filename}",
+  "attachment_saved_multiple_toast": "{count} attachments saved",
+  "attachment_saved_open_folder": "Open folder",
+  "attachment_save_error": "Error while saving the attachment",
+  "settings_export_folder_label": "Attachment download folder",
+  "settings_export_folder_hint": "Choose where attachments downloaded from emails are saved.",
+  "settings_export_folder_info": "Info: Attachments are saved directly by EMLy, without going through the Edge/WebView2 download manager. If no folder is set, the Windows Downloads folder is used.",
+  "settings_export_folder_default": "Windows Downloads folder (default)",
+  "settings_select_folder_button": "Select folder",
+  "settings_export_folder_reset": "Reset to default",
+  "settings_export_folder_saved": "Attachment folder saved",
+  "settings_export_folder_save_error": "Error while saving the folder"
 }

@@ -198,3 +198,33 @@ func (a *App) SetUpdateCheckerEnabled(enabled bool) error {
 
 	return nil
 }
+
+// SetExportAttachmentFolder updates the EXPORT_ATTACHMENT_FOLDER setting in
+// config.ini. An empty string resets to the default (Downloads folder).
+//
+// Parameters:
+//   - folderPath: The folder where downloaded attachments should be saved
+//
+// Returns:
+//   - error: Error if loading or saving config fails
+func (a *App) SetExportAttachmentFolder(folderPath string) error {
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.ExportAttachmentFolder = strings.TrimSpace(folderPath)
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
+}
+
+// GetExportAttachmentFolder returns the EXPORT_ATTACHMENT_FOLDER setting from
+// config.ini, or an empty string if not set (meaning the Downloads folder).
+func (a *App) GetExportAttachmentFolder() string {
+	config := a.GetConfig()
+	if config == nil {
+		return ""
+	}
+	return config.EMLy.ExportAttachmentFolder
+}

@@ -46,8 +46,16 @@ export function GetCurrentMailFilePath() {
   return window['go']['main']['App']['GetCurrentMailFilePath']();
 }
 
+export function GetExportAttachmentFolder() {
+  return window['go']['main']['App']['GetExportAttachmentFolder']();
+}
+
 export function GetImageViewerData() {
   return window['go']['main']['App']['GetImageViewerData']();
+}
+
+export function GetLogsDir() {
+  return window['go']['main']['App']['GetLogsDir']();
 }
 
 export function GetMachineData() {
@@ -100,6 +108,10 @@ export function OpenDefaultAppsSettings() {
 
 export function OpenEMLWindow(arg1, arg2) {
   return window['go']['main']['App']['OpenEMLWindow'](arg1, arg2);
+}
+
+export function OpenExplorerForPath(arg1) {
+  return window['go']['main']['App']['OpenExplorerForPath'](arg1);
 }
 
 export function OpenFolderInExplorer(arg1) {
@@ -158,6 +170,10 @@ export function RestartApp() {
   return window['go']['main']['App']['RestartApp']();
 }
 
+export function SaveAttachment(arg1, arg2) {
+  return window['go']['main']['App']['SaveAttachment'](arg1, arg2);
+}
+
 export function SaveConfig(arg1) {
   return window['go']['main']['App']['SaveConfig'](arg1);
 }
@@ -172,6 +188,10 @@ export function SaveScreenshotAs() {
 
 export function SetCurrentMailFilePath(arg1) {
   return window['go']['main']['App']['SetCurrentMailFilePath'](arg1);
+}
+
+export function SetExportAttachmentFolder(arg1) {
+  return window['go']['main']['App']['SetExportAttachmentFolder'](arg1);
 }
 
 export function SetReleaseChannel(arg1) {
@@ -192,6 +212,10 @@ export function SetUpdateSource(arg1) {
 
 export function ShowOpenFileDialog() {
   return window['go']['main']['App']['ShowOpenFileDialog']();
+}
+
+export function ShowOpenFolderDialog() {
+  return window['go']['main']['App']['ShowOpenFolderDialog']();
 }
 
 export function SubmitBugReport(arg1, arg2) {

@@ -16,6 +16,7 @@
         Sun,
         Moon,
         Save,
+        FolderOpen,
     } from "@lucide/svelte";
     import { Input } from "$lib/components/ui/input";
     import type { EMLy_GUI_Settings } from "$lib/types";
@@ -47,6 +48,8 @@
         ReloadConfig,
         SetUpdatePath,
         SetReleaseChannel,
+        ShowOpenFolderDialog,
+        SetExportAttachmentFolder,
     } from "$lib/wailsjs/go/main/App";
     import { EventsOn, EventsOff } from "$lib/wailsjs/runtime/runtime";
     import { UPDATE_PATH_OPTIONS, type UpdatePathOption, UNC_PATH_RE, LOCAL_PATH_RE, UPDATE_PATH_LABELS } from "$lib/utils/settingsHelper";
@@ -78,6 +81,42 @@
     );
     let reloadingConfig = $state(false);
     let updatePathLabel = $derived(UPDATE_PATH_LABELS[updatePathSelection]);
+    let exportFolder = $state("");
+    let savingExportFolder = $state(false);
+
+    $effect(() => {
+        exportFolder = config?.ExportAttachmentFolder ?? "";
+    });
+
+    async function selectExportFolder() {
+        savingExportFolder = true;
+        try {
+            const folder = await ShowOpenFolderDialog();
+            if (!folder) return;
+            await SetExportAttachmentFolder(folder);
+            exportFolder = folder;
+            toast.success(m.settings_export_folder_saved());
+        } catch (e) {
+            console.error("Failed to set export folder", e);
+            toast.error(m.settings_export_folder_save_error());
+        } finally {
+            savingExportFolder = false;
+        }
+    }
+
+    async function resetExportFolder() {
+        savingExportFolder = true;
+        try {
+            await SetExportAttachmentFolder("");
+            exportFolder = "";
+            toast.success(m.settings_export_folder_saved());
+        } catch (e) {
+            console.error("Failed to reset export folder", e);
+            toast.error(m.settings_export_folder_save_error());
+        } finally {
+            savingExportFolder = false;
+        }
+    }
     
     const customPathValid = $derived(
         updatePathSelection !== "Other" ||
@@ -786,6 +825,51 @@
                         infoText={m.settings_attachments_tab_info()}
                         disabled={!form.enableTabMode}
                     />
+                </div>
+
+                <Separator />
+
+                <div class="space-y-3">
+                    <div class="space-y-1">
+                        <Label class="text-sm"
+                            >{m.settings_export_folder_label()}</Label
+                        >
+                        <p class="text-sm text-muted-foreground">
+                            {m.settings_export_folder_hint()}
+                        </p>
+                    </div>
+                    <div class="text-xs text-muted-foreground">
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded"
+                            >{exportFolder ||
+                                m.settings_export_folder_default()}</code
+                        >
+                    </div>
+                    <div class="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="cursor-pointer hover:cursor-pointer"
+                            onclick={selectExportFolder}
+                            disabled={savingExportFolder}
+                        >
+                            <FolderOpen class="size-4 mr-2" />
+                            {m.settings_select_folder_button()}
+                        </Button>
+                        {#if exportFolder}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                class="cursor-pointer hover:cursor-pointer"
+                                onclick={resetExportFolder}
+                                disabled={savingExportFolder}
+                            >
+                                {m.settings_export_folder_reset()}
+                            </Button>
+                        {/if}
+                    </div>
+                    <div class="text-xs text-muted-foreground">
+                        {m.settings_export_folder_info()}
+                    </div>
                 </div>
             </Card.Content>
         </Card.Root>

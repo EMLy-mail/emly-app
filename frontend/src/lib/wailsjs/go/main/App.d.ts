@@ -26,7 +26,11 @@ export function GetConfig():Promise<utils.Config>;
 
 export function GetCurrentMailFilePath():Promise<string>;
 
+export function GetExportAttachmentFolder():Promise<string>;
+
 export function GetImageViewerData():Promise<main.ImageViewerData>;
+
+export function GetLogsDir():Promise<string>;
 
 export function GetMachineData():Promise<utils.MachineInfo>;
 
@@ -53,6 +57,8 @@ export function IsDebuggerRunning():Promise<boolean>;
 export function OpenDefaultAppsSettings():Promise<void>;
 
 export function OpenEMLWindow(arg1:string,arg2:string):Promise<void>;
+
+export function OpenExplorerForPath(arg1:string):Promise<void>;
 
 export function OpenFolderInExplorer(arg1:string):Promise<void>;
 
@@ -82,6 +88,8 @@ export function ReloadEMLyConfig():Promise<utils.EMLyConfig>;
 
 export function RestartApp():Promise<void>;
 
+export function SaveAttachment(arg1:string,arg2:string):Promise<string>;
+
 export function SaveConfig(arg1:utils.Config):Promise<void>;
 
 export function SaveScreenshot():Promise<string>;
@@ -89,6 +97,8 @@ export function SaveScreenshot():Promise<string>;
 export function SaveScreenshotAs():Promise<string>;
 
 export function SetCurrentMailFilePath(arg1:string):Promise<void>;
+
+export function SetExportAttachmentFolder(arg1:string):Promise<void>;
 
 export function SetReleaseChannel(arg1:string):Promise<void>;
 
@@ -99,6 +109,8 @@ export function SetUpdatePath(arg1:string):Promise<void>;
 export function SetUpdateSource(arg1:string):Promise<void>;
 
 export function ShowOpenFileDialog():Promise<string>;
+
+export function ShowOpenFolderDialog():Promise<string>;
 
 export function SubmitBugReport(arg1:main.BugReportInput,arg2:string):Promise<main.SubmitBugReportResult>;
 

@@ -27,6 +27,7 @@ type EMLyConfig struct {
 	BugReportAPIURL          string `ini:"BUGREPORT_API_URL"`
 	BugReportAPIKey          string `ini:"BUGREPORT_API_KEY"`
 	LogLevel                 string `ini:"LOG_LEVEL"`
+	ExportAttachmentFolder   string `ini:"EXPORT_ATTACHMENT_FOLDER"`
 }
 
 // LoadConfig reads the config.ini file at the given path and returns a Config struct

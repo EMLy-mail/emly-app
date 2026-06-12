@@ -454,6 +454,7 @@ export namespace utils {
 	    BugReportAPIURL: string;
 	    BugReportAPIKey: string;
 	    LogLevel: string;
+	    ExportAttachmentFolder: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new EMLyConfig(source);
@@ -473,6 +474,7 @@ export namespace utils {
 	        this.BugReportAPIURL = source["BugReportAPIURL"];
 	        this.BugReportAPIKey = source["BugReportAPIKey"];
 	        this.LogLevel = source["LogLevel"];
+	        this.ExportAttachmentFolder = source["ExportAttachmentFolder"];
 	    }
 	}
 	export class Config {

@@ -352,5 +352,17 @@
   "settings_update_path_saved": "Percorso aggiornamento salvato: {path}",
   "settings_update_path_save_error": "Errore durante il salvataggio del percorso",
   "settings_danger_test_crash_label": "Test gestore crash",
-  "settings_danger_test_crash_hint": "Attiva un errore HTTP 500 o 404 per testare la pagina di errore di EMLy."
+  "settings_danger_test_crash_hint": "Attiva un errore HTTP 500 o 404 per testare la pagina di errore di EMLy.",
+  "attachment_saved_toast": "Allegato salvato: {filename}",
+  "attachment_saved_multiple_toast": "{count} allegati salvati",
+  "attachment_saved_open_folder": "Apri cartella",
+  "attachment_save_error": "Errore durante il salvataggio dell'allegato",
+  "settings_export_folder_label": "Cartella download allegati",
+  "settings_export_folder_hint": "Scegli dove salvare gli allegati scaricati dalle email.",
+  "settings_export_folder_info": "Info: Gli allegati vengono salvati direttamente da EMLy, senza passare dal download di Edge/WebView2. Se non imposti una cartella, viene usata la cartella Download di Windows.",
+  "settings_export_folder_default": "Cartella Download di Windows (predefinita)",
+  "settings_select_folder_button": "Seleziona cartella",
+  "settings_export_folder_reset": "Ripristina predefinita",
+  "settings_export_folder_saved": "Cartella allegati salvata",
+  "settings_export_folder_save_error": "Errore durante il salvataggio della cartella"
 }

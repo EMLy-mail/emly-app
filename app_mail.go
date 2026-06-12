@@ -114,6 +114,53 @@ func (a *App) ShowOpenFileDialog() (string, error) {
 	return internal.ShowFileDialog(a.ctx)
 }
 
+// ShowOpenFolderDialog displays the system directory picker dialog.
+// Returns the selected folder path, or an empty string if cancelled.
+func (a *App) ShowOpenFolderDialog() (string, error) {
+	return internal.ShowFolderDialog(a.ctx)
+}
+
+// SaveAttachment saves a base64-encoded attachment to disk without going
+// through the WebView2 download manager. The target folder is the
+// EXPORT_ATTACHMENT_FOLDER from config.ini if set, otherwise the user's
+// Downloads folder. Existing files are never overwritten.
+//
+// Parameters:
+//   - filename: The name to save the file as
+//   - base64Data: The base64-encoded attachment data
+//
+// Returns:
+//   - string: The full path where the file was saved
+//   - error: Any decoding or file system errors
+func (a *App) SaveAttachment(filename string, base64Data string) (savedPath string, err error) {
+	start := time.Now()
+	defer func() { canonicalLog("SaveAttachment", start, err) }()
+
+	savedPath, err = internal.SaveAttachmentToFolder(filename, base64Data, a.GetExportAttachmentFolder())
+	if err != nil {
+		return "", err
+	}
+
+	pkglogger.Debug("attachment saved",
+		"function", "SaveAttachment",
+		"file", filepath.Base(savedPath),
+		"folder", filepath.Dir(savedPath),
+	)
+	return savedPath, nil
+}
+
+// OpenExplorerForPath opens Windows Explorer showing the specified file
+// (selected) or folder.
+//
+// Parameters:
+//   - path: The full path to the file or folder to show in Explorer
+//
+// Returns:
+//   - error: Any execution errors
+func (a *App) OpenExplorerForPath(path string) error {
+	return internal.OpenFileExplorer(path)
+}
+
 // =============================================================================
 // Debug Logging Helpers
 // =============================================================================

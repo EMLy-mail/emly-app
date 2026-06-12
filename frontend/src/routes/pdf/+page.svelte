@@ -11,6 +11,7 @@
 
   let filename = $state("");
   let blobUrl = $state<string | null>(null);
+  let base64Data = $state("");
   let error = $state("");
 
   onMount(() => {
@@ -24,6 +25,7 @@
           bytes[i] = binaryString.charCodeAt(i);
         }
         filename = result.filename;
+        base64Data = result.data;
         logger.info("pdf_viewer: data received", { filename, sizeBytes: len });
         document.title = filename + " - EMLy PDF Viewer";
         sidebarOpen.set(false);
@@ -51,7 +53,7 @@
     <div>{error}</div>
   </div>
 {:else if blobUrl}
-  <PDFViewer src={blobUrl} {filename} />
+  <PDFViewer src={blobUrl} {filename} {base64Data} />
 {:else}
   <div class="state-page">
     <div class="spinner"></div>

@@ -15,9 +15,10 @@
     src: string;
     filename?: string;
     height?: string;
+    base64Data?: string;
   }
 
-  let { src, filename = '', height = '100%' }: Props = $props();
+  let { src, filename = '', height = '100%', base64Data = '' }: Props = $props();
 
   const pdfEngine = usePdfiumEngine();
 
@@ -45,7 +46,7 @@
     <EmbedPDF engine={pdfEngine.engine} {plugins}>
       {#snippet children(ctx)}
         {#if ctx.activeDocumentId}
-          <PDFViewerContent documentId={ctx.activeDocumentId} {filename} {src} />
+          <PDFViewerContent documentId={ctx.activeDocumentId} {filename} {base64Data} />
         {:else}
           <div class="loading-overlay">
             <div class="spinner"></div>
