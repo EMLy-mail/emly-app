@@ -1,4 +1,16 @@
 # Changelog EMLy
+## 1.7.6 (2026-06-12)
+1) Implementato un nuovo sistema di download nativo degli allegati che non passa più dal download manager di Edge/WebView2: i file vengono salvati direttamente su disco dal backend Go. Risolve il bug critico dove, scaricando un allegato non supportato e cliccando "Mantieni" sul prompt di sicurezza di Edge, una parte della WebView rimaneva freezata in modo permanente.
+2) Aggiunta nelle Impostazioni (sezione Anteprima) la possibilità di scegliere la cartella di destinazione per gli allegati scaricati (default: cartella Download). Dopo ogni salvataggio viene mostrata una toast con il pulsante "Apri cartella" che apre Esplora Risorse con il file selezionato.
+3) Fixato un bug critico dove gli allegati di email Yahoo (e mailer simili) venivano salvati con il Content-Id come nome file (es. `c181c7cd-...@yahoo.com` invece di `Dichiarazione.docx`), con conseguente estensione errata. Il parser MIME ora dà priorità al filename dichiarato in `Content-Disposition`/`Content-Type` rispetto all'header `Content-Id`, e i file embedded senza nome ricevono sempre l'estensione corretta derivata dal MIME type. Aggiunti test automatici per la classificazione degli allegati.
+4) Aggiunto il supporto agli allegati .DOC e .DOCX: ora vengono aperti direttamente con l'applicazione predefinita di Windows (Word, LibreOffice, ecc.) invece di mostrare la toast per allegati non supportati.
+5) Rimosso completamente il sistema di aggiornamento integrato (controllo manifest, download e installazione), ora sostituito da un updater esterno dedicato. Rimosse le relative opzioni dalle Impostazioni (canale di rilascio, sorgente aggiornamenti, percorso UNC) e le chiavi `UPDATE_*` da config.ini.
+6) Aggiunta la possibilità di aprire gli allegati PDF e immagine come schede (tab) invece che in finestre separate, attivabile dalle Impostazioni quando la modalità tab è abilitata. Aggiunto un menu contestuale sulle schede.
+7) L'opzione "Apri allegati come tab" viene ora disabilitata automaticamente quando la modalità tab viene disattivata.
+8) Migliorata la pagina di errore: nuova immagine di errore personalizzata, messaggi aggiuntivi, e suggerimento mostrato quando il caricamento rimane bloccato troppo a lungo (possibile crash interno).
+9) Aggiunti pulsanti di test del crash handler (errori 500/404) nella Danger Zone delle Impostazioni.
+10) Aggiunti nuovi ringraziamenti nella pagina Credits.
+
 ## 1.7.5 (2026-06-05)
 1) Aggiunto supporto al controllo aggiornamenti tramite API HTTP (`/v2/updates/manifest`), con download diretto dell'installer tramite URL completo restituito dal manifest.
 2) Aggiunto campo `UPDATE_SOURCE` in `config.ini` (`api` o `unc`) per scegliere esplicitamente la sorgente degli aggiornamenti.
