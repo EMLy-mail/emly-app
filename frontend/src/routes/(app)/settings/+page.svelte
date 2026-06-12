@@ -220,6 +220,12 @@
                 return;
             }
         }
+        try {
+            await SetExportAttachmentFolder("");
+            exportFolder = "";
+        } catch (e) {
+            console.error("Failed to reset export folder", e);
+        }
         await setLanguage(form.selectedLanguage);
         mailState.clear();
         toast.info(m.settings_toast_reset_success());
@@ -560,43 +566,36 @@
 
                 <Separator />
 
-                <div class="space-y-3">
+                <div class="rounded-lg border bg-card p-4 space-y-3">
                     <div class="space-y-1">
                         <Label class="text-sm"
                             >{m.settings_export_folder_label()}</Label
                         >
-                        <p class="text-sm text-muted-foreground">
+                        <div class="text-sm text-muted-foreground">
                             {m.settings_export_folder_hint()}
-                        </p>
+                        </div>
                     </div>
-                    <div class="text-xs text-muted-foreground">
-                        <code class="text-xs bg-muted px-1 py-0.5 rounded"
-                            >{exportFolder ||
-                                m.settings_export_folder_default()}</code
-                        >
-                    </div>
-                    <div class="flex gap-2">
+                    <div class="flex items-end gap-2">
+                        <div class="flex flex-col gap-1.5 flex-1 min-w-0">
+                            <Label class="text-xs text-muted-foreground"
+                                >{m.settings_export_folder_label()}</Label
+                            >
+                            <div
+                                class="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 py-1 text-sm shadow-sm font-mono truncate text-muted-foreground"
+                                title={exportFolder || "%USERPROFILE%\\Downloads"}
+                            >
+                                {exportFolder || "%USERPROFILE%\\Downloads"}
+                            </div>
+                        </div>
                         <Button
                             variant="outline"
-                            size="sm"
-                            class="cursor-pointer hover:cursor-pointer"
+                            class="cursor-pointer hover:cursor-pointer shrink-0 h-9"
                             onclick={selectExportFolder}
                             disabled={savingExportFolder}
                         >
                             <FolderOpen class="size-4 mr-2" />
                             {m.settings_select_folder_button()}
                         </Button>
-                        {#if exportFolder}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                class="cursor-pointer hover:cursor-pointer"
-                                onclick={resetExportFolder}
-                                disabled={savingExportFolder}
-                            >
-                                {m.settings_export_folder_reset()}
-                            </Button>
-                        {/if}
                     </div>
                     <div class="text-xs text-muted-foreground">
                         {m.settings_export_folder_info()}
