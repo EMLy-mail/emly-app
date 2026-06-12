@@ -8,13 +8,43 @@
   import { sidebarOpen } from "$lib/stores/app";
   import * as m from "$lib/paraglide/messages.js";
   import { toast } from "svelte-sonner";
-  import { X, Plus, Mail, FileText, Image } from "@lucide/svelte";
+  import { X, Plus, Mail, FileText, Image, ChevronLeft, ChevronRight, Loader2 } from "@lucide/svelte";
   import { openAndLoadEmail } from "$lib/utils/mail";
   import { onDestroy, onMount } from "svelte";
 
   let { data } = $props();
 
   let isAddingTab = $state(false);
+
+  let tabStripEl: HTMLDivElement | null = $state(null);
+  let canScrollLeft = $state(false);
+  let canScrollRight = $state(false);
+  let hasOverflow = $state(false);
+
+  function updateScrollState() {
+    if (!tabStripEl) return;
+    hasOverflow = tabStripEl.scrollWidth > tabStripEl.clientWidth + 1;
+    canScrollLeft = tabStripEl.scrollLeft > 0;
+    canScrollRight =
+      tabStripEl.scrollLeft < tabStripEl.scrollWidth - tabStripEl.clientWidth - 1;
+  }
+
+  function scrollTabs(direction: number) {
+    if (!tabStripEl) return;
+    tabStripEl.scrollBy({ left: direction * 160, behavior: "smooth" });
+  }
+
+  function handleTabStripWheel(e: WheelEvent) {
+    if (!tabStripEl) return;
+    e.preventDefault();
+    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    tabStripEl.scrollBy({ left: delta, behavior: "auto" });
+  }
+
+  $effect(() => {
+    mailState.tabs.length;
+    setTimeout(updateScrollState, 0);
+  });
 
   onMount(() => {
     if (data.email) {
@@ -82,51 +112,92 @@
   >
     {#if showTabs}
       <!-- Windows 11 Explorer-style tabbed panel -->
-      <div class="tabbed-panel">
+      <div class="tabbed-panel" style="position: relative;">
+        {#if isAddingTab}
+          <div class="loading-overlay">
+            <Loader2 class="spinner" size="40" />
+          </div>
+        {/if}
         <!-- Tab strip -->
-        <div class="tab-strip" role="tablist">
-          {#each mailState.tabs as tab (tab.id)}
-            {@const isActive = tab.id === mailState.activeTabId}
-            <!-- svelte-ignore a11y_interactive_supports_focus -->
-            <div
-              class="tab-item"
-              class:active={isActive}
-              role="tab"
-              aria-selected={isActive}
-              onclick={() => mailState.setActiveTab(tab.id)}
-              onkeydown={(e) =>
-                e.key === "Enter" && mailState.setActiveTab(tab.id)}
+        <div class="tab-strip-wrapper">
+          <!-- Left scroll arrow -->
+          {#if hasOverflow}
+            <button
+              class="tab-scroll-btn"
+              class:inactive={!canScrollLeft}
+              onclick={() => scrollTabs(-1)}
+              aria-label="Scorri tab a sinistra"
+              tabindex={-1}
             >
-              <span class="tab-icon">
-                {#if tab.type === "pdf"}
-                  <FileText size="11" strokeWidth={2} />
-                {:else if tab.type === "image"}
-                  <Image size="11" strokeWidth={2} />
-                {:else}
-                  <Mail size="11" strokeWidth={2} />
-                {/if}
-              </span>
-              <span class="tab-label">{getTabLabel(tab)}</span>
-              <button
-                class="tab-close"
-                tabindex={-1}
-                aria-label={m.tabs_close_tab_label()}
-                onclick={(e) => closeTab(tab.id, e)}
-              >
-                <X size="11" strokeWidth={2.5} />
-              </button>
-            </div>
-          {/each}
+              <ChevronLeft size="13" strokeWidth={2.5} />
+            </button>
+          {/if}
 
-          <button
-            class="tab-add"
-            onclick={openNewTab}
-            disabled={isAddingTab}
-            aria-label="Apri nuova scheda"
-            title="Apri nuova scheda"
+          <!-- Scrollable tabs area -->
+          <div
+            class="tab-strip"
+            role="tablist"
+            bind:this={tabStripEl}
+            onscroll={updateScrollState}
+            onwheel={handleTabStripWheel}
           >
-            <Plus size="14" strokeWidth={2} />
-          </button>
+            {#each mailState.tabs as tab (tab.id)}
+              {@const isActive = tab.id === mailState.activeTabId}
+              <!-- svelte-ignore a11y_interactive_supports_focus -->
+              <div
+                class="tab-item"
+                class:active={isActive}
+                role="tab"
+                aria-selected={isActive}
+                onclick={() => mailState.setActiveTab(tab.id)}
+                onkeydown={(e) =>
+                  e.key === "Enter" && mailState.setActiveTab(tab.id)}
+              >
+                <span class="tab-icon">
+                  {#if tab.type === "pdf"}
+                    <FileText size="11" strokeWidth={2} />
+                  {:else if tab.type === "image"}
+                    <Image size="11" strokeWidth={2} />
+                  {:else}
+                    <Mail size="11" strokeWidth={2} />
+                  {/if}
+                </span>
+                <span class="tab-label">{getTabLabel(tab)}</span>
+                <button
+                  class="tab-close"
+                  tabindex={-1}
+                  aria-label={m.tabs_close_tab_label()}
+                  onclick={(e) => closeTab(tab.id, e)}
+                >
+                  <X size="11" strokeWidth={2.5} />
+                </button>
+              </div>
+            {/each}
+
+            <!-- Add tab button — inside scroll area, right after the last tab -->
+            <button
+              class="tab-add"
+              onclick={openNewTab}
+              disabled={isAddingTab}
+              aria-label="Apri nuova scheda"
+              title="Apri nuova scheda"
+            >
+              <Plus size="14" strokeWidth={2} />
+            </button>
+          </div>
+
+          <!-- Right scroll arrow -->
+          {#if hasOverflow}
+            <button
+              class="tab-scroll-btn"
+              class:inactive={!canScrollRight}
+              onclick={() => scrollTabs(1)}
+              aria-label="Scorri tab a destra"
+              tabindex={-1}
+            >
+              <ChevronRight size="13" strokeWidth={2.5} />
+            </button>
+          {/if}
         </div>
 
         <!-- Tab content panels - all mounted, shown/hidden via display -->
@@ -190,22 +261,84 @@
     overflow: hidden;
   }
 
-  /* ── Tab strip (the dark chrome bar) ── */
-  .tab-strip {
+  /* ── Loading overlay ── */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--background) 60%, transparent);
+    backdrop-filter: blur(4px);
+    border-radius: 14px;
+  }
+
+  :global(.spinner) {
+    animation: spin 0.8s linear infinite;
+    color: var(--muted-foreground);
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ── Tab strip wrapper (the dark chrome bar) ── */
+  .tab-strip-wrapper {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 2px;
-    padding: 6px 8px 0 8px;
+    padding: 6px 6px 0 6px;
     background: color-mix(in srgb, var(--background) 80%, var(--card) 20%);
     border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Scrollable tabs area ── */
+  .tab-strip {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden;
     scrollbar-width: none;
   }
 
   .tab-strip::-webkit-scrollbar {
     display: none;
+  }
+
+  /* ── Scroll arrows ── */
+  .tab-scroll-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+      background 0.1s,
+      opacity 0.15s;
+    opacity: 0.75;
+  }
+
+  .tab-scroll-btn:hover {
+    background: var(--muted);
+    opacity: 1;
+  }
+
+  .tab-scroll-btn.inactive {
+    opacity: 0.22;
+    cursor: default;
+    pointer-events: none;
   }
 
   /* ── Individual tab ── */
