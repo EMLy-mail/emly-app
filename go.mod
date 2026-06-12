@@ -3,6 +3,7 @@ module emly
 go 1.24.4
 
 require (
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/jaypipes/ghw v0.21.2
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
 	github.com/teamwork/tnef v0.0.0-20200108124832-7deabccfdb32

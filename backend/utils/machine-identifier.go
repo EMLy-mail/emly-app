@@ -12,6 +12,7 @@ import (
 
 	"emly/backend/logger"
 
+	"github.com/denisbrodbeck/machineid"
 	"github.com/jaypipes/ghw"
 	"golang.org/x/sys/windows/registry"
 )
@@ -109,24 +110,27 @@ func GetMachineInfo() (*MachineInfo, error) {
 			}
 		}
 
-		// Fallback to registry MachineGuid if wmic fails or empty
+		// Fallback to machineid library if wmic fails or returns empty, as it has multiple strategies for Windows
 		if info.HWID == "" {
-			// Simplified registry read attempt using reg query command to avoid cgo/syscall complexity for now
-			// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography -> MachineGuid
-			regCmd := exec.Command("reg", "query", `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography`, "/v", "MachineGuid")
-			regCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
-			out, err := regCmd.Output()
-			if err == nil {
-				// Parse output
-				content := string(out)
-				if idx := strings.Index(content, "REG_SZ"); idx != -1 {
-					info.HWID = strings.TrimSpace(content[idx+6:])
-				}
+			logger.Debug("WMIC failed or was empty, fallback to machineid.ProtectedID")
+			out, err := machineid.ProtectedID("emly-machine-id")
+			if err != nil {
+				logger.Warn("GetMachineInfo: machineid.ProtectedID failed", "error", err)
+				info.HWID = "N/A for " + runtime.GOOS
+				return info, nil
 			}
+			info.HWID = out
 		}
 	} else {
-		info.HWID = "Not implemented for " + runtime.GOOS
+		id, err := machineid.ProtectedID("emly-machine-id")
+		if err != nil {
+			logger.Warn("GetMachineInfo: machineid.ProtectedID failed", "error", err)
+			info.HWID = "N/A for " + runtime.GOOS
+		}
+		info.HWID = id
 	}
+	info.HWID = strings.TrimSpace(info.HWID)
+
 	logger.Debug("GetMachineInfo: fetched HWID", "duration_ms", time.Since(t4).Milliseconds())
 
 	// 5. Get CPU Info
