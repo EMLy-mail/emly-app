@@ -858,11 +858,11 @@
   }
 
   .att-btn.image {
-    color: #60a5fa;
-    border-color: rgba(96, 165, 250, 0.3);
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.3);
   }
   .att-btn.image:hover {
-    color: #93c5fd;
+    color: #86efac;
   }
 
   .att-btn.pdf {
@@ -882,11 +882,11 @@
   }
 
   .att-btn.doc {
-    color: #4ade80;
-    border-color: rgba(74, 222, 128, 0.3);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.3);
   }
   .att-btn.doc:hover {
-    color: #86efac;
+    color: #93c5fd;
   }
 
   .att-name {
