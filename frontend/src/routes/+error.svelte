@@ -80,7 +80,16 @@
                 {:else}
                 <p class="error-message">{m.error_500_message()}</p>
                 {/if}
-                
+            {:else if page.status === 404}
+                <div class="error-icon">{page.status} :(</div>
+                <img class="error-img" src="https://media.tenor.com/1Oql_dU4fIEAAAAM/bean-mr-bean.gif" alt="uh oh" />
+                <p class="error-message">
+                    {#if dev}
+                        {m.error_404_message_alt()}
+                    {:else}
+                        {m.error_404_message()}
+                    {/if}
+                </p>
             {:else}
                 <div class="error-icon">{page.status}</div>
                 <p class="error-message">

@@ -8,6 +8,8 @@
   "error_500_title_alt": "Oh heck!- EMLy hurty hurty TwT",
   "error_500_message": "EMLy has encountered an unexpected error and could not recover. Please report this issue to your TL/RDS.",
   "error_500_message_alt": "\"me angy, me no worky\" - some shifuck JS code",
+  "error_404_message": "The page you're looking for doesn't exist. This is probably a bug, please report it to your TL/RDS.",
+  "error_404_message_alt": "Look, I really tried looking for that page, believe me! But it went poof and now it's gone. Just like Caine...",
   "error_close_app": "Close application",
   "error_open_logs": "Open logs folder",
   "sidebar_overview": "Mail Viewer",
@@ -295,5 +297,7 @@
   "settings_select_folder_button": "Select folder",
   "settings_export_folder_reset": "Reset to default",
   "settings_export_folder_saved": "Attachment folder saved",
-  "settings_export_folder_save_error": "Error while saving the folder"
+  "settings_export_folder_save_error": "Error while saving the folder",
+  "settings_danger_test_crash_label": "Test crash handler",
+  "settings_danger_test_crash_hint": "Emits a HTTP 500 or 404 error to test the crash handler and error pages."
 }

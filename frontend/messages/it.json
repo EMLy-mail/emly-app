@@ -8,6 +8,8 @@
   "error_500_message": "EMLy ha incontrato un errore imprevisto e non è riuscita a recuperare. Si prega di segnalare il problema al proprio TL/RDS.",
   "error_500_title_alt": "Oh heck!- EMLy hurty hurty TwT",
   "error_500_message_alt": "\"me angy, me no worky\" - some shifuck JS code",
+  "error_404_message": "La pagina che stai cercando non esiste. Probabilmente è un bug, segnalalo al tuo TL/RDS.",
+  "error_404_message_alt": "Guarda, ho davvero cercato quella pagina, credimi! Ma ha fatto poof ed è sparita. Proprio come Caine...",
   "error_close_app": "Chiudi applicazione",
   "error_open_logs": "Apri cartella log",
   "sidebar_overview": "Visualizza Mail",
