@@ -111,7 +111,7 @@
         useDarkEmailViewer: true,
         reduceMotion: false,
         theme: "dark",
-        enableLinkClickConfirmation: false,
+        enableLinkClickConfirmation: true,
         enableTabMode: false,
         openAttachmentsAsTab: false,
         fixEmailTextContrast: true,

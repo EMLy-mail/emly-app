@@ -15,10 +15,10 @@ const defaults: EMLy_GUI_Settings = {
     useDarkEmailViewer: true,
     reduceMotion: false,
     theme: "dark",
-    enableLinkClickConfirmation: false,
+    enableLinkClickConfirmation: true,
     enableTabMode: false,
     openAttachmentsAsTab: false,
-    fixEmailTextContrast: false,
+    fixEmailTextContrast: true,
 };
 
 class SettingsStore {
