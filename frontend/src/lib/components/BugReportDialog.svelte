@@ -213,7 +213,7 @@
 
 <Dialog.Root bind:open={$bugReportDialogOpen}>
     <Dialog.Content
-        class="sm:max-w-125 w-full max-h-[80vh] overflow-y-auto custom-scrollbar"
+        class="sm:max-w-125 w-full max-h-[80vh] flex flex-col overflow-hidden"
     >
         {#if isSuccess}
             <!-- Success State -->
@@ -238,7 +238,7 @@
                 </Dialog.Description>
             </Dialog.Header>
 
-            <div class="grid gap-4 py-4">
+            <div class="grid gap-4 py-4 overflow-y-auto flex-1 min-h-0 custom-scrollbar px-1 pb-2 mb-2">
                 {#if uploadError}
                     <div
                         class="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md p-3"
@@ -285,7 +285,7 @@
             </Dialog.Footer>
         {:else}
             <!-- Form State -->
-            <form onsubmit={handleBugReportSubmit}>
+            <form onsubmit={handleBugReportSubmit} class="flex flex-col flex-1 min-h-0">
                 <Dialog.Header>
                     <Dialog.Title>{m.bugreport_title()}</Dialog.Title>
                     <Dialog.Description>
@@ -293,7 +293,7 @@
                     </Dialog.Description>
                 </Dialog.Header>
 
-                <div class="grid gap-4 py-4">
+                <div class="grid gap-4 py-4 overflow-y-auto flex-1 min-h-0 custom-scrollbar px-1 pb-2 mb-2">
                     <div class="grid gap-2">
                         <Label for="bug-name">{m.bugreport_name_label()}</Label>
                         <Input
