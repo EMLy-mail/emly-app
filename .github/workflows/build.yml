@@ -60,13 +60,14 @@ jobs:
       - name: Compile installer
         run: iscc installer\installer.iss
 
-      - name: Sign installer
+      - name: Compile & sign installer
         shell: pwsh
         run: |
           $signtool = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1).FullName
-          Get-ChildItem "installer\Output\EMLy_Installer_*.exe" | ForEach-Object {
-            & $signtool sign /f "$env:RUNNER_TEMP\codesign.pfx" /p "${{ secrets.CODE_SIGN_PASSWORD }}" /fd sha256 /tr http://timestamp.digicert.com /td sha256 $_.FullName
-          }
+          $pfxPath = "$env:RUNNER_TEMP\codesign.pfx"
+          $pfxPassword = "${{ secrets.CODE_SIGN_PASSWORD }}"
+          $signCmd = '$q{0}$q sign /f $q{1}$q /p $q{2}$q /fd sha256 /tr http://timestamp.digicert.com /td sha256 $q$f$q' -f $signtool, $pfxPath, $pfxPassword
+          iscc "/Ssigntool=$signCmd" installer\installer.iss
             
       - name: Cleanup certificate
         if: always()
@@ -79,7 +80,7 @@ jobs:
           name: EMLy-windows-amd64
           path: build/bin/EMLy.exe
           if-no-files-found: error
-          
+
       - name: Upload installer artifact
         uses: actions/upload-artifact@v6
         with:
