@@ -57,9 +57,6 @@ jobs:
           $signtool = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1).FullName
           & $signtool sign /f "$env:RUNNER_TEMP\codesign.pfx" /p "${{ secrets.CODE_SIGN_PASSWORD }}" /fd sha256 /tr http://timestamp.digicert.com /td sha256 build\bin\EMLy.exe
 
-      - name: Compile installer
-        run: iscc installer\installer.iss
-
       - name: Compile & sign installer
         shell: pwsh
         run: |
