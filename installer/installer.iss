@@ -38,7 +38,8 @@ SetupIconFile=..\build\windows\icon.ico
 UninstallDisplayIcon={app}\{#ApplicationName}.exe
 AppVerName={#ApplicationName} {#ApplicationVersion}
 WizardStyle=modern dynamic includetitlebar
-
+SignTool=signtool
+SignedUninstaller=yes
 
 [Dirs]
 ; Grant the built-in Users group Modify permission on the install directory.
