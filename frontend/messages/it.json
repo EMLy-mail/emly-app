@@ -299,5 +299,6 @@
   "settings_select_folder_button": "Seleziona cartella",
   "settings_export_folder_reset": "Ripristina predefinita",
   "settings_export_folder_saved": "Cartella allegati salvata",
-  "settings_export_folder_save_error": "Errore durante il salvataggio della cartella"
+  "settings_export_folder_save_error": "Errore durante il salvataggio della cartella",
+  "settings_toast_load_error": "Impossibile caricare le impostazioni. Sono stati ripristinati i valori predefiniti."
 }

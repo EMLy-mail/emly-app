@@ -28,9 +28,9 @@ export function getStoredTheme(): Theme {
 	
 	try {
 		const stored = localStorage.getItem(THEME_KEY);
-		return stored === "light" || stored === "dark" ? stored : "light";
+		return stored === "light" || stored === "dark" ? stored : "dark";
 	} catch {
-		return "light";
+		return "dark";
 	}
 }
 

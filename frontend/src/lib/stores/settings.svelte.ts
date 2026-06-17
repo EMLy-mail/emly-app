@@ -16,14 +16,15 @@ const defaults: EMLy_GUI_Settings = {
     reduceMotion: false,
     theme: "dark",
     enableLinkClickConfirmation: true,
-    enableTabMode: false,
-    openAttachmentsAsTab: false,
+    enableTabMode: true,
+    openAttachmentsAsTab: true,
     fixEmailTextContrast: true,
 };
 
 class SettingsStore {
     settings = $state<EMLy_GUI_Settings>({ ...defaults });
     hasHydrated = $state(false);
+    wasReset = $state(false);
 
     constructor() {
         if (browser) {
@@ -38,9 +39,12 @@ class SettingsStore {
                 this.settings = { ...this.settings, ...JSON.parse(stored) };
             } catch (e) {
                 console.error("Failed to load settings", e);
+                this.wasReset = true;
             }
+        } else {
+            this.wasReset = true;
         }
-        
+
         // Sync theme from localStorage key used in app.html
         const storedTheme = getStoredTheme();
         if (!this.settings.theme) {
@@ -49,10 +53,10 @@ class SettingsStore {
             // If there's a mismatch, prioritize the theme from emly_theme key
             this.settings.theme = storedTheme;
         }
-        
+
         // Sync useDarkEmailViewer with theme
         this.settings.useDarkEmailViewer = this.settings.theme === "dark";
-        
+
         // Apply the theme
         applyTheme(this.settings.theme);
 
@@ -60,8 +64,8 @@ class SettingsStore {
         if (this.settings.selectedLanguage) {
             setLocale(this.settings.selectedLanguage);
         }
-        
-        // Save defaults/merged settings to storage if they didn't exist or were updated during load
+
+        // Save defaults to storage if they didn't exist or failed to parse
         if (!stored) {
             this.save();
         }

@@ -98,12 +98,19 @@
     }
 
     onMount(async () => {
+        // Log the entire local storage
+        console.log("Local Storage Contents:");
+        console.log(localStorage);
         window.addEventListener("focus", () => (windowFocused = true));
         window.addEventListener("blur", () => (windowFocused = false));
         if (dev) dangerZoneEnabled.set(true);
         if (browser && isDebbugerProtectionOn) {
             detectDebugging();
             setInterval(detectDebugging, 1000);
+        }
+
+        if (settingsStore.wasReset) {
+            toast.warning(m.settings_toast_load_error());
         }
 
         versionInfo = data.data as utils.Config;

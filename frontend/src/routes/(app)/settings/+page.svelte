@@ -112,8 +112,8 @@
         reduceMotion: false,
         theme: "dark",
         enableLinkClickConfirmation: true,
-        enableTabMode: false,
-        openAttachmentsAsTab: false,
+        enableTabMode: true,
+        openAttachmentsAsTab: true,
         fixEmailTextContrast: true,
     };
 
