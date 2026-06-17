@@ -93,8 +93,11 @@ EMLy/
 │   └── utils/
 │       ├── mail/
 │       │   ├── eml_reader.go     # EML file parsing
-│       │   ├── msg_reader.go     # MSG file parsing
+│       │   ├── msg_reader.go     # MSG (Outlook OLE2/CFB) parsing
+│       │   ├── rtf.go            # Compressed-RTF decompression + HTML de-encapsulation
 │       │   ├── mailparser.go     # MIME email parsing
+│       │   ├── format_detector.go # Email format detection (magic bytes)
+│       │   ├── tnef_reader.go    # TNEF (winmail.dat) attachment extraction
 │       │   └── file_dialog.go    # File dialog utilities
 │       ├── screenshot_windows.go  # Windows screenshot capture
 │       ├── debug_windows.go       # Debugger detection
@@ -286,7 +289,41 @@ The Go backend is split into logical files:
 Reads standard `.eml` files using the `mailparser.go` MIME parser.
 
 #### MSG Reader (`msg_reader.go`)
-Handles Microsoft Outlook `.msg` files using external conversion.
+A native parser for Microsoft Outlook `.msg` files. It reads the OLE2/CFB
+(Compound File Binary) container directly in Go — no external tools or
+conversion required — and extracts the MAPI properties (subject, sender,
+recipients, body, attachments).
+
+**Body resolution order:**
+1. `PidTagBodyHtml` (0x1013) — HTML body, when present
+2. **Compressed RTF** (`PidTagRtfCompressed`, 0x1009) — decompressed and
+   de-encapsulated to HTML (see [RTF Handler](#rtf-handler-rtfgo) below).
+   Outlook frequently stores HTML mail *only* in this form, with no plain HTML
+   body stream.
+3. `PidTagBody` (0x1000) — plain text, converted to minimal HTML
+
+**Inline images (CID):** image attachments carry a `PidTagAttachContentId`
+(0x3712). Their bytes are base64-encoded into `data:` URIs and substituted for
+the matching `cid:` references in the HTML body, so embedded images render
+in-line in the message (the images also remain listed as attachments). This
+mirrors the EML reader's behaviour, and combined with the RTF de-encapsulation
+above it makes inline images in Outlook `.msg` files display correctly.
+
+#### RTF Handler (`rtf.go`)
+Recovers the HTML body that Outlook stores as compressed RTF when a `.msg` has
+no plain HTML body stream:
+- `decompressRTF` — inflates `PidTagRtfCompressed` per **[MS-OXRTFCP]** (the
+  "LZFu" dictionary scheme; also handles the uncompressed "MELA" variant).
+- `deEncapsulateHTML` — extracts the original markup from `\fromhtml` RTF per
+  **[MS-OXRTFEX]**: emits `\*\htmltag` destination contents and unsuppressed
+  document text, honours the `\htmlrtf` suppression toggle, decodes `\'XX`
+  escapes via the declared `\ansicpg` code page, and discards RTF-only
+  destinations (font/colour tables, `\mhtmltag`, etc.).
+- `htmlFromCompressedRTF` — wrapper used by the MSG reader; returns `""` for
+  genuine (non-HTML) RTF so the caller falls back to the plain-text body.
+
+Unit tests live in `rtf_test.go`; an end-to-end check against a real `.msg`
+runs when the `MSG_DEBUG_PATH` environment variable points to a sample file.
 
 #### Mail Parser (`mailparser.go`)
 A comprehensive MIME email parser that handles:
@@ -656,6 +693,8 @@ EMLy uses **shadcn-svelte**, a port of shadcn/ui for Svelte. Components are loca
 - Parse and display EML and MSG files
 - Show email metadata (from, to, cc, bcc, subject)
 - Render HTML email bodies in sandboxed iframe
+- Render inline (CID) images embedded in the message body, for both EML and MSG
+  (including Outlook messages whose body is stored only as compressed RTF)
 - List and handle attachments with type-specific actions
 
 ### 2. Attachment Handling
