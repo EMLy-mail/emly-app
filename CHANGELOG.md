@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+# 1.7.9 (2026-06-23)
+1) Fixato un bug dove la finestra non veniva portata in primo piano quando si apriva una mail con EMLy già in esecuzione.
+
 # 1.7.8 (2026-06-23)
 1) Fixato un bug dove la data non veniva estratta sui file .EML non-PEC
 2) Aggiornato alcune dipendenze lato Frontend.
