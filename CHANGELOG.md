@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 1.7.8 (2026-06-23)
+1) Fixato un bug dove la data non veniva estratta sui file .EML non-PEC
+2) Aggiornato alcune dipendenze lato Frontend.
+
 # 1.7.7 (2026-06-12)
 1) Aggiunto un error handling per errori 404.
 2) Cambiato algortimo di HWID con offuscamento per privacy.
