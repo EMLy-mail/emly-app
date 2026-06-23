@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	pkglogger "emly/backend/logger"
 	"emly/backend/utils"
@@ -30,6 +31,17 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 	)
 	runtime.WindowUnminimise(a.ctx)
 	runtime.WindowShow(a.ctx)
+
+	// Windows blocks SetForegroundWindow calls from background processes
+	// (foreground lock), so WindowShow alone often fails to bring the
+	// window above other apps. Toggling AlwaysOnTop forces a Z-order
+	// change that isn't subject to that restriction.
+	runtime.WindowSetAlwaysOnTop(a.ctx, true)
+	go func() {
+		time.Sleep(200 * time.Millisecond)
+		runtime.WindowSetAlwaysOnTop(a.ctx, false)
+	}()
+
 	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
 }
 
