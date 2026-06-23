@@ -11,7 +11,6 @@
         Flame,
         Sun,
         Moon,
-        FolderOpen,
     } from "@lucide/svelte";
     import type { EMLy_GUI_Settings } from "$lib/types";
     import { toast } from "svelte-sonner";
@@ -593,7 +592,6 @@
                             onclick={selectExportFolder}
                             disabled={savingExportFolder}
                         >
-                            <FolderOpen class="size-4 mr-2" />
                             {m.settings_select_folder_button()}
                         </Button>
                     </div>

@@ -129,6 +129,18 @@ func (a *App) startup(ctx context.Context) {
 	} else {
 		pkglogger.Info("EMLy main application started")
 	}
+
+	// Windows blocks SetForegroundWindow calls from background processes
+	// (foreground lock), so WindowShow alone often fails to bring the
+	// window above other apps. Toggling AlwaysOnTop forces a Z-order
+	// change that isn't subject to that restriction.
+	runtime.EventsOn(ctx, "bringOnTop", func(optionalData ...any) {
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			runtime.WindowSetAlwaysOnTop(a.ctx, false)
+		}()
+	})
 }
 
 // shutdown is called by Wails when the application is closing.

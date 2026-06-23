@@ -18,6 +18,7 @@
     import { toast } from "svelte-sonner";
     import {
         EventsOn,
+        EventsEmit,
         WindowShow,
         WindowUnminimise,
         BrowserOpenURL,
@@ -101,11 +102,7 @@
             : mailState.currentEmail,
     );
 
-    $effect(() => {
-        if (dev) {
-            console.log(activeEmail);
-        }
-    });
+    
 
     let activeFilePath = $derived<string | undefined>(
         tabId !== null
@@ -313,7 +310,11 @@
             toast.dismiss(LINK_HINT_TOAST_ID);
 
             if (activeEmail?.body) {
+                let startParseTime = new Date();
                 const processedBody = await processEmailBody(activeEmail.body);
+                let finishParseTime = new Date();
+                let parseTime = finishParseTime.getTime() - startParseTime.getTime();
+                console.log("Parse -> B64 to HTML -> time took: " + parseTime + " ms")
                 if (processedBody !== activeEmail.body) {
                     activeEmail.body = processedBody;
                 }
@@ -370,6 +371,7 @@
                     const result = await loadEmailFromPath(arg);
 
                     if (result.success && result.email) {
+                        
                         if (tabId !== null) {
                             // In tab mode: open in a new tab
                             mailState.addTab(result.email, result.filePath);
@@ -380,6 +382,7 @@
                         }
                         WindowUnminimise();
                         WindowShow();
+                        EventsEmit("bringOnTop");
                     } else if (result.error) {
                         console.error("Failed to load email:", result.error);
                         toast.error(m.mail_error_opening());

@@ -15,6 +15,7 @@ import {
 import type { internal } from '$lib/wailsjs/go/models';
 import { isBase64, isHtml } from '$lib/utils';
 import { looksLikeBase64, tryDecodeBase64 } from './data-utils';
+import DOMPurify from 'dompurify';
 
 export interface LoadEmailResult {
   success: boolean;
@@ -58,6 +59,8 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
   }
 
   try {
+    const startTime = new Date();
+
     // ReadAuto detects the format (EML/PEC/MSG) by magic bytes and dispatches
     // to the appropriate reader. This works for any extension, including
     // unconventional ones like winmail.dat or no extension at all.
@@ -72,8 +75,11 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
           email.body = decoded;
         }
       }
+      email.body = DOMPurify.sanitize(email.body);
     }
-
+    const finishTime = new Date();
+    const loadTime = finishTime.getTime() - startTime.getTime();
+    console.log(`Parse -> Email, load and encode B64 -> time took  ${loadTime} ms`);
     return { success: true, email, filePath };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

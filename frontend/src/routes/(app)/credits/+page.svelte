@@ -189,6 +189,7 @@
     </Card.Root>
 
     <!-- Team Card -->
+    {#if teamData.length > 0}
     <Card.Root>
       <Card.Header class="space-y-1">
         <Card.Title class="flex items-center gap-2">
@@ -249,7 +250,9 @@
         </div>
       </Card.Content>
     </Card.Root>
+    {/if}
 
+    {#if specialThanksData.length > 0}
     <!-- Special Thanks Card -->
     <Card.Root>
       <Card.Header class="space-y-1">
@@ -320,6 +323,7 @@
         </div>
       </Card.Content>
     </Card.Root>
+    {/if}
 
     <!-- Technologies Card -->
     <Card.Root>
