@@ -6,6 +6,7 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/jaypipes/ghw v0.21.2
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
+	github.com/mbndr/figlet4go v0.0.0-20190224160619-d6cef5b186ea
 	github.com/teamwork/tnef v0.0.0-20200108124832-7deabccfdb32
 	github.com/wailsapp/wails/v2 v2.11.0
 	golang.org/x/sys v0.40.0

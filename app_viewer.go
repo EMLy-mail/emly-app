@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -377,6 +378,34 @@ func (a *App) OpenDocument(base64Data string, filename string) error {
 // Viewer Mode Detection
 // =============================================================================
 
+// imageFileExtensions lists the raster image extensions EMLy registers itself
+// as a handler for, so double-clicking one of these in Explorer opens EMLy's
+// built-in image viewer instead of (or alongside) the system default.
+var imageFileExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+
+// isImageFilePath reports whether path has one of imageFileExtensions.
+func isImageFilePath(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return slices.Contains(imageFileExtensions, ext)
+}
+
+// findImageViewerPath scans os.Args for the file EMLy should display in image
+// viewer mode: either the explicit --view-image= flag (used when EMLy
+// relaunches itself for an email attachment) or a bare path with an image
+// extension (used when Windows launches EMLy via file association after a
+// double click on a .jpg/.png/etc file). Returns "" if neither is found.
+func findImageViewerPath() string {
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "--view-image=") {
+			return strings.TrimPrefix(arg, "--view-image=")
+		}
+		if isImageFilePath(arg) {
+			return arg
+		}
+	}
+	return ""
+}
+
 // GetImageViewerData checks CLI arguments and returns image data if running in image viewer mode.
 // This is called by the viewer page on startup to get the image to display.
 //
@@ -384,22 +413,20 @@ func (a *App) OpenDocument(base64Data string, filename string) error {
 //   - *ImageViewerData: Image data if in viewer mode, nil otherwise
 //   - error: Error if reading the image file fails
 func (a *App) GetImageViewerData() (*ImageViewerData, error) {
-	for _, arg := range os.Args {
-		if strings.HasPrefix(arg, "--view-image=") {
-			filePath := strings.TrimPrefix(arg, "--view-image=")
-			data, err := os.ReadFile(filePath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read image file: %w", err)
-			}
-			// Return as base64 for consistent frontend handling
-			encoded := base64.StdEncoding.EncodeToString(data)
-			return &ImageViewerData{
-				Data:     encoded,
-				Filename: filepath.Base(filePath),
-			}, nil
-		}
+	filePath := findImageViewerPath()
+	if filePath == "" {
+		return nil, nil
 	}
-	return nil, nil
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read image file: %w", err)
+	}
+	// Return as base64 for consistent frontend handling
+	encoded := base64.StdEncoding.EncodeToString(data)
+	return &ImageViewerData{
+		Data:     encoded,
+		Filename: filepath.Base(filePath),
+	}, nil
 }
 
 // GetPDFViewerData checks CLI arguments and returns PDF data if running in PDF viewer mode.
@@ -434,23 +461,22 @@ func (a *App) GetPDFViewerData() (*PDFViewerData, error) {
 //   - *ViewerData: Contains either ImageData or PDFData depending on mode
 //   - error: Error if reading the file fails
 func (a *App) GetViewerData() (*ViewerData, error) {
-	for _, arg := range os.Args {
-		// Check for image viewer mode
-		if strings.HasPrefix(arg, "--view-image=") {
-			filePath := strings.TrimPrefix(arg, "--view-image=")
-			data, err := os.ReadFile(filePath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read image file: %w", err)
-			}
-			encoded := base64.StdEncoding.EncodeToString(data)
-			return &ViewerData{
-				ImageData: &ImageViewerData{
-					Data:     encoded,
-					Filename: filepath.Base(filePath),
-				},
-			}, nil
+	// Check for image viewer mode
+	if filePath := findImageViewerPath(); filePath != "" {
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read image file: %w", err)
 		}
+		encoded := base64.StdEncoding.EncodeToString(data)
+		return &ViewerData{
+			ImageData: &ImageViewerData{
+				Data:     encoded,
+				Filename: filepath.Base(filePath),
+			},
+		}, nil
+	}
 
+	for _, arg := range os.Args {
 		// Check for PDF viewer mode
 		if strings.HasPrefix(arg, "--view-pdf=") {
 			filePath := strings.TrimPrefix(arg, "--view-pdf=")

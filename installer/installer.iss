@@ -79,6 +79,26 @@ Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open\command"
 Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.EML\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"; Check: IsAdmin()
 Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.MSG\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"; Check: IsAdmin()
 
+; 4. Register EMLy as a handler for common raster image extensions, so it
+; shows up as a choice (or becomes the default, if the user confirms via
+; Windows' "Choose default apps" dialog) when double-clicking a .jpg/.png/etc.
+; All extensions share a single ProgID since the open command is identical.
+; Note: on Windows 10/11 simply writing these keys does not silently make
+; EMLy the default image app system-wide — the OS still requires explicit
+; user confirmation (UserChoice) for image extensions. These entries register
+; EMLy as an available handler / let it appear in "Open with".
+Root: HKLM; Subkey: "Software\Classes\.jpg"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.jpeg"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.png"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.gif"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.bmp"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.webp"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.IMAGE"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName} Image"; Flags: uninsdeletekey; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.IMAGE\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#ApplicationName}.exe,0"; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.IMAGE\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\EMLy.exe"" ""%1"""; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.IMAGE\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#ApplicationName}"; Check: IsAdmin()
+
 [Icons]
 ; Shortcuts are created in machine-wide All Users locations (persist across AD
 ; temporary profiles) only when running as administrator. Non-admin updates skip

@@ -27,7 +27,7 @@ export const load: PageLoad = async () => {
       let emlContent: internal.EmailData;
 
       if (startupFile.toLowerCase().endsWith(".msg")) {
-        emlContent = await ReadMSG(startupFile, true);
+        emlContent = await ReadMSG(startupFile);
       } else {
         emlContent = await ReadEML(startupFile);
       }

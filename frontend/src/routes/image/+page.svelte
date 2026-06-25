@@ -28,6 +28,19 @@
   let imgElement = $state<HTMLImageElement>();
   let containerElement = $state<HTMLDivElement>();
 
+  const MIME_BY_EXT: Record<string, string> = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    bmp: "image/bmp",
+    webp: "image/webp",
+  };
+
+  let imageMimeType = $derived(
+    MIME_BY_EXT[filename.split(".").pop()?.toLowerCase() ?? ""] ?? "image/png"
+  );
+
   // Non-reactive state for drag calculations
   let isDragging = false;
   let startX = 0;
@@ -188,7 +201,7 @@
         <img
           bind:this={imgElement}
           onload={fitToScreen}
-          src={`data:image/png;base64,${imageData}`}
+          src={`data:${imageMimeType};base64,${imageData}`}
           alt={filename}
           class="viewer-img"
           draggable="false"
