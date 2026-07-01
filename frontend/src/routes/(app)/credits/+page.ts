@@ -120,25 +120,33 @@ export const load = (async ({ fetch }) => {
         console.error("Failed to load GitHub user data for credits", e);
     }
 
+    let juneTriggerFloat = 0.2; // 20% chance of triggering the easter egg in June
+    let normalTriggerFloat = 0.05; // 5% chance of triggering the easter egg in other months
 
-    let easterEgg = false;
-
-    if((new Date().getMonth() + 1) === 6) {
-        if (Math.random() < 0.2) {
-            easterEgg = true;
-
-            if (contributorsData.team[0] && contributorsData.team[0].id === 278996585) {
-                contributorsData.team[0].avatar_url = "https://avatars.githubusercontent.com/u/44366896?v=4&s=400&u=1c9e5b8a7c3d2e5f8b6a9c4d2e1f3a4b5c6d7e&v=4";
-            }
-
-            for (let i = 0; i < contributorsData.specialThanks.length; i++) {
-                if (contributorsData.specialThanks[i]) {
-                    contributorsData.specialThanks[i]!.name = `${contributorsData.specialThanks[i]!.name} (meow)`;
-                }
-            }
+    function getTriggerFloat(): number {
+        const currentMonth = new Date().getMonth() + 1;
+        if (currentMonth === 6) {
+            return juneTriggerFloat;
+        } else {
+            return normalTriggerFloat;
         }
     }
 
+    let easterEgg = false;
+
+    if (Math.random() < getTriggerFloat()) {
+        easterEgg = true;
+
+        if (contributorsData.team[0] && contributorsData.team[0].id === 278996585) {
+            contributorsData.team[0].avatar_url = "https://avatars.githubusercontent.com/u/44366896?v=4&s=400&u=1c9e5b8a7c3d2e5f8b6a9c4d2e1f3a4b5c6d7e&v=4";
+        }
+
+        for (let i = 0; i < contributorsData.specialThanks.length; i++) {
+            if (contributorsData.specialThanks[i]) {
+                contributorsData.specialThanks[i]!.name = `${contributorsData.specialThanks[i]!.name} (meow)`;
+            }
+        }
+    }
 
     return {
         config: configRoot?.EMLy,
