@@ -30,13 +30,18 @@ export async function openPDFAttachment(
   filename: string
 ): Promise<AttachmentHandlerResult> {
   try {
-    if (settingsStore.settings.openAttachmentsAsTab && settingsStore.settings.enableTabMode) {
+    if (settingsStore.settings.openAttachmentsAsTab && settingsStore.settings.enableTabMode && settingsStore.settings.useBuiltinPDFViewer) {
       mailState.addPDFTab(filename, base64Data);
       return { success: true };
     }
     if (settingsStore.settings.useBuiltinPDFViewer) {
       await OpenPDFWindow(base64Data, filename);
     } else {
+      // Use default Windows .PDF handler (e.g., Adobe Acrobat, Edge, etc.)
+      toast.loading(m.mail_file_external_app_opening_toast(), {
+        id: "mail-file-external-app-opening",
+        duration: 2000,
+      });
       await OpenPDF(base64Data, filename);
     }
     return { success: true };
@@ -65,13 +70,18 @@ export async function openImageAttachment(
   filename: string
 ): Promise<AttachmentHandlerResult> {
   try {
-    if (settingsStore.settings.openAttachmentsAsTab && settingsStore.settings.enableTabMode) {
+    if (settingsStore.settings.openAttachmentsAsTab && settingsStore.settings.enableTabMode && settingsStore.settings.useBuiltinPreview) {
       mailState.addImageTab(filename, base64Data);
       return { success: true };
     }
     if (settingsStore.settings.useBuiltinPreview) {
       await OpenImageWindow(base64Data, filename);
     } else {
+      // Use default Windows image handler (e.g., Photos, Paint, etc.)
+      toast.loading(m.mail_file_external_app_opening_toast(), {
+        id: "mail-file-external-app-opening",
+        duration: 2000,
+      });
       await OpenImage(base64Data, filename);
     }
     return { success: true };
@@ -93,6 +103,10 @@ export async function openDocAttachment(
   filename: string
 ): Promise<AttachmentHandlerResult> {
   try {
+    toast.loading(m.mail_file_external_app_opening_toast(), {
+      id: "mail-file-external-app-opening",
+      duration: 2000,
+    });
     await OpenDocument(base64Data, filename);
     return { success: true };
   } catch (error: unknown) {
