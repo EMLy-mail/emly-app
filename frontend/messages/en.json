@@ -300,5 +300,6 @@
   "settings_export_folder_save_error": "Error while saving the folder",
   "settings_danger_test_crash_label": "Test crash handler",
   "settings_danger_test_crash_hint": "Emits a HTTP 500 or 404 error to test the crash handler and error pages.",
-  "settings_toast_load_error": "Default settings values have been restored due to an error."
+  "settings_toast_load_error": "Default settings values have been restored due to an error.",
+  "mail_file_external_app_opening_toast": "Opening file..."
 }
