@@ -14,10 +14,10 @@ import (
 
 	"github.com/mbndr/figlet4go"
 	"github.com/wailsapp/wails/v2"
-	"golang.org/x/sys/windows"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/sys/windows"
 )
 
 //go:embed all:frontend/build

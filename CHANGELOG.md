@@ -1,5 +1,11 @@
 # Changelog EMLy
 
+# 1.8.0 (2026-06-01)
+1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
+2) Aggiornate dipendenze lato Frontend.
+3) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
+4) Fixati vari bug
+
 # 1.7.9 (2026-06-23)
 1) Fixato un bug dove la finestra non veniva portata in primo piano quando si apriva una mail con EMLy già in esecuzione.
 
