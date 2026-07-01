@@ -9,39 +9,39 @@ interface GitHubUserAssignment {
 }
 
 export interface GitHubUserData {
-  login: string;
-  id: number;
-  node_id: string;
-  avatar_url: string;
-  gravatar_id: string;
-  url: string;
-  html_url: string;
-  followers_url: string;
-  following_url: string;
-  gists_url: string;
-  starred_url: string;
-  subscriptions_url: string;
-  organizations_url: string;
-  repos_url: string;
-  events_url: string;
-  received_events_url: string;
-  type: "User" | "Organization" | "Bot";
-  user_view_type: "public" | "private";
-  site_admin: boolean;
-  name: string | null;
-  company: string | null;
-  blog: string | null;
-  location: string | null;
-  email: string | null;
-  hireable: boolean | null;
-  bio: string | null;
-  twitter_username: string | null;
-  public_repos: number;
-  public_gists: number;
-  followers: number;
-  following: number;
-  created_at: string;
-  updated_at: string;
+    login: string;
+    id: number;
+    node_id: string;
+    avatar_url: string;
+    gravatar_id: string;
+    url: string;
+    html_url: string;
+    followers_url: string;
+    following_url: string;
+    gists_url: string;
+    starred_url: string;
+    subscriptions_url: string;
+    organizations_url: string;
+    repos_url: string;
+    events_url: string;
+    received_events_url: string;
+    type: "User" | "Organization" | "Bot";
+    user_view_type: "public" | "private";
+    site_admin: boolean;
+    name: string | null;
+    company: string | null;
+    blog: string | null;
+    location: string | null;
+    email: string | null;
+    hireable: boolean | null;
+    bio: string | null;
+    twitter_username: string | null;
+    public_repos: number;
+    public_gists: number;
+    followers: number;
+    following: number;
+    created_at: string;
+    updated_at: string;
 }
 
 interface ContributorsData {
@@ -49,7 +49,7 @@ interface ContributorsData {
     specialThanks: Array<GitHubUserData | null>;
 }
 
-export const load = (async ({fetch}) => {
+export const load = (async ({ fetch }) => {
     if (!browser) return {
         config: null, contributorsData: {
             team: [], specialThanks: []
@@ -100,9 +100,9 @@ export const load = (async ({fetch}) => {
     async function processArray(array: GitHubUserAssignment[]): Promise<void> {
         for (const item of array) {
             let res: GitHubUserData | null = await fetchGitHubUserData(item);
-            if(item.role === "team") {
+            if (item.role === "team") {
                 contributorsData.team.push(res);
-            } else if(item.role === "specialThanks") {
+            } else if (item.role === "specialThanks") {
                 contributorsData.specialThanks.push(res);
             }
         }
