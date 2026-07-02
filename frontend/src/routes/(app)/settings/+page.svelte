@@ -34,6 +34,7 @@
         ReloadConfig,
         ShowOpenFolderDialog,
         SetExportAttachmentFolder,
+        OpenDevTools,
     } from "$lib/wailsjs/go/main/App";
     import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
 
@@ -624,6 +625,13 @@
                                 {m.settings_danger_devtools_hint()}
                             </div>
                         </div>
+                        <Button
+                                variant="destructive"
+                                class="cursor-pointer hover:cursor-pointer"
+                                onclick={() => OpenDevTools()}
+                            >
+                                {m.settings_danger_devtools_btn_label()}
+                            </Button>
                     </div>
                     <Separator />
                     <div
