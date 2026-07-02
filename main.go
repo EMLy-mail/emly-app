@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"log"
@@ -108,6 +109,7 @@ func main() {
 		Height: windowHeight,
 		AssetServer: &assetserver.Options{
 			Assets:     assets,
+			Handler:    spaFallbackHandler(assets),
 			Middleware: userAgentMiddleware(userAgent),
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
@@ -175,6 +177,31 @@ func printStartupBanner(version string) {
 
 	fmt.Print(banner)
 	fmt.Printf("  v%s\n\n", version)
+}
+
+// spaFallbackHandler serves the embedded index.html for any GET request
+// that doesn't match a real asset (e.g. a broken deep link or stale
+// hashed-asset reference), so the SvelteKit app still boots and its own
+// root +error.svelte renders the 404 — complete with draggable titlebar
+// and window controls — instead of WebView2's native error page, which
+// has none of that chrome.
+func spaFallbackHandler(assets embed.FS) http.Handler {
+	fallback, err := assets.ReadFile("frontend/build/index.html")
+	if err == nil {
+		// Force relative asset URLs (./_app/...) to resolve against the
+		// site root regardless of how deep the unmatched path is.
+		fallback = bytes.Replace(fallback, []byte("<head>"), []byte("<head><base href=\"/\">"), 1)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(fallback)
+	})
 }
 
 // userAgentMiddleware returns an AssetServer middleware that sets the
