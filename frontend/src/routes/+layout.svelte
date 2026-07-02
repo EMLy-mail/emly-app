@@ -7,7 +7,19 @@
 	
 	let { children } = $props();
 
+	// WebView2 opens a new native window when a link is Shift+clicked. Block
+	// that at the source (capture phase, before it reaches the anchor's
+	// default action) so it never spawns unmanaged windows outside the app.
+	function suppressShiftClickNewWindow(e: MouseEvent) {
+		if (!e.shiftKey && !e.ctrlKey && !e.altKey) return;
+		if ((e.target as HTMLElement)?.closest('a[href]')) {
+			e.preventDefault();
+		}
+	}
+
 	onMount(async () => {
+		document.addEventListener('click', suppressShiftClickNewWindow, true);
+
 		setupConsoleLogger();
 
 		const loader = document.getElementById('app-loading');

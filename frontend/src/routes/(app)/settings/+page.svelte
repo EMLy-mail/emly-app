@@ -287,6 +287,8 @@
 
     async function refreshUpdaterStatus() {
         checkingUpdaterStatus = true;
+        // Sleep for 250ms
+        await new Promise((resolve) => setTimeout(resolve, 250));
         try {
             const status = await GetEMLyUpdaterStatus();
             LogDebug(`EMLy Updater status: ${JSON.stringify(status)}`);
@@ -677,20 +679,7 @@
                                 <div class="text-sm text-muted-foreground">
                                     {m.settings_danger_updater_check_hint()}
                                 </div>
-                            </div>
-                            <Button
-                                variant="destructive"
-                                class="cursor-pointer hover:cursor-pointer"
-                                onclick={refreshUpdaterStatus}
-                                disabled={checkingUpdaterStatus}
-                            >
-                                {#if checkingUpdaterStatus}
-                                    <Loader2 class="size-4 animate-spin" />
-                                {/if}
-                                {m.settings_danger_updater_refresh_btn()}
-                            </Button>
-                        </div>
-                        <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-4">
                             <div class="flex items-center gap-1.5 text-sm">
                                 {#if updaterInstalled}
                                     <CircleCheck class="size-4 text-green-500" />
@@ -708,6 +697,20 @@
                                 {m.settings_danger_updater_running_label()}
                             </div>
                         </div>
+                            </div>
+                            <Button
+                                variant="destructive"
+                                class="cursor-pointer hover:cursor-pointer"
+                                onclick={refreshUpdaterStatus}
+                                disabled={checkingUpdaterStatus}
+                            >
+                                {#if checkingUpdaterStatus}
+                                    <Loader2 class="size-4 animate-spin" />
+                                {/if}
+                                {m.settings_danger_updater_refresh_btn()}
+                            </Button>
+                        </div>
+                        
                     </div>
                     <Separator />
                     <div
