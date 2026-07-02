@@ -1,0 +1,6 @@
+# Patch files must stay LF-only on checkout regardless of core.autocrlf.
+# On Windows (incl. CI runners with autocrlf=true), a checked-out CRLF patch
+# file breaks `git apply`'s literal context-line matching against the
+# LF-only vendor/ (go mod vendor) and node_modules (bun install) trees these
+# patches target, even though the diff content itself never changed.
+*.patch text eol=lf
