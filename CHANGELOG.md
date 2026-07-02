@@ -1,5 +1,11 @@
 # Changelog EMLy
 
+# 1.8.1 (2026-07-02)
+1) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
+2) Aggiunta una patch Bun per correggere un warning di Vite dev-server causato da un modulo che punta a un file `.map` non pubblicato.
+3) Aggiornato il README: nuova sezione Configuration allineata alle chiavi reali di `config.ini`, rimossa la vecchia sezione del sistema di aggiornamento integrato (ora gestito da EMLy-Updater esterno), documentate le patch Wails/Bun e lo Standalone Image Reader.
+4) Aggiornata la CI/CD (GitHub Actions) per eseguire `scripts/vendor-wails-patch.ps1` prima della build, così il binario rilasciato include sempre il backport DevTools di Wails v3.
+
 # 1.8.0 (2026-06-01)
 1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
 2) Aggiornate dipendenze lato Frontend.

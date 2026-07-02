@@ -42,6 +42,9 @@ jobs:
         working-directory: frontend
         run: bun install
 
+      - name: Vendor & patch Wails v2 (DevTools backport)
+        run: ./scripts/vendor-wails-patch.ps1
+
       - name: Decode signing certificate
         shell: pwsh
         run: |
