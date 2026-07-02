@@ -38,6 +38,10 @@ export function GetCurrentMailFilePath() {
   return window['go']['main']['App']['GetCurrentMailFilePath']();
 }
 
+export function GetEMLyUpdaterStatus() {
+  return window['go']['main']['App']['GetEMLyUpdaterStatus']();
+}
+
 export function GetExportAttachmentFolder() {
   return window['go']['main']['App']['GetExportAttachmentFolder']();
 }

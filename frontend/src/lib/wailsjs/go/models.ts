@@ -211,6 +211,20 @@ export namespace main {
 	        this.mailFilePath = source["mailFilePath"];
 	    }
 	}
+	export class EMLyUpdaterStatus {
+	    Installed: boolean;
+	    Running: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new EMLyUpdaterStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Installed = source["Installed"];
+	        this.Running = source["Running"];
+	    }
+	}
 	export class ImageViewerData {
 	    data: string;
 	    filename: string;

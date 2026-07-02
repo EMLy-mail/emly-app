@@ -11,6 +11,9 @@
         Flame,
         Sun,
         Moon,
+        CircleCheck,
+        CircleX,
+        Loader2,
     } from "@lucide/svelte";
     import type { EMLy_GUI_Settings } from "$lib/types";
     import { toast } from "svelte-sonner";
@@ -35,6 +38,7 @@
         ShowOpenFolderDialog,
         SetExportAttachmentFolder,
         OpenDevTools,
+        GetEMLyUpdaterStatus,
     } from "$lib/wailsjs/go/main/App";
     import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
 
@@ -273,6 +277,34 @@
             }
             previousDangerZoneEnabled = $dangerZoneEnabled;
         })();
+    });
+
+    // Lazily checks (once) the EMLy Updater's installed/running state, when
+    // the danger zone becomes visible. Can be re-run via refreshUpdaterStatus.
+    let updaterInstalled = $state<boolean | null>(null);
+    let updaterRunning = $state<boolean | null>(null);
+    let checkingUpdaterStatus = $state(false);
+
+    async function refreshUpdaterStatus() {
+        checkingUpdaterStatus = true;
+        try {
+            const status = await GetEMLyUpdaterStatus();
+            LogDebug(`EMLy Updater status: ${JSON.stringify(status)}`);
+            updaterInstalled = status.Installed;
+            updaterRunning = status.Running;
+        } catch (err) {
+            LogDebug(`EMLy Updater status check failed: ${err}`);
+            updaterInstalled = false;
+            updaterRunning = false;
+        } finally {
+            checkingUpdaterStatus = false;
+        }
+    }
+
+    $effect(() => {
+        if (($dangerZoneEnabled || dev) && updaterInstalled === null) {
+            refreshUpdaterStatus();
+        }
     });
 
     // Sync theme with email viewer dark mode
@@ -632,6 +664,50 @@
                             >
                                 {m.settings_danger_devtools_btn_label()}
                             </Button>
+                    </div>
+                    <Separator />
+                    <div
+                        class="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-card p-4"
+                    >
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <Label class="text-sm"
+                                    >{m.settings_danger_updater_check_label()}</Label
+                                >
+                                <div class="text-sm text-muted-foreground">
+                                    {m.settings_danger_updater_check_hint()}
+                                </div>
+                            </div>
+                            <Button
+                                variant="destructive"
+                                class="cursor-pointer hover:cursor-pointer"
+                                onclick={refreshUpdaterStatus}
+                                disabled={checkingUpdaterStatus}
+                            >
+                                {#if checkingUpdaterStatus}
+                                    <Loader2 class="size-4 animate-spin" />
+                                {/if}
+                                {m.settings_danger_updater_refresh_btn()}
+                            </Button>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-1.5 text-sm">
+                                {#if updaterInstalled}
+                                    <CircleCheck class="size-4 text-green-500" />
+                                {:else}
+                                    <CircleX class="size-4 text-red-500" />
+                                {/if}
+                                {m.settings_danger_updater_installed_label()}
+                            </div>
+                            <div class="flex items-center gap-1.5 text-sm">
+                                {#if updaterRunning}
+                                    <CircleCheck class="size-4 text-green-500" />
+                                {:else}
+                                    <CircleX class="size-4 text-red-500" />
+                                {/if}
+                                {m.settings_danger_updater_running_label()}
+                            </div>
+                        </div>
                     </div>
                     <Separator />
                     <div

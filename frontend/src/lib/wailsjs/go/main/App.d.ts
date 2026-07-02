@@ -22,6 +22,8 @@ export function GetConfig():Promise<utils.Config>;
 
 export function GetCurrentMailFilePath():Promise<string>;
 
+export function GetEMLyUpdaterStatus():Promise<main.EMLyUpdaterStatus>;
+
 export function GetExportAttachmentFolder():Promise<string>;
 
 export function GetImageViewerData():Promise<main.ImageViewerData>;
