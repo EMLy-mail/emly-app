@@ -21,8 +21,8 @@ coverage.*
 *.coverprofile
 profile.cov
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# Dependency directories (regenerated + patched via scripts/vendor-wails-patch.ps1)
+vendor/
 
 # Go workspace file
 go.work

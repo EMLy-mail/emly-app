@@ -82,6 +82,10 @@ export function OpenDefaultAppsSettings() {
   return window['go']['main']['App']['OpenDefaultAppsSettings']();
 }
 
+export function OpenDevTools() {
+  return window['go']['main']['App']['OpenDevTools']();
+}
+
 export function OpenDocument(arg1, arg2) {
   return window['go']['main']['App']['OpenDocument'](arg1, arg2);
 }

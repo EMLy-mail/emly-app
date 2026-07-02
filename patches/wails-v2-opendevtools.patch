@@ -1,0 +1,93 @@
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
+@@ -167,6 +167,7 @@
+ 	WindowIsFullscreen() bool
+ 	WindowClose()
+ 	WindowPrint()
++	WindowOpenDevTools()
+ 
+ 	// Screen
+ 	ScreenGetAll() ([]Screen, error)
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/frontend.go
+@@ -463,6 +463,20 @@
+ 	f.ExecJS("window.print();")
+ }
+ 
++// WindowOpenDevTools opens the WebView2 DevTools window, backported from
++// Wails v3's webview_window_windows_devtools.go. Requires devtools to be
++// enabled (debug build, or frontendOptions.Debug.OpenInspectorOnStartup /
++// the F12 handler already rely on the same underlying capability).
++//
++// Bound methods run off the main thread, but the WebView2 COM object is
++// STA-affine and must only be touched from the thread that created it
++// (same reason WindowSetBackgroundColour etc. go through mainWindow.Invoke).
++func (f *Frontend) WindowOpenDevTools() {
++	f.mainWindow.Invoke(func() {
++		f.chromium.OpenDevToolsWindow()
++	})
++}
++
+ func (f *Frontend) setupChromium() {
+ 	chromium := f.chromium
+ 
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
+@@ -215,6 +215,12 @@
+ 	f.ExecJS(fmt.Sprintf("window.location.href = '%s';", f.startURL))
+ }
+ 
++// WindowOpenDevTools is a no-op on macOS: WKWebView's inspector is toggled
++// natively (Option-click / Safari's Develop menu), there is no programmatic
++// open API exposed here. Kept for Frontend interface parity with Windows.
++func (f *Frontend) WindowOpenDevTools() {
++}
++
+ func (f *Frontend) WindowSetSystemDefaultTheme() {
+ }
+ 
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
+@@ -255,6 +255,12 @@
+ 	f.ExecJS("runtime.WindowReload();")
+ }
+ 
++// WindowOpenDevTools is a no-op on Linux: webkit2gtk's WebKitWebInspector
++// isn't wired up here, so there is no programmatic open API exposed. Kept
++// for Frontend interface parity with Windows.
++func (f *Frontend) WindowOpenDevTools() {
++}
++
+ func (f *Frontend) WindowSetSystemDefaultTheme() {
+ 	return
+ }
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/devserver/devserver.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/devserver/devserver.go
+@@ -146,6 +146,10 @@
+ 	d.Frontend.WindowReloadApp()
+ }
+ 
++func (d *DevWebServer) WindowOpenDevTools() {
++	d.Frontend.WindowOpenDevTools()
++}
++
+ func (d *DevWebServer) Notify(name string, data ...interface{}) {
+ 	d.notify(name, data...)
+ }
+--- a/vendor/github.com/wailsapp/wails/v2/pkg/runtime/window.go
++++ b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/window.go
+@@ -36,6 +36,14 @@
+ 	appFrontend.WindowReload()
+ }
+ 
++// WindowOpenDevTools opens the developer tools, backported from Wails v3.
++// On Windows this opens the WebView2 DevTools window; it is a no-op on
++// macOS and Linux, where no equivalent programmatic API is wired up.
++func WindowOpenDevTools(ctx context.Context) {
++	appFrontend := getFrontend(ctx)
++	appFrontend.WindowOpenDevTools()
++}
++
+ // WindowReloadApp will reload the application
+ func WindowReloadApp(ctx context.Context) {
+ 	appFrontend := getFrontend(ctx)

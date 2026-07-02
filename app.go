@@ -271,3 +271,10 @@ func (a *App) IsAppInDebugMode() bool {
 	}
 	return utils.IsRunningInDebugMode()
 }
+
+// OpenDevTools opens the WebView2 developer tools window. Backported from
+// Wails v3 (see patches/wails-v2-opendevtools.patch); no-op on macOS/Linux
+// where no equivalent programmatic API is wired up in Wails v2.
+func (a *App) OpenDevTools() {
+	runtime.WindowOpenDevTools(a.ctx)
+}
