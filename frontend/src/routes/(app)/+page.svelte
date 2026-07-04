@@ -11,6 +11,7 @@
   import { X, Plus, Mail, FileText, Image, ChevronLeft, ChevronRight, Loader2 } from "@lucide/svelte";
   import { openAndLoadEmail } from "$lib/utils/mail";
   import { onDestroy, onMount } from "svelte";
+  import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
 
   let { data } = $props();
 
@@ -141,37 +142,65 @@
             onscroll={updateScrollState}
             onwheel={handleTabStripWheel}
           >
-            {#each mailState.tabs as tab (tab.id)}
+            {#each mailState.tabs as tab, i (tab.id)}
               {@const isActive = tab.id === mailState.activeTabId}
-              <!-- svelte-ignore a11y_interactive_supports_focus -->
-              <div
-                class="tab-item"
-                class:active={isActive}
-                role="tab"
-                aria-selected={isActive}
-                onclick={() => mailState.setActiveTab(tab.id)}
-                onkeydown={(e) =>
-                  e.key === "Enter" && mailState.setActiveTab(tab.id)}
-              >
-                <span class="tab-icon">
-                  {#if tab.type === "pdf"}
-                    <FileText size="11" strokeWidth={2} />
-                  {:else if tab.type === "image"}
-                    <Image size="11" strokeWidth={2} />
-                  {:else}
-                    <Mail size="11" strokeWidth={2} />
-                  {/if}
-                </span>
-                <span class="tab-label">{getTabLabel(tab)}</span>
-                <button
-                  class="tab-close"
-                  tabindex={-1}
-                  aria-label={m.tabs_close_tab_label()}
-                  onclick={(e) => closeTab(tab.id, e)}
+              <ContextMenu.Root>
+                <ContextMenu.Trigger
+                  class={isActive ? "tab-item active" : "tab-item"}
+                  role="tab"
+                  aria-selected={isActive}
+                  onclick={() => mailState.setActiveTab(tab.id)}
+                  onkeydown={(e: KeyboardEvent) =>
+                    e.key === "Enter" && mailState.setActiveTab(tab.id)}
                 >
-                  <X size="11" strokeWidth={2.5} />
-                </button>
-              </div>
+                  <span class="tab-icon">
+                    {#if tab.type === "pdf"}
+                      <FileText size="11" strokeWidth={2} />
+                    {:else if tab.type === "image"}
+                      <Image size="11" strokeWidth={2} />
+                    {:else}
+                      <Mail size="11" strokeWidth={2} />
+                    {/if}
+                  </span>
+                  <span class="tab-label">{getTabLabel(tab)}</span>
+                  <button
+                    class="tab-close"
+                    tabindex={-1}
+                    aria-label={m.tabs_close_tab_label()}
+                    onclick={(e) => closeTab(tab.id, e)}
+                  >
+                    <X size="11" strokeWidth={2.5} />
+                  </button>
+                </ContextMenu.Trigger>
+                <ContextMenu.Content>
+                  <ContextMenu.Item onclick={() => mailState.removeTab(tab.id)}>
+                    {m.tabs_context_close()}
+                  </ContextMenu.Item>
+                  <ContextMenu.Item
+                    disabled={mailState.tabs.length <= 1}
+                    onclick={() => mailState.closeOtherTabs(tab.id)}
+                  >
+                    {m.tabs_context_close_others()}
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator />
+                  <ContextMenu.Item
+                    disabled={i === 0}
+                    onclick={() => mailState.closeTabsToLeft(tab.id)}
+                  >
+                    {m.tabs_context_close_left()}
+                  </ContextMenu.Item>
+                  <ContextMenu.Item
+                    disabled={i === mailState.tabs.length - 1}
+                    onclick={() => mailState.closeTabsToRight(tab.id)}
+                  >
+                    {m.tabs_context_close_right()}
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator />
+                  <ContextMenu.Item onclick={() => mailState.closeAllTabs()}>
+                    {m.tabs_context_close_all()}
+                  </ContextMenu.Item>
+                </ContextMenu.Content>
+              </ContextMenu.Root>
             {/each}
 
             <!-- Add tab button — inside scroll area, right after the last tab -->
@@ -342,7 +371,9 @@
   }
 
   /* ── Individual tab ── */
-  .tab-item {
+  /* :global() because .tab-item is applied via a prop to <ContextMenu.Trigger>,
+     whose rendered element lives outside this component's scoped-CSS template */
+  :global(.tab-item) {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -369,12 +400,12 @@
     padding-bottom: 1px;
   }
 
-  .tab-item:hover {
+  :global(.tab-item):hover {
     background: color-mix(in srgb, var(--muted) 70%, transparent);
     color: var(--foreground);
   }
 
-  .tab-item.active {
+  :global(.tab-item.active) {
     background: var(--card);
     border-color: var(--border);
     color: var(--foreground);
@@ -411,8 +442,8 @@
       color 0.1s;
   }
 
-  .tab-item:hover .tab-close,
-  .tab-item.active .tab-close {
+  :global(.tab-item):hover .tab-close,
+  :global(.tab-item.active) .tab-close {
     opacity: 0.7;
   }
 

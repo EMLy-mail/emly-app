@@ -69,6 +69,37 @@ class MailState {
         this.activeTabId = id;
     }
 
+    closeAllTabs() {
+        this.clear();
+    }
+
+    closeOtherTabs(id: string) {
+        const keep = this.tabs.find(t => t.id === id);
+        if (!keep) return;
+        this.tabs = [keep];
+        this.activeTabId = id;
+    }
+
+    closeTabsToLeft(id: string) {
+        const idx = this.tabs.findIndex(t => t.id === id);
+        if (idx === -1) return;
+        const newTabs = this.tabs.slice(idx);
+        this.tabs = newTabs;
+        if (!newTabs.some(t => t.id === this.activeTabId)) {
+            this.activeTabId = id;
+        }
+    }
+
+    closeTabsToRight(id: string) {
+        const idx = this.tabs.findIndex(t => t.id === id);
+        if (idx === -1) return;
+        const newTabs = this.tabs.slice(0, idx + 1);
+        this.tabs = newTabs;
+        if (!newTabs.some(t => t.id === this.activeTabId)) {
+            this.activeTabId = id;
+        }
+    }
+
     clear() {
         this.tabs = [];
         this.activeTabId = null;

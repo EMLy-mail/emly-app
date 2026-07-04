@@ -1,7 +1,9 @@
 # Changelog EMLy
 
-# 1.8.1 (2026-07-02)
+# 1.8.1 (2026-07-02, 2026-07-04)
 1) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
+2) Aggiornate dipendenze lato Frontend (Vite 8, Typescript 6).
+3) Aggiunto un menu contestuale (tasto destro) sulle tab del Mail Viewer per chiudere tutte le tab, tutte tranne quella selezionata, o quelle a sinistra/destra.
 
 # 1.8.0 (2026-06-01)
 1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
