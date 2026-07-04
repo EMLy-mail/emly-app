@@ -120,12 +120,6 @@
         runningInDebugMode.set(await IsAppInDebugMode());
     });
 
-    function handleWheel(event: WheelEvent) {
-        if (event.ctrlKey) {
-            event.preventDefault();
-        }
-    }
-
     async function detectDebugging() {
         if (!browser) return;
         if (isDebugerOn === true) return; // Prevent multiple detections
@@ -178,7 +172,7 @@
     syncMaxState();
 </script>
 
-<div class="app" onwheel={handleWheel}>
+<div class="app">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class="titlebar"
