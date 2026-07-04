@@ -59,6 +59,32 @@ func (a *App) bringToForeground() {
 		time.Sleep(200 * time.Millisecond)
 		runtime.WindowSetAlwaysOnTop(a.ctx, false)
 	}()
+
+	a.setTrayVisible(true)
+}
+
+// hideToTray hides the main window without quitting, mirroring what
+// HideWindowOnClose already does when the user clicks the window's close
+// button - used by the "Nascondi EMLy" tray menu item.
+func (a *App) hideToTray() {
+	runtime.WindowHide(a.ctx)
+	a.setTrayVisible(false)
+}
+
+// setTrayVisible records whether the main window is currently shown and
+// rebuilds the tray menu so its toggle item's label matches ("Nascondi
+// EMLy" / "Mostra EMLy"). It's only called from our own show/hide code
+// paths (tray menu clicks, second-instance activation) - if the window is
+// ever hidden or shown by some other means, the label can lag until the
+// next tray action, which then self-corrects it.
+func (a *App) setTrayVisible(visible bool) {
+	a.trayVisibleMux.Lock()
+	a.trayVisible = visible
+	a.trayVisibleMux.Unlock()
+
+	if a.trayIconBase64 != "" {
+		runtime.TraySetSystemTray(a.ctx, a.buildTrayMenu())
+	}
 }
 
 // trayIconBase64 extracts the ICO entry closest to preferredSize from the
@@ -103,23 +129,41 @@ func trayIconBase64(ico []byte, preferredSize int) (string, error) {
 	return base64.StdEncoding.EncodeToString(ico[bestOffset:end]), nil
 }
 
-// newTrayMenu builds the system tray icon menu. Left-clicking the tray icon
-// already restores the window (handled natively by Wails); the menu is only
-// shown on right-click.
-func newTrayMenu(app *App, iconBase64 string) *menu.TrayMenu {
+// buildTrayMenu builds the system tray icon menu. Left-clicking the tray
+// icon always restores the window (handled natively by Wails); the menu is
+// only shown on right-click, and its "Mostra"/"Nascondi" item toggles based
+// on the last known window visibility (see setTrayVisible).
+func (a *App) buildTrayMenu() *menu.TrayMenu {
 	trayMenu := menu.NewMenu()
-	trayMenu.AddText("Mostra EMLy", nil, func(_ *menu.CallbackData) {
-		app.bringToForeground()
-	})
+	guiVersion := "unknown"
+	if cfg, err := utils.LoadConfig(utils.DefaultConfigPath()); err == nil && cfg != nil {
+		guiVersion = cfg.EMLy.GUISemver
+	}
+	trayMenu.AddText("Versione: "+guiVersion, nil, nil).Disable()
+	trayMenu.AddSeparator()
+
+	a.trayVisibleMux.Lock()
+	visible := a.trayVisible
+	a.trayVisibleMux.Unlock()
+
+	if visible {
+		trayMenu.AddText("Nascondi EMLy", nil, func(_ *menu.CallbackData) {
+			a.hideToTray()
+		})
+	} else {
+		trayMenu.AddText("Mostra EMLy", nil, func(_ *menu.CallbackData) {
+			a.bringToForeground()
+		})
+	}
 	trayMenu.AddSeparator()
 	trayMenu.AddText("Esci", nil, func(_ *menu.CallbackData) {
-		runtime.Quit(app.ctx)
+		runtime.Quit(a.ctx)
 	})
 
 	return &menu.TrayMenu{
 		Label:   "EMLy",
 		Tooltip: "EMLy - EML Viewer for 3gIT",
-		Image:   iconBase64,
+		Image:   a.trayIconBase64,
 		Menu:    trayMenu,
 	}
 }
@@ -213,7 +257,9 @@ func main() {
 		if iconBase64, err := trayIconBase64(trayIconICO, 32); err != nil {
 			pkglogger.Error("failed to prepare tray icon", "error", err.Error())
 		} else {
-			appOptions.Tray = newTrayMenu(app, iconBase64)
+			app.trayIconBase64 = iconBase64
+			app.trayVisible = true // the main window starts shown
+			appOptions.Tray = app.buildTrayMenu()
 			appOptions.HideWindowOnClose = true
 		}
 	}

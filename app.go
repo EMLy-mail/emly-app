@@ -57,6 +57,18 @@ type App struct {
 	// httpClient is a shared HTTP client with custom User-Agent for all
 	// outgoing requests (heartbeat, bug report upload, etc.)
 	httpClient *http.Client
+
+	// trayIconBase64 is the base64-encoded tray icon image, set once at
+	// startup by main(); empty on windows that don't have a tray (viewers).
+	trayIconBase64 string
+
+	// trayVisibleMux guards trayVisible, which mirrors whether the main
+	// window is currently shown (true) or hidden in the tray (false). It's
+	// only updated by our own show/hide code paths (tray menu, second
+	// instance activation), so it can drift if the window is hidden by
+	// some other means - see setTrayVisible.
+	trayVisibleMux sync.Mutex
+	trayVisible    bool
 }
 
 // =============================================================================
