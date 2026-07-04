@@ -82,12 +82,15 @@ EMLy no longer ships a built-in update checker/installer. Version rollout is han
 
 ## Wails v2 Patches
 
-This project backports one feature from Wails v3 onto the pinned Wails v2.12.0: a `WindowOpenDevTools` runtime call (exposed on `App` as `OpenDevTools()`) that programmatically opens the WebView2 DevTools window, since v2 only exposes this via the F12 shortcut.
+This project backports features onto the pinned Wails v2.12.0 that aren't in that release yet:
 
-The change lives as a patch, not a fork, so it never needs to be manually re-applied against a re-pulled copy of Wails:
+- `patches/wails-v2-opendevtools.patch` - a `WindowOpenDevTools` runtime call (exposed on `App` as `OpenDevTools()`) that programmatically opens the WebView2 DevTools window, since v2 only exposes this via the F12 shortcut. Backported from Wails v3.
+- `patches/wails-v2-tray-icon.patch` - system tray support (`runtime.TraySetSystemTray`, `options.Tray`), backported from upstream PR [wailsapp/wails#4991](https://github.com/wailsapp/wails/pull/4991) and rebased onto v2.12.0 (the PR's own branch predates that release). Test-only files from the PR (not part of `go mod vendor` output) were dropped from the patch.
 
-- `patches/wails-v2-opendevtools.patch` - unified diff against `vendor/github.com/wailsapp/wails/v2`
-- `scripts/vendor-wails-patch.ps1` - runs `go mod vendor` and (re)applies the patch
+Each change lives as a patch, not a fork, so it never needs to be manually re-applied against a re-pulled copy of Wails:
+
+- `patches/*.patch` - unified diffs against `vendor/github.com/wailsapp/wails/v2`, applied in alphabetical order
+- `scripts/vendor-wails-patch.ps1` - runs `go mod vendor` and (re)applies every patch under `patches/`
 
 `vendor/` itself is gitignored and regenerated locally; run the script above after cloning and after any Wails version bump (it will fail loudly if the patch no longer applies cleanly, meaning the upstream code moved and the patch needs a manual re-diff).
 

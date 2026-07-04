@@ -4,6 +4,7 @@
 1) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
 2) Aggiornate dipendenze lato Frontend (Vite 8, Typescript 6).
 3) Aggiunto un menu contestuale (tasto destro) sulle tab del Mail Viewer per chiudere tutte le tab, tutte tranne quella selezionata, o quelle a sinistra/destra.
+4) Aggiunta l'icona di EMLy nella system tray: chiudendo la finestra principale, l'app resta in esecuzione in tray invece di terminare; dal menu dell'icona è possibile riaprire la finestra ("Mostra EMLy") o uscire definitivamente ("Esci"). Il supporto tray è backportato dalla PR upstream Wails v2 [#4991](https://github.com/wailsapp/wails/pull/4991) (non ancora rilasciata), applicato anch'esso tramite patch su `vendor/`.
 
 # 1.8.0 (2026-06-01)
 1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.

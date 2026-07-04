@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"embed"
+	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/mbndr/figlet4go"
 	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -24,6 +27,9 @@ import (
 //go:embed all:frontend/build
 var assets embed.FS
 
+//go:embed build/windows/icon.ico
+var trayIconICO []byte
+
 func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceData) {
 	var secondInstanceArgs []string
 	secondInstanceArgs = secondInstanceData.Args
@@ -32,6 +38,15 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 		"args", strings.Join(secondInstanceData.Args, ","),
 		"working_dir", secondInstanceData.WorkingDirectory,
 	)
+	a.bringToForeground()
+
+	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
+}
+
+// bringToForeground restores and focuses the main window, used both when a
+// second instance is launched and when the user picks "Mostra EMLy" from the
+// tray menu.
+func (a *App) bringToForeground() {
 	runtime.WindowUnminimise(a.ctx)
 	runtime.WindowShow(a.ctx)
 
@@ -44,8 +59,69 @@ func (a *App) onSecondInstanceLaunch(secondInstanceData options.SecondInstanceDa
 		time.Sleep(200 * time.Millisecond)
 		runtime.WindowSetAlwaysOnTop(a.ctx, false)
 	}()
+}
 
-	go runtime.EventsEmit(a.ctx, "launchArgs", secondInstanceArgs)
+// trayIconBase64 extracts the ICO entry closest to preferredSize from the
+// embedded icon and returns it base64-encoded, in the form Wails' Windows
+// tray implementation expects when Image isn't a file path. Passing a file
+// path instead doesn't work: it's loaded via the Win32 LoadIcon function,
+// which (with a null module handle) only resolves predefined system icon
+// IDs, not arbitrary file paths - it silently fails for any real .ico file.
+func trayIconBase64(ico []byte, preferredSize int) (string, error) {
+	if len(ico) < 6 || binary.LittleEndian.Uint16(ico[2:4]) != 1 {
+		return "", fmt.Errorf("not a valid .ico file")
+	}
+	count := int(binary.LittleEndian.Uint16(ico[4:6]))
+
+	var bestOffset, bestSize uint32
+	bestDiff := int(^uint(0) >> 1)
+	off := 6
+	for i := 0; i < count && off+16 <= len(ico); i++ {
+		width := int(ico[off])
+		if width == 0 {
+			width = 256
+		}
+		byteSize := binary.LittleEndian.Uint32(ico[off+8 : off+12])
+		imageOffset := binary.LittleEndian.Uint32(ico[off+12 : off+16])
+
+		absDiff := width - preferredSize
+		if absDiff < 0 {
+			absDiff = -absDiff
+		}
+		if absDiff < bestDiff {
+			bestDiff = absDiff
+			bestOffset = imageOffset
+			bestSize = byteSize
+		}
+		off += 16
+	}
+
+	end := bestOffset + bestSize
+	if bestSize == 0 || end > uint32(len(ico)) {
+		return "", fmt.Errorf("no usable image found in .ico data")
+	}
+	return base64.StdEncoding.EncodeToString(ico[bestOffset:end]), nil
+}
+
+// newTrayMenu builds the system tray icon menu. Left-clicking the tray icon
+// already restores the window (handled natively by Wails); the menu is only
+// shown on right-click.
+func newTrayMenu(app *App, iconBase64 string) *menu.TrayMenu {
+	trayMenu := menu.NewMenu()
+	trayMenu.AddText("Mostra EMLy", nil, func(_ *menu.CallbackData) {
+		app.bringToForeground()
+	})
+	trayMenu.AddSeparator()
+	trayMenu.AddText("Esci", nil, func(_ *menu.CallbackData) {
+		runtime.Quit(app.ctx)
+	})
+
+	return &menu.TrayMenu{
+		Label:   "EMLy",
+		Tooltip: "EMLy - EML Viewer for 3gIT",
+		Image:   iconBase64,
+		Menu:    trayMenu,
+	}
 }
 
 func main() {
@@ -69,6 +145,7 @@ func main() {
 	windowWidth := 1024
 	windowHeight := 700
 	frameless := true
+	isMainWindow := true
 
 	for _, arg := range args {
 		if strings.Contains(arg, "--view-image") || isImageFilePath(arg) {
@@ -76,6 +153,7 @@ func main() {
 			windowTitle = "EMLy Image Viewer"
 			windowWidth = 800
 			windowHeight = 600
+			isMainWindow = false
 
 		}
 		if strings.Contains(arg, "--view-pdf") {
@@ -84,6 +162,7 @@ func main() {
 			windowWidth = 800
 			windowHeight = 600
 			frameless = true
+			isMainWindow = false
 		}
 	}
 
@@ -103,7 +182,7 @@ func main() {
 	}
 
 	// Create application with options
-	err := wails.Run(&options.App{
+	appOptions := &options.App{
 		Title:  windowTitle,
 		Width:  windowWidth,
 		Height: windowHeight,
@@ -126,7 +205,20 @@ func main() {
 		MinHeight:                690,
 		Frameless:                frameless,
 		OnBeforeClose:            app.beforeClose,
-	})
+	}
+
+	// The tray icon only makes sense on the main window; standalone image/PDF
+	// viewer windows close normally when the user closes them.
+	if isMainWindow {
+		if iconBase64, err := trayIconBase64(trayIconICO, 32); err != nil {
+			pkglogger.Error("failed to prepare tray icon", "error", err.Error())
+		} else {
+			appOptions.Tray = newTrayMenu(app, iconBase64)
+			appOptions.HideWindowOnClose = true
+		}
+	}
+
+	err := wails.Run(appOptions)
 
 	if err != nil {
 		pkglogger.Error("application error", "error", err.Error())
