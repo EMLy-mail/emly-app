@@ -252,8 +252,15 @@ func main() {
 	}
 
 	// The tray icon only makes sense on the main window; standalone image/PDF
-	// viewer windows close normally when the user closes them.
-	if isMainWindow {
+	// viewer windows close normally when the user closes them. It can also be
+	// turned off entirely from the settings danger zone (DISABLE_TRAY_ICON in
+	// config.ini), which takes effect on the next restart.
+	trayIconEnabled := true
+	if cfg, err := utils.LoadConfig(utils.DefaultConfigPath()); err == nil && cfg != nil {
+		trayIconEnabled = !cfg.EMLy.DisableTrayIcon
+	}
+
+	if isMainWindow && trayIconEnabled {
 		if iconBase64, err := trayIconBase64(trayIconICO, 32); err != nil {
 			pkglogger.Error("failed to prepare tray icon", "error", err.Error())
 		} else {

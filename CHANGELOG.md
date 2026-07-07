@@ -1,16 +1,21 @@
 # Changelog EMLy
 
-# 1.8.1 (2026-07-02, 2026-07-04)
-1) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
-2) Aggiornate dipendenze lato Frontend (Vite 8, Typescript 6).
-3) Aggiunto un menu contestuale (tasto destro) sulle tab del Mail Viewer per chiudere tutte le tab, tutte tranne quella selezionata, o quelle a sinistra/destra.
-4) Aggiunta l'icona di EMLy nella system tray: chiudendo la finestra principale, l'app resta in esecuzione in tray invece di terminare; dal menu dell'icona è possibile riaprire la finestra ("Mostra EMLy") o uscire definitivamente ("Esci"). Il supporto tray è backportato dalla PR upstream Wails v2 [#4991](https://github.com/wailsapp/wails/pull/4991) (non ancora rilasciata), applicato anch'esso tramite patch su `vendor/`.
-
-# 1.8.0 (2026-06-01)
-1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
-2) Aggiornate dipendenze lato Frontend.
-3) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
-4) Fixati vari bug
+# 1.8.0 (2026-07-01, 2026-07-02, 2026-07-04, 2026-07-07)
+1) Fixati vari bug
+2) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
+3) Aggiornate dipendenze lato Frontend.
+4) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
+5) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
+6) Aggiunto un menu contestuale (tasto destro) sulle tab del Mail Viewer per chiudere tutte le tab, tutte tranne quella selezionata, o quelle a sinistra/destra.
+7) Aggiornate dipendenze lato Frontend (Vite 8, Typescript 6).
+8) Fixato un bug dove, tenendo premuto CTRL + Scroll del mouse, la WebView2 zoomava in/out nelle Card Dialog
+9) Aggiunta l'icona di EMLy nella system tray: chiudendo la finestra principale, l'app resta in esecuzione in tray invece di terminare; dal menu dell'icona è possibile riaprire la finestra ("Mostra EMLy") o uscire definitivamente ("Esci"). Il supporto tray è backportato dalla PR upstream Wails v2 [#4991](https://github.com/wailsapp/wails/pull/4991) (non ancora rilasciata), applicato anch'esso tramite patch su `vendor/`.
+10) Aggiornato Wails v2 alla v2.13.0
+11) Aggiornate dipendenze lato Backend (Golang)
+12) Aggiunta nelle Impostazioni (Zona Pericolosa) la possibilità di attivare/disattivare l'icona nella system tray, con effetto al riavvio dell'app.
+13) Aggiunto un controllo di idoneità del dispositivo (hostname e dominio Active Directory): se il dispositivo non risulta approvato per l'utilizzo di EMLy, viene mostrato un avviso dedicato, il corpo delle email viene sfocato, l'apertura degli allegati e delle email PEC viene bloccata (con toast esplicativo), e il pulsante "Apri DevTools" nelle Impostazioni viene disabilitato. Il controllo può essere disattivato dalle Impostazioni (Zona Pericolosa).
+14) Aggiunta una pagina "Privacy Policy" (raggiungibile dalla footerbar), che descrive quali dati EMLy raccoglie, cosa resta sul dispositivo e cosa viene eventualmente inviato al servizio di segnalazione bug di 3gIT.
+15) Fixato un bug dove il controllo di idoneità del dispositivo poteva non attivarsi in produzione a causa di una race condition tra il caricamento asincrono dei dati macchina e il controllo stesso.
 
 # 1.7.9 (2026-06-23)
 1) Fixato un bug dove la finestra non veniva portata in primo piano quando si apriva una mail con EMLy già in esecuzione.
@@ -148,28 +153,21 @@
 4) Fixato un bug dove, nel Bug Reporting, non si disattivaa il pulsante di invio, se tutti i campi erano compilati.
 5) Aggiunto il supprto all'allegare i file di localStorage e config.ini al Bug Report, per investigare meglio i problemi legati all'ambiente dell'utente.
 
-
-
 ## 1.5.3 (2026-02-10)
 1) Sistemato un bug dove, al primo avvio, il tema chiaro era applicato insieme all'opzioni del tema scuro sul contenuto mail, causando un contrasto eccessivo.
-
-
 
 ## 1.5.2 (2026-02-10)
 1) Supporto tema chiaro/scuro.
 2) Internazionalizzazione completa (Italiano/Inglese).
 3) Opzioni di accessibilità (riduzione animazioni, contrasto).
 
-
 ## 1.5.1 (2026-02-09)
 1) Sistemato un bug del primo avvio, con mismatch della lingua.
 2) Aggiunto il supporto all'installazione sotto AppData/Local
 
-
 ## 1.5.0 (2026-02-08)
 1) Sistema di aggiornamento automatico self-hosted (ancora non attivo di default).
 2) Sistema di bug report integrato.
-
 
 ## 1.4.1 (2026-02-06)
 1) Export/Import impostazioni.

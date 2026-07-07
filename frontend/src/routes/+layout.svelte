@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { setupConsoleLogger } from '$lib/utils/logger-hook';
-	import { GetMachineData } from '$lib/wailsjs/go/main/App';
+	import { GetExtendedMachineData, GetMachineData } from '$lib/wailsjs/go/main/App';
 	import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
 	import "./layout.css";
 	
@@ -45,7 +45,7 @@
 			if(systemInfoStore.data) {
 				return;
 			}
-			const info = await GetMachineData();
+			const info = await GetExtendedMachineData();
 			systemInfoStore.setData(info);
 		} catch (e) {
 			console.error('Failed to fetch machine data', e);

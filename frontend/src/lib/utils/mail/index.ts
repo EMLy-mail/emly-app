@@ -42,3 +42,6 @@ export {
   processEmailBody,
   type LoadEmailResult,
 } from './email-loader';
+
+// PEC integrity guard
+export { isPecOpenBlocked } from './pec-guard';

@@ -8,6 +8,7 @@ interface EMLy_GUI_Settings {
     useBuiltinPDFViewer?: boolean;
     previewFileSupportedTypes?: SupportedFileTypePreview[];
     enableAttachedDebuggerProtection?: boolean;
+    enableHostIntegrityCheck?: boolean;
     useDarkEmailViewer?: boolean;
     musicInspirationEnabled?: boolean;
     reduceMotion?: boolean;

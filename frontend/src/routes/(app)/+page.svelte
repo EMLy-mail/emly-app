@@ -9,7 +9,7 @@
   import * as m from "$lib/paraglide/messages.js";
   import { toast } from "svelte-sonner";
   import { X, Plus, Mail, FileText, Image, ChevronLeft, ChevronRight, Loader2 } from "@lucide/svelte";
-  import { openAndLoadEmail } from "$lib/utils/mail";
+  import { openAndLoadEmail, isPecOpenBlocked } from "$lib/utils/mail";
   import { onDestroy, onMount } from "svelte";
   import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
 
@@ -49,6 +49,7 @@
 
   onMount(() => {
     if (data.email) {
+      if (isPecOpenBlocked(data.email)) return;
       if (settingsStore.settings.enableTabMode) {
         mailState.addTab(data.email);
         sidebarOpen.set(false);
@@ -91,8 +92,10 @@
     const result = await openAndLoadEmail();
 
     if (!result.cancelled && result.success && result.email) {
-      mailState.addTab(result.email);
-      sidebarOpen.set(false);
+      if (!isPecOpenBlocked(result.email)) {
+        mailState.addTab(result.email);
+        sidebarOpen.set(false);
+      }
     } else if (result.error) {
       toast.error(m.mail_error_opening());
     }

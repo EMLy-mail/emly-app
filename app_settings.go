@@ -145,3 +145,24 @@ func (a *App) GetExportAttachmentFolder() string {
 	}
 	return config.EMLy.ExportAttachmentFolder
 }
+
+// SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
+// The system tray icon is only created at startup (see main.go), so this
+// takes effect after the next restart (see RestartApp).
+//
+// Parameters:
+//   - enabled: whether the system tray icon should be shown on next startup
+//
+// Returns:
+//   - error: Error if loading or saving config fails
+func (a *App) SetTrayIconEnabled(enabled bool) error {
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.DisableTrayIcon = !enabled
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
+}

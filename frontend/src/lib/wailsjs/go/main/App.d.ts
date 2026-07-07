@@ -26,6 +26,8 @@ export function GetEMLyUpdaterStatus():Promise<main.EMLyUpdaterStatus>;
 
 export function GetExportAttachmentFolder():Promise<string>;
 
+export function GetExtendedMachineData():Promise<utils.ExtendedMachineInfo>;
+
 export function GetImageViewerData():Promise<main.ImageViewerData>;
 
 export function GetLogsDir():Promise<string>;
@@ -93,6 +95,8 @@ export function SaveScreenshotAs():Promise<string>;
 export function SetCurrentMailFilePath(arg1:string):Promise<void>;
 
 export function SetExportAttachmentFolder(arg1:string):Promise<void>;
+
+export function SetTrayIconEnabled(arg1:boolean):Promise<void>;
 
 export function ShowOpenFileDialog():Promise<string>;
 

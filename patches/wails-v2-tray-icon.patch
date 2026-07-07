@@ -1,5 +1,5 @@
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/app/app_dev.go b/vendor/github.com/wailsapp/wails/v2/internal/app/app_dev.go
-index 6de845f96..0db30b297 100644
+index 6de845f..0db30b2 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/app/app_dev.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/app/app_dev.go
 @@ -30,6 +30,9 @@ import (
@@ -12,29 +12,8 @@ index 6de845f96..0db30b297 100644
  	a.frontend.RunMainLoop()
  	a.frontend.WindowClose()
  	if a.shutdownCallback != nil {
-diff --git a/vendor/github.com/wailsapp/wails/v2/internal/app/app_devtools.go b/vendor/github.com/wailsapp/wails/v2/internal/app/app_devtools.go
-index 60b221094..a84e8c283 100644
---- a/vendor/github.com/wailsapp/wails/v2/internal/app/app_devtools.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/app/app_devtools.go
-@@ -1,8 +1,8 @@
--//go:build devtools
--
--package app
--
--// Note: devtools flag is also added in debug builds
--func IsDevtoolsEnabled() bool {
--	return true
--}
-+//go:build devtools
-+
-+package app
-+
-+// Note: devtools flag is also added in debug builds
-+func IsDevtoolsEnabled() bool {
-+	return true
-+}
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/app/app_production.go b/vendor/github.com/wailsapp/wails/v2/internal/app/app_production.go
-index 9eb0e5a66..849374a38 100644
+index 9eb0e5a..849374a 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/app/app_production.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/app/app_production.go
 @@ -16,6 +16,9 @@ import (
@@ -48,7 +27,7 @@ index 9eb0e5a66..849374a38 100644
  	a.frontend.WindowClose()
  	if a.shutdownCallback != nil {
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.h b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.h
-index c3cd8075a..d6660904b 100644
+index dc4c756..3962165 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.h
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.h
 @@ -62,6 +62,8 @@ void AppendRole(void *inctx, void *inMenu, int role);
@@ -61,7 +40,7 @@ index c3cd8075a..d6660904b 100644
  void* AppendMenuItem(void* inctx, void* nsmenu, const char* label, const char* shortcutKey, int modifiers, int disabled, int checked, int menuItemID);
  void AppendSeparator(void* inMenu);
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.m b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.m
-index 38b2f35ef..1ab9d1956 100644
+index e251233..60fd295 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.m
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/Application.m
 @@ -336,6 +336,52 @@ void UpdateApplicationMenu(void *inctx) {
@@ -118,10 +97,10 @@ index 38b2f35ef..1ab9d1956 100644
      WailsContext *ctx = (__bridge WailsContext*) inctx;
      NSString *_title = safeInit(title);
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.h b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.h
-index aafc3a1d4..576634466 100644
+index 1a2d53d..1657d28 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.h
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.h
-@@ -36,7 +36,7 @@
+@@ -37,7 +37,7 @@
  @property (retain) WailsWebView* webview;
  @property (nonatomic, assign) id appdelegate;
  
@@ -130,7 +109,7 @@ index aafc3a1d4..576634466 100644
  @property bool shuttingDown;
  @property bool startHidden;
  @property bool startFullscreen;
-@@ -55,6 +55,8 @@
+@@ -56,6 +56,8 @@
  
  @property (retain) NSMenu* applicationMenu;
  
@@ -139,20 +118,20 @@ index aafc3a1d4..576634466 100644
  @property (retain) NSImage* aboutImage;
  @property (retain) NSString* aboutTitle;
  @property (retain) NSString* aboutDescription;
-@@ -65,7 +67,7 @@ struct Preferences {
-   bool *fullscreenEnabled;
+@@ -67,7 +69,7 @@ struct Preferences {
+   const char *applicationNameForUserAgent;
  };
  
--- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent  :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(bool)hideWindowOnClose :(NSString *)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop;
-+- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent  :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(int)hideWindowOnClose :(NSString *)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop;
+-- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent  :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(bool)hideWindowOnClose :(NSString *)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop :(bool)disableEscapeExitsFullscreen;
++- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent  :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(int)hideWindowOnClose :(NSString *)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop :(bool)disableEscapeExitsFullscreen;
  - (void) SetSize:(int)width :(int)height;
  - (void) SetPosition:(int)x :(int) y;
  - (void) SetMinSize:(int)minWidth :(int)minHeight;
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.m b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.m
-index 51993eda2..a2b7202d5 100644
+index 642c731..9f7c984 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.m
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WailsContext.m
-@@ -118,6 +118,10 @@ extern void didReceiveNotificationResponse(const char *jsonPayload, const char*
+@@ -126,6 +126,10 @@ extern void didReceiveNotificationResponse(const char *jsonPayload, const char*
      [self.mouseEvent release];
      [self.userContentController release];
      [self.applicationMenu release];
@@ -163,16 +142,16 @@ index 51993eda2..a2b7202d5 100644
      [super dealloc];
  }
  
-@@ -145,7 +149,7 @@ extern void didReceiveNotificationResponse(const char *jsonPayload, const char*
+@@ -153,7 +157,7 @@ extern void didReceiveNotificationResponse(const char *jsonPayload, const char*
      return NO;
  }
  
--- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(bool)hideWindowOnClose :(NSString*)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop  {
-+- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(int)hideWindowOnClose :(NSString*)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop  {
+-- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(bool)hideWindowOnClose :(NSString*)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop :(bool)disableEscapeExitsFullscreen {
++- (void) CreateWindow:(int)width :(int)height :(bool)frameless :(bool)resizable :(bool)zoomable :(bool)fullscreen :(bool)fullSizeContent :(bool)hideTitleBar :(bool)titlebarAppearsTransparent :(bool)hideTitle :(bool)useToolbar :(bool)hideToolbarSeparator :(bool)webviewIsTransparent :(int)hideWindowOnClose :(NSString*)appearance :(bool)windowIsTranslucent :(int)minWidth :(int)minHeight :(int)maxWidth :(int)maxHeight :(bool)fraudulentWebsiteWarningEnabled :(struct Preferences)preferences :(bool)enableDragAndDrop :(bool)disableWebViewDragAndDrop :(bool)disableEscapeExitsFullscreen {
      NSWindowStyleMask styleMask = 0;
  
      if( !frameless ) {
-@@ -406,6 +410,9 @@ extern void didReceiveNotificationResponse(const char *jsonPayload, const char*
+@@ -421,6 +425,9 @@ extern void didReceiveNotificationResponse(const char *jsonPayload, const char*
  }
  
  - (void) Show {
@@ -183,7 +162,7 @@ index 51993eda2..a2b7202d5 100644
      [NSApp activateIgnoringOtherApps:YES];
  }
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.h b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.h
-index 6f83e0e48..08307e1ba 100644
+index 6f83e0e..08307e1 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.h
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.h
 @@ -12,7 +12,7 @@
@@ -196,7 +175,7 @@ index 6f83e0e48..08307e1ba 100644
  @property (assign) WailsContext* ctx;
  
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.m b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.m
-index 915f12853..be2e9fb0e 100644
+index 915f128..be2e9fb 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.m
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/WindowDelegate.m
 @@ -14,10 +14,15 @@
@@ -217,7 +196,7 @@ index 915f12853..be2e9fb0e 100644
      return false;
  }
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
-index 6566445d5..027a199d4 100644
+index 6e1ed4e..8b5980c 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
 @@ -28,6 +28,7 @@ import (
@@ -238,7 +217,7 @@ index 6566445d5..027a199d4 100644
  }
  
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/menu.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/menu.go
-index 24dbe3201..b701d71a4 100644
+index 24dbe32..b701d71 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/menu.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/menu.go
 @@ -132,3 +132,12 @@ func (f *Frontend) MenuSetApplicationMenu(menu *menu.Menu) {
@@ -255,7 +234,7 @@ index 24dbe3201..b701d71a4 100644
 +	}
 +}
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/window.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/window.go
-index 87d4213d9..314c45e0c 100644
+index af1e53e..774d85d 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/window.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/window.go
 @@ -56,7 +56,6 @@ func NewWindow(frontendOptions *options.App, debug bool, devtools bool) *Window
@@ -266,7 +245,7 @@ index 87d4213d9..314c45e0c 100644
  	startsHidden := bool2Cint(frontendOptions.StartHidden)
  	devtoolsEnabled := bool2Cint(devtools)
  	defaultContextMenuEnabled := bool2Cint(debug || frontendOptions.EnableDefaultContextMenu)
-@@ -121,9 +120,18 @@ func NewWindow(frontendOptions *options.App, debug bool, devtools bool) *Window
+@@ -127,9 +126,18 @@ func NewWindow(frontendOptions *options.App, debug bool, devtools bool) *Window
  
  		appearance = c.String(string(mac.Appearance))
  	}
@@ -285,8 +264,8 @@ index 87d4213d9..314c45e0c 100644
 +		alwaysOnTop, C.int(hideWindowOnClose), appearance, windowIsTranslucent, contentProtection, devtoolsEnabled, defaultContextMenuEnabled,
  		windowStartState, startsHidden, minWidth, minHeight, maxWidth, maxHeight, enableFraudulentWebsiteWarnings,
  		preferences, singleInstanceEnabled, singleInstanceUniqueId, enableDragAndDrop, disableWebViewDragAndDrop,
- 	)
-@@ -308,6 +316,37 @@ func (w *Window) UpdateApplicationMenu() {
+ 		disableEscapeExitsFullscreen,
+@@ -315,6 +323,37 @@ func (w *Window) UpdateApplicationMenu() {
  	C.UpdateApplicationMenu(w.context)
  }
  
@@ -325,7 +304,7 @@ index 87d4213d9..314c45e0c 100644
  	C.WindowPrint(w.context)
  }
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/gtk.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/gtk.go
-index 67a38c7a0..689313e86 100644
+index 67a38c7..689313e 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/gtk.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/gtk.go
 @@ -22,6 +22,8 @@ import (
@@ -434,7 +413,7 @@ index 67a38c7a0..689313e86 100644
 +	})
  }
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/menu.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/menu.go
-index a61d190bd..4e47d6596 100644
+index a61d190..4e47d65 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/menu.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/menu.go
 @@ -9,8 +9,11 @@ package linux
@@ -672,7 +651,7 @@ index a61d190bd..4e47d6596 100644
  		C.addAccelerator(result, group, key, mods)
  	}
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.c b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.c
-index 5441db022..415159a3c 100644
+index 5441db0..415159a 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.c
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.c
 @@ -1,11 +1,13 @@
@@ -814,7 +793,7 @@ index 5441db022..415159a3c 100644
 +}
 +
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.go
-index 0bf5ac51d..51fd9c923 100644
+index 0bf5ac5..51fd9c9 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.go
 @@ -4,12 +4,13 @@
@@ -872,7 +851,7 @@ index 0bf5ac51d..51fd9c923 100644
  
  func (w *Window) Close() {
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.h b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.h
-index 04410959a..88b6e689e 100644
+index 0441095..88b6e68 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.h
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/window.h
 @@ -125,4 +125,6 @@ void sendShowInspectorMessage();
@@ -883,7 +862,7 @@ index 04410959a..88b6e689e 100644
 +
  #endif /* window_h */
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/menu.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/menu.go
-index b71128b45..16af9eadc 100644
+index b71128b..16af9ea 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/menu.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/menu.go
 @@ -130,3 +130,9 @@ func (f *Frontend) MenuSetApplicationMenu(menu *menu.Menu) {
@@ -897,7 +876,7 @@ index b71128b45..16af9eadc 100644
 +	}
 +}
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/consts.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/consts.go
-index e38ea4b92..a677f0d26 100644
+index e38ea4b..a677f0d 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/consts.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/consts.go
 @@ -11,6 +11,35 @@ import (
@@ -955,7 +934,7 @@ index e38ea4b92..a677f0d26 100644
  	modwingdi            = syscall.NewLazyDLL("gdi32.dll")
  	procCreateSolidBrush = modwingdi.NewProc("CreateSolidBrush")
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/window.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/window.go
-index 6028789de..934d128ff 100644
+index 6028789..934d128 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/window.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32/window.go
 @@ -100,7 +100,27 @@ func IsVisible(hwnd uintptr) bool {
@@ -987,7 +966,7 @@ index 6028789de..934d128ff 100644
  	wRect := GetWindowRect(hwnd)
  	m := MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY)
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/menu.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/menu.go
-index d1567e648..869f00ea3 100644
+index d1567e6..869f00e 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/menu.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/menu.go
 @@ -205,6 +205,10 @@ func (mi *MenuItem) OnClick() *EventManager {
@@ -1002,7 +981,7 @@ index d1567e648..869f00ea3 100644
  	addMenuItem(mi.hSubMenu, 0, "-", Shortcut{}, nil, false)
  }
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/w32/user32.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/w32/user32.go
-index 707701f5e..b69c09169 100644
+index 707701f..b69c091 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/w32/user32.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/w32/user32.go
 @@ -820,7 +820,7 @@ func CreatePopupMenu() HMENU {
@@ -1014,149 +993,11 @@ index 707701f5e..b69c09169 100644
  		uintptr(hMenu),
  		uintptr(fuFlags),
  		uintptr(x),
-diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
-index 873b61dc7..0cb6ae889 100644
---- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
-@@ -174,6 +174,7 @@ type Frontend interface {
- 	// Menus
- 	MenuSetApplicationMenu(menu *menu.Menu)
- 	MenuUpdateApplicationMenu()
-+	TraySetSystemTray(trayMenu *menu.TrayMenu)
- 
- 	// Events
- 	Notify(name string, data ...interface{})
-diff --git a/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go b/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go
-index 4ca3300b9..37bd2a96d 100644
---- a/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go
-@@ -3,7 +3,7 @@ package cfd
- import "errors"
- 
- var (
--	ErrCancelled = errors.New("cancelled by user")
--	ErrInvalidGUID = errors.New("guid cannot be nil")
-+	ErrCancelled    = errors.New("cancelled by user")
-+	ErrInvalidGUID  = errors.New("guid cannot be nil")
- 	ErrEmptyFilters = errors.New("must specify at least one filter")
- )
-diff --git a/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go b/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go
-index 916b92d44..7591e5ba1 100644
---- a/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go
-@@ -6,7 +6,7 @@ import (
- 	"unsafe"
- )
- 
--func CreateIconFromResourceEx(presbits uintptr, dwResSize uint32, isIcon bool, version uint32, cxDesired int, cyDesired int, flags uint) (uintptr, error) {
-+func CreateIconFromResourceEx(presbits uintptr, dwResSize uint32, isIcon bool, version uint32, cxDesired int, cyDesired int, flags uint) (HICON, error) {
- 	icon := 0
- 	if isIcon {
- 		icon = 1
-@@ -24,12 +24,12 @@ func CreateIconFromResourceEx(presbits uintptr, dwResSize uint32, isIcon bool, v
- 	if r == 0 {
- 		return 0, err
- 	}
--	return r, nil
-+	return HICON(r), nil
- }
- 
- // CreateHIconFromPNG creates a HICON from a PNG file
- func CreateHIconFromPNG(pngData []byte) (HICON, error) {
--	icon, err := CreateIconFromResourceEx(
-+	return CreateIconFromResourceEx(
- 		uintptr(unsafe.Pointer(&pngData[0])),
- 		uint32(len(pngData)),
- 		true,
-@@ -37,5 +37,4 @@ func CreateHIconFromPNG(pngData []byte) (HICON, error) {
- 		0,
- 		0,
- 		LR_DEFAULTSIZE)
--	return HICON(icon), err
- }
-diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go b/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go
-index 1f0db3c89..e551ddbe4 100644
---- a/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go
-+++ b/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go
-@@ -1,9 +1,9 @@
--//go:build linux && (webkit2_36 || webkit2_40 || webkit2_41 )
-+//go:build linux && (webkit2_36 || webkit2_40 || webkit2_41)
- 
- package webview
- 
- /*
--#cgo linux pkg-config: gtk+-3.0 
-+#cgo linux pkg-config: gtk+-3.0
- #cgo !webkit2_41 pkg-config: webkit2gtk-4.0 libsoup-2.4
- #cgo webkit2_41 pkg-config: webkit2gtk-4.1 libsoup-3.0
- 
-diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go b/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go
-index 0f62d5e4b..e70caf0b6 100644
---- a/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go
-+++ b/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go
-@@ -32,17 +32,19 @@ type Experimental struct{}
- 
- // App contains options for creating the App
- type App struct {
--	Title             string
--	Width             int
--	Height            int
--	DisableResize     bool
--	Fullscreen        bool
--	Frameless         bool
--	MinWidth          int
--	MinHeight         int
--	MaxWidth          int
--	MaxHeight         int
--	StartHidden       bool
-+	Title         string
-+	Width         int
-+	Height        int
-+	DisableResize bool
-+	Fullscreen    bool
-+	Frameless     bool
-+	MinWidth      int
-+	MinHeight     int
-+	MaxWidth      int
-+	MaxHeight     int
-+	StartHidden   bool
-+	// HideWindowOnClose controls close button behavior.
-+	// If true and a tray icon is configured, close behaves like HideWindowAndDock.
- 	HideWindowOnClose bool
- 	AlwaysOnTop       bool
- 	// BackgroundColour is the background colour of the window
-@@ -55,6 +57,7 @@ type App struct {
- 	// AssetServer configures the Assets for the application
- 	AssetServer        *assetserver.Options
- 	Menu               *menu.Menu
-+	Tray               *menu.TrayMenu
- 	Logger             logger.Logger `json:"-"`
- 	LogLevel           logger.LogLevel
- 	LogLevelProduction logger.LogLevel
-diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/runtime/tray.go b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/tray.go
-new file mode 100644
-index 000000000..7fb8e0863
---- /dev/null
-+++ b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/tray.go
-@@ -0,0 +1,13 @@
-+package runtime
-+
-+import (
-+	"context"
-+
-+	"github.com/wailsapp/wails/v2/pkg/menu"
-+)
-+
-+// TraySetSystemTray sets the system tray menu
-+func TraySetSystemTray(ctx context.Context, trayMenu *menu.TrayMenu) {
-+	frontend := getFrontend(ctx)
-+	frontend.TraySetSystemTray(trayMenu)
-+}
 diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/window.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/window.go
-index 0000000..0000000 100644
+index b04d618..bf5a89d 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/window.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/window.go
-@@ -11,6 +11,11 @@
+@@ -11,6 +11,11 @@ import (
  	"github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/win32"
  	"github.com/wailsapp/wails/v2/internal/system/operatingsystem"
  
@@ -1168,7 +1009,7 @@ index 0000000..0000000 100644
  	"github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc"
  	"github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/winc/w32"
  	"github.com/wailsapp/wails/v2/pkg/menu"
-@@ -18,6 +23,10 @@
+@@ -18,6 +23,10 @@ import (
  	winoptions "github.com/wailsapp/wails/v2/pkg/options/windows"
  )
  
@@ -1179,7 +1020,7 @@ index 0000000..0000000 100644
  type Window struct {
  	winc.Form
  	frontendOptions                          *options.App
-@@ -39,6 +48,11 @@
+@@ -39,6 +48,11 @@ type Window struct {
  
  	chromium *edge.Chromium
  
@@ -1191,7 +1032,7 @@ index 0000000..0000000 100644
  	// isMinimizing indicates whether the window is currently being minimized
  	// 标识窗口是否处于最小化状态,用于解决最小化/恢复时的闪屏问题
  	// This flag is used to prevent unnecessary redraws during minimize/restore transitions for frameless windows
-@@ -203,6 +217,20 @@
+@@ -203,6 +217,20 @@ func (w *Window) IsVisible() bool {
  func (w *Window) WndProc(msg uint32, wparam, lparam uintptr) uintptr {
  
  	switch msg {
@@ -1212,7 +1053,7 @@ index 0000000..0000000 100644
  	case win32.WM_POWERBROADCAST:
  		switch wparam {
  		case win32.PBT_APMSUSPEND:
-@@ -317,6 +345,118 @@
+@@ -317,6 +345,118 @@ func (w *Window) WndProc(msg uint32, wparam, lparam uintptr) uintptr {
  	return w.Form.WndProc(msg, wparam, lparam)
  }
  
@@ -1331,3 +1172,141 @@ index 0000000..0000000 100644
  func (w *Window) IsMaximised() bool {
  	return win32.IsWindowMaximised(w.Handle())
  }
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
+index 879a92a..93edf51 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
+@@ -175,6 +175,7 @@ type Frontend interface {
+ 	// Menus
+ 	MenuSetApplicationMenu(menu *menu.Menu)
+ 	MenuUpdateApplicationMenu()
++	TraySetSystemTray(trayMenu *menu.TrayMenu)
+ 
+ 	// Events
+ 	Notify(name string, data ...interface{})
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go b/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go
+index 4ca3300..37bd2a9 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/go-common-file-dialog/cfd/errors.go
+@@ -3,7 +3,7 @@ package cfd
+ import "errors"
+ 
+ var (
+-	ErrCancelled = errors.New("cancelled by user")
+-	ErrInvalidGUID = errors.New("guid cannot be nil")
++	ErrCancelled    = errors.New("cancelled by user")
++	ErrInvalidGUID  = errors.New("guid cannot be nil")
+ 	ErrEmptyFilters = errors.New("must specify at least one filter")
+ )
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go b/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go
+index 916b92d..7591e5b 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/platform/win32/icon.go
+@@ -6,7 +6,7 @@ import (
+ 	"unsafe"
+ )
+ 
+-func CreateIconFromResourceEx(presbits uintptr, dwResSize uint32, isIcon bool, version uint32, cxDesired int, cyDesired int, flags uint) (uintptr, error) {
++func CreateIconFromResourceEx(presbits uintptr, dwResSize uint32, isIcon bool, version uint32, cxDesired int, cyDesired int, flags uint) (HICON, error) {
+ 	icon := 0
+ 	if isIcon {
+ 		icon = 1
+@@ -24,12 +24,12 @@ func CreateIconFromResourceEx(presbits uintptr, dwResSize uint32, isIcon bool, v
+ 	if r == 0 {
+ 		return 0, err
+ 	}
+-	return r, nil
++	return HICON(r), nil
+ }
+ 
+ // CreateHIconFromPNG creates a HICON from a PNG file
+ func CreateHIconFromPNG(pngData []byte) (HICON, error) {
+-	icon, err := CreateIconFromResourceEx(
++	return CreateIconFromResourceEx(
+ 		uintptr(unsafe.Pointer(&pngData[0])),
+ 		uint32(len(pngData)),
+ 		true,
+@@ -37,5 +37,4 @@ func CreateHIconFromPNG(pngData []byte) (HICON, error) {
+ 		0,
+ 		0,
+ 		LR_DEFAULTSIZE)
+-	return HICON(icon), err
+ }
+diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go b/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go
+index 1f0db3c..e551ddb 100644
+--- a/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go
++++ b/vendor/github.com/wailsapp/wails/v2/pkg/assetserver/webview/webkit2_36+.go
+@@ -1,9 +1,9 @@
+-//go:build linux && (webkit2_36 || webkit2_40 || webkit2_41 )
++//go:build linux && (webkit2_36 || webkit2_40 || webkit2_41)
+ 
+ package webview
+ 
+ /*
+-#cgo linux pkg-config: gtk+-3.0 
++#cgo linux pkg-config: gtk+-3.0
+ #cgo !webkit2_41 pkg-config: webkit2gtk-4.0 libsoup-2.4
+ #cgo webkit2_41 pkg-config: webkit2gtk-4.1 libsoup-3.0
+ 
+diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go b/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go
+index 0f62d5e..e70caf0 100644
+--- a/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go
++++ b/vendor/github.com/wailsapp/wails/v2/pkg/options/options.go
+@@ -32,17 +32,19 @@ type Experimental struct{}
+ 
+ // App contains options for creating the App
+ type App struct {
+-	Title             string
+-	Width             int
+-	Height            int
+-	DisableResize     bool
+-	Fullscreen        bool
+-	Frameless         bool
+-	MinWidth          int
+-	MinHeight         int
+-	MaxWidth          int
+-	MaxHeight         int
+-	StartHidden       bool
++	Title         string
++	Width         int
++	Height        int
++	DisableResize bool
++	Fullscreen    bool
++	Frameless     bool
++	MinWidth      int
++	MinHeight     int
++	MaxWidth      int
++	MaxHeight     int
++	StartHidden   bool
++	// HideWindowOnClose controls close button behavior.
++	// If true and a tray icon is configured, close behaves like HideWindowAndDock.
+ 	HideWindowOnClose bool
+ 	AlwaysOnTop       bool
+ 	// BackgroundColour is the background colour of the window
+@@ -55,6 +57,7 @@ type App struct {
+ 	// AssetServer configures the Assets for the application
+ 	AssetServer        *assetserver.Options
+ 	Menu               *menu.Menu
++	Tray               *menu.TrayMenu
+ 	Logger             logger.Logger `json:"-"`
+ 	LogLevel           logger.LogLevel
+ 	LogLevelProduction logger.LogLevel
+diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/runtime/tray.go b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/tray.go
+new file mode 100644
+index 0000000..7fb8e08
+--- /dev/null
++++ b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/tray.go
+@@ -0,0 +1,13 @@
++package runtime
++
++import (
++	"context"
++
++	"github.com/wailsapp/wails/v2/pkg/menu"
++)
++
++// TraySetSystemTray sets the system tray menu
++func TraySetSystemTray(ctx context.Context, trayMenu *menu.TrayMenu) {
++	frontend := getFrontend(ctx)
++	frontend.TraySetSystemTray(trayMenu)
++}

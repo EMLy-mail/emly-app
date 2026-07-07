@@ -9,6 +9,7 @@
         bugReportDialogOpen,
         dangerZoneEnabled,
         runningInDebugMode,
+        hostIntegrityFailed,
     } from "$lib/stores/app";
     import { onMount } from "svelte";
     import * as m from "$lib/paraglide/messages.js";
@@ -28,6 +29,8 @@
         Info,
         Music,
         TriangleAlert,
+        ShieldAlert,
+        Lock,
     } from "@lucide/svelte";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { toast } from "svelte-sonner";
@@ -49,6 +52,11 @@
     } from "$lib/wailsjs/go/main/App";
     import { settingsStore } from "$lib/stores/settings.svelte.js";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
+    import { systemInfoStore } from "$lib/stores/system-info.svelte.js";
+    import {
+        evaluateHostname,
+        isInsideTREGCCADDomain,
+    } from "$lib/utils/hostIntegrity";
 
     let versionInfo: utils.Config | null = $state(null);
     let isMaximized = $state(false);
@@ -56,10 +64,16 @@
     let isDebugerOn: boolean = $state(false);
     let isDebbugerProtectionOn: boolean = $state(true);
     let configMissingDialogOpen = $state(false);
+    let hostIntegrityDialogOpen = $state(false);
+    let hostIntegrityChecked = false;
 
     async function syncMaxState() {
         isMaximized = await WindowIsMaximised();
     }
+
+    $effect(() => {
+        $inspect("hostIntegrityDialogOpen", hostIntegrityDialogOpen);
+    })
 
     beforeNavigate(({ cancel, to }) => {
         const normalize = (p: string) => p.replace(/\/+$/, "") || "/";
@@ -118,6 +132,21 @@
             configMissingDialogOpen = true;
         }
         runningInDebugMode.set(await IsAppInDebugMode());
+    });
+
+    $effect(() => {
+        if (hostIntegrityChecked) return;
+        const machineInfo = systemInfoStore.data;
+        if (!machineInfo) return;
+        if (!settingsStore.settings.enableHostIntegrityCheck) return;
+
+        hostIntegrityChecked = true;
+        const hostnameOk = evaluateHostname(machineInfo.Hostname);
+        const domainOk = isInsideTREGCCADDomain(machineInfo.ADDomain);
+        if (!hostnameOk || !domainOk) {
+            hostIntegrityFailed.set(true);
+            hostIntegrityDialogOpen = true;
+        }
     });
 
     async function detectDebugging() {
@@ -191,6 +220,10 @@
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
                         <dev><TriangleAlert size="16" /> DEV BUILD</dev>
+                    {:else if $hostIntegrityFailed}
+                        v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
+                                .GUIReleaseChannel}
+                        <debug><ShieldAlert size="16" /> {m.version_host_integrity_check_failed_version_info()}</debug>
                     {:else if versionInfo?.EMLy.GUIReleaseChannel !== "stable"}
                         v{versionInfo?.EMLy.GUISemver}_{versionInfo?.EMLy
                             .GUIReleaseChannel}
@@ -322,6 +355,16 @@
             style="cursor: pointer; opacity: 0.7;"
             class="hover:opacity-100 transition-opacity"
         />
+        <Lock
+            size="16"
+            title={m.layout_privacy_policy_label()}
+            onclick={() => {
+                const p = page.url.pathname as string;
+                if (p !== "/privacy" && p !== "/privacy/") goto("/privacy");
+            }}
+            style="cursor: pointer; opacity: 0.7;"
+            class="hover:opacity-100 transition-opacity"
+        />
 
         <a
             data-sveltekit-reload
@@ -379,6 +422,31 @@
                         configMissingDialogOpen = false;
                     }}
                     >{m.layout_config_missing_understood()}</AlertDialog.Action
+                >
+            </AlertDialog.Footer>
+        </AlertDialog.Content>
+    </AlertDialog.Root>
+
+    <AlertDialog.Root bind:open={hostIntegrityDialogOpen}>
+        <AlertDialog.Content>
+            <AlertDialog.Header>
+                <AlertDialog.Title
+                    style="color: var(--destructive); opacity: 0.7;"
+                    >
+                    <ShieldAlert class="inline mr-1 -translate-y-0.5" />
+                    {m.layout_host_integrity_title()}
+                    </AlertDialog.Title
+                >
+                <AlertDialog.Description>
+                    {m.layout_host_integrity_description()}
+                </AlertDialog.Description>
+            </AlertDialog.Header>
+            <AlertDialog.Footer>
+                <AlertDialog.Action
+                    onclick={() => {
+                        hostIntegrityDialogOpen = false;
+                    }}
+                    >{m.layout_host_integrity_understood()}</AlertDialog.Action
                 >
             </AlertDialog.Footer>
         </AlertDialog.Content>

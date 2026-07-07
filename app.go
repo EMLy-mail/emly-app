@@ -268,6 +268,15 @@ func (a *App) GetMachineData() *utils.MachineInfo {
 	return data
 }
 
+func (a *App) GetExtendedMachineData() (*utils.ExtendedMachineInfo, error) {
+	data, err := utils.GetExtendedMachineInfo()
+	if err != nil {
+		pkglogger.Error("GetExtendedMachineData: failed to get extended machine info", "error", err.Error())
+		return nil, err
+	}
+	return data, nil
+}
+
 // IsDebuggerRunning checks if a debugger is attached to the application.
 // Used for anti-debugging protection in production builds.
 func (a *App) IsDebuggerRunning() bool {

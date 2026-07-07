@@ -423,6 +423,7 @@ export namespace utils {
 	    BugReportAPIKey: string;
 	    LogLevel: string;
 	    ExportAttachmentFolder: string;
+	    DisableTrayIcon: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new EMLyConfig(source);
@@ -439,6 +440,7 @@ export namespace utils {
 	        this.BugReportAPIKey = source["BugReportAPIKey"];
 	        this.LogLevel = source["LogLevel"];
 	        this.ExportAttachmentFolder = source["ExportAttachmentFolder"];
+	        this.DisableTrayIcon = source["DisableTrayIcon"];
 	    }
 	}
 	export class Config {
@@ -472,6 +474,52 @@ export namespace utils {
 		}
 	}
 	
+	export class ExtendedMachineInfo {
+	    Hostname: string;
+	    OS: string;
+	    Version: string;
+	    HWID: string;
+	    CPU: cpu.Info;
+	    RAM: memory.Info;
+	    InternalIP: string;
+	    ADDomain: string;
+	    EMLyConfig: EMLyConfig;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExtendedMachineInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Hostname = source["Hostname"];
+	        this.OS = source["OS"];
+	        this.Version = source["Version"];
+	        this.HWID = source["HWID"];
+	        this.CPU = this.convertValues(source["CPU"], cpu.Info);
+	        this.RAM = this.convertValues(source["RAM"], memory.Info);
+	        this.InternalIP = source["InternalIP"];
+	        this.ADDomain = source["ADDomain"];
+	        this.EMLyConfig = this.convertValues(source["EMLyConfig"], EMLyConfig);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class MachineInfo {
 	    Hostname: string;
 	    OS: string;

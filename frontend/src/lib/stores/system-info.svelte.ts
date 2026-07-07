@@ -1,9 +1,9 @@
 import type { utils } from '$lib/wailsjs/go/models';
 
 class SystemInfoStore {
-	data = $state<utils.MachineInfo | null>(null);
+	data = $state<utils.ExtendedMachineInfo | null>(null);
 
-	setData(info: utils.MachineInfo) {
+	setData(info: utils.ExtendedMachineInfo) {
 		this.data = info;
 	}
 

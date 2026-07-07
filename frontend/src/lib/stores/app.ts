@@ -12,6 +12,7 @@ export const unsavedChanges = writable<boolean>(false);
 export const sidebarOpen = writable<boolean>(true);
 export const bugReportDialogOpen = writable<boolean>(false);
 export const runningInDebugMode = writable<boolean>(false);
+export const hostIntegrityFailed = writable<boolean>(false);
 
 export type AppEvent = {
   id: string;

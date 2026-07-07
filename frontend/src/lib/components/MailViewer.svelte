@@ -6,13 +6,18 @@
         FileText,
         File,
         ShieldCheck,
+        ShieldAlert,
         Loader2,
         Download,
         Info,
         FolderOpen,
     } from "@lucide/svelte";
     import { dev } from "$app/environment";
-    import { sidebarOpen, runningInDebugMode } from "$lib/stores/app";
+    import {
+        sidebarOpen,
+        runningInDebugMode,
+        hostIntegrityFailed,
+    } from "$lib/stores/app";
     import { onDestroy, onMount } from "svelte";
     import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { toast } from "svelte-sonner";
@@ -58,6 +63,7 @@
         loadEmailFromPath,
         processEmailBody,
         isEmailFile,
+        isPecOpenBlocked,
     } from "$lib/utils/mail";
     import { settingsStore } from "$lib/stores/settings.svelte";
 
@@ -195,7 +201,20 @@
         }
     }
 
+    // Returns true (and shows a toast) if attachment interactions should be
+    // blocked because the host integrity check failed. Buttons stay natively
+    // enabled (not `disabled`) so hover tooltips keep working; this guard is
+    // what actually stops the action on click.
+    function isAttachmentBlocked(): boolean {
+        if ($hostIntegrityFailed) {
+            toast.error(m.mail_attachments_disabled_hint());
+            return true;
+        }
+        return false;
+    }
+
     async function onDownloadAttachments() {
+        if (isAttachmentBlocked()) return;
         if (!activeEmail || !activeEmail.attachments) return;
 
         await saveAllAttachmentsNatively(
@@ -219,6 +238,11 @@
         }
 
         if (result.success && result.email) {
+            if (isPecOpenBlocked(result.email)) {
+                isLoading = false;
+                loadingText = "";
+                return;
+            }
             if (tabId !== null) {
                 mailState.addTab(result.email, result.filePath);
             } else {
@@ -235,18 +259,22 @@
     }
 
     async function handleOpenPDF(base64Data: string, filename: string) {
+        if (isAttachmentBlocked()) return;
         await openPDFAttachment(base64Data, filename);
     }
 
     async function handleOpenImage(base64Data: string, filename: string) {
+        if (isAttachmentBlocked()) return;
         await openImageAttachment(base64Data, filename);
     }
 
     async function handleOpenEML(base64Data: string, filename: string) {
+        if (isAttachmentBlocked()) return;
         await openEMLAttachment(base64Data, filename);
     }
 
     async function handleOpenDoc(base64Data: string, filename: string) {
+        if (isAttachmentBlocked()) return;
         await openDocAttachment(base64Data, filename);
     }
 
@@ -370,8 +398,11 @@
 
                     const result = await loadEmailFromPath(arg);
 
-                    if (result.success && result.email) {
-                        
+                    if (result.success && result.email && isPecOpenBlocked(result.email)) {
+                        WindowUnminimise();
+                        WindowShow();
+                        EventsEmit("bringOnTop");
+                    } else if (result.success && result.email) {
                         if (tabId !== null) {
                             // In tab mode: open in a new tab
                             mailState.addTab(result.email, result.filePath);
@@ -597,9 +628,12 @@
                         <div class="controls">
                             <button
                                 class="btn"
+                                class:integrity-blocked={$hostIntegrityFailed}
                                 onclick={onDownloadAttachments}
                                 aria-label={m.mail_download_btn_label()}
-                                title={m.mail_download_btn_title()}
+                                title={$hostIntegrityFailed
+                                    ? m.mail_attachments_disabled_hint()
+                                    : m.mail_download_btn_title()}
                                 disabled={isLoading}
                             >
                                 <Download size="15" />
@@ -724,11 +758,15 @@
                                 {#if isImage}
                                     <button
                                         class="att-btn image"
+                                        class:integrity-blocked={$hostIntegrityFailed}
                                         onclick={() =>
                                             handleOpenImage(
                                                 base64,
                                                 att.filename,
                                             )}
+                                        title={$hostIntegrityFailed
+                                            ? m.mail_attachments_disabled_hint()
+                                            : undefined}
                                     >
                                         <Image size="16" />
                                         <span class="att-name"
@@ -738,8 +776,12 @@
                                 {:else if isPdf}
                                     <button
                                         class="att-btn pdf"
+                                        class:integrity-blocked={$hostIntegrityFailed}
                                         onclick={() =>
                                             handleOpenPDF(base64, att.filename)}
+                                        title={$hostIntegrityFailed
+                                            ? m.mail_attachments_disabled_hint()
+                                            : undefined}
                                     >
                                         <FileText size="16" />
                                         <span class="att-name"
@@ -749,8 +791,12 @@
                                 {:else if isEml}
                                     <button
                                         class="att-btn eml"
+                                        class:integrity-blocked={$hostIntegrityFailed}
                                         onclick={() =>
                                             handleOpenEML(base64, att.filename)}
+                                        title={$hostIntegrityFailed
+                                            ? m.mail_attachments_disabled_hint()
+                                            : undefined}
                                     >
                                         <MailOpen size="16" />
                                         <span class="att-name"
@@ -760,8 +806,12 @@
                                 {:else if isDoc}
                                     <button
                                         class="att-btn doc"
+                                        class:integrity-blocked={$hostIntegrityFailed}
                                         onclick={() =>
                                             handleOpenDoc(base64, att.filename)}
+                                        title={$hostIntegrityFailed
+                                            ? m.mail_attachments_disabled_hint()
+                                            : undefined}
                                     >
                                         <FileText size="16" />
                                         <span class="att-name"
@@ -771,7 +821,9 @@
                                 {:else}
                                     <button
                                         class="att-btn file"
-                                        onclick={() =>
+                                        class:integrity-blocked={$hostIntegrityFailed}
+                                        onclick={() => {
+                                            if (isAttachmentBlocked()) return;
                                             showDefaultAttachmentToast({
                                                 onSave: () =>
                                                     void saveAttachmentNatively(
@@ -779,7 +831,11 @@
                                                         att.filename,
                                                     ),
                                                 onReset: () => {},
-                                            })}
+                                            });
+                                        }}
+                                        title={$hostIntegrityFailed
+                                            ? m.mail_attachments_disabled_hint()
+                                            : undefined}
                                     >
                                         <File size="16" />
                                         <span class="att-name"
@@ -801,6 +857,7 @@
                     class="email-body-wrapper"
                     class:light-theme={settingsStore.settings
                         .useDarkEmailViewer === false}
+                    class:integrity-blurred={$hostIntegrityFailed}
                 >
                     <iframe
                         srcdoc={activeEmail.body +
@@ -811,6 +868,12 @@
                         sandbox="allow-scripts"
                         onwheel={handleWheel}
                     ></iframe>
+                    {#if $hostIntegrityFailed}
+                        <div class="integrity-blur-notice">
+                            <ShieldAlert size="18" />
+                            {m.mail_body_blurred_hint()}
+                        </div>
+                    {/if}
                 </div>
             </div>
         {/if}
@@ -1010,6 +1073,19 @@
         color: var(--accent-foreground);
     }
 
+    /* Not `:disabled` on purpose: the button stays interactive so hover
+       still shows the title tooltip and click still fires (to surface the
+       "blocked by integrity check" toast) instead of being swallowed. */
+    .att-btn.integrity-blocked {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .att-btn.integrity-blocked:hover {
+        background: transparent;
+        color: var(--foreground);
+    }
+
     .att-btn.image {
         color: #4ade80;
         border-color: rgba(74, 222, 128, 0.3);
@@ -1070,6 +1146,34 @@
         background: #ffffff;
     }
 
+    .email-body-wrapper.integrity-blurred .email-iframe {
+        filter: blur(14px);
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .integrity-blur-notice {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 80%;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        pointer-events: none;
+        user-select: none;
+    }
+
     .email-iframe {
         width: 100%;
         height: 100%;
@@ -1123,6 +1227,18 @@
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
+    }
+
+    /* Not `:disabled`: stays interactive so the title tooltip and the
+       "blocked by integrity check" toast on click both keep working. */
+    .btn.integrity-blocked {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn.integrity-blocked:hover {
+        background: var(--muted);
+        color: var(--muted-foreground);
     }
 
     ::-webkit-scrollbar {

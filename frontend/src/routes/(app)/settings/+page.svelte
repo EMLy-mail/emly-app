@@ -26,7 +26,11 @@
         dismissUnsavedChangesToast,
         showUnsavedChangesToast,
     } from "$lib/utils/unsaved-changes-toast";
-    import { dangerZoneEnabled, unsavedChanges } from "$lib/stores/app";
+    import {
+        dangerZoneEnabled,
+        unsavedChanges,
+        hostIntegrityFailed,
+    } from "$lib/stores/app";
     import { LogDebug, LogInfo } from "$lib/wailsjs/runtime/runtime";
     import { settingsStore } from "$lib/stores/settings.svelte";
     import * as m from "$lib/paraglide/messages";
@@ -37,15 +41,20 @@
         ReloadConfig,
         ShowOpenFolderDialog,
         SetExportAttachmentFolder,
+        SetTrayIconEnabled,
         OpenDevTools,
         GetEMLyUpdaterStatus,
+        RestartApp
     } from "$lib/wailsjs/go/main/App";
     import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
+    import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
+    import { isInsideADDomain, isInsideTREGCCADDomain, evaluateHostname } from '$lib/utils/hostIntegrity';
 
     let { data } = $props();
     let config = $derived(data.config);
     let previousTheme = $state<string | undefined>(undefined);
     let runningInDevMode: boolean = dev;
+    let machineData = $derived(systemInfoStore.data);
     
     // Clone store state for form editing
     // Use normalizeSettings to ensure new fields (like useBuiltinPDFViewer) are populated with defaults
@@ -59,10 +68,34 @@
     let reloadingConfig = $state(false);
     let exportFolder = $state("");
     let savingExportFolder = $state(false);
+    let trayIconEnabled = $state(true);
+    let savingTrayIcon = $state(false);
 
     $effect(() => {
         exportFolder = config?.ExportAttachmentFolder ?? "";
     });
+
+    $effect(() => {
+        trayIconEnabled = !(config?.DisableTrayIcon ?? false);
+    });
+
+    $effect(() => {
+        $inspect("data", data)
+    })
+
+    async function toggleTrayIcon(checked: boolean) {
+        savingTrayIcon = true;
+        try {
+            await SetTrayIconEnabled(checked);
+            trayIconEnabled = checked;
+            toast.success(m.settings_danger_tray_icon_saved());
+        } catch (e) {
+            console.error("Failed to set tray icon enabled", e);
+            toast.error(m.settings_danger_tray_icon_save_error());
+        } finally {
+            savingTrayIcon = false;
+        }
+    }
 
     async function selectExportFolder() {
         savingExportFolder = true;
@@ -112,6 +145,7 @@
         useBuiltinPDFViewer: true,
         previewFileSupportedTypes: ["jpg", "jpeg", "png"],
         enableAttachedDebuggerProtection: true,
+        enableHostIntegrityCheck: true,
         useDarkEmailViewer: true,
         reduceMotion: false,
         theme: "dark",
@@ -147,6 +181,10 @@
             enableAttachedDebuggerProtection:
                 s.enableAttachedDebuggerProtection ??
                 defaults.enableAttachedDebuggerProtection ??
+                true,
+            enableHostIntegrityCheck:
+                s.enableHostIntegrityCheck ??
+                defaults.enableHostIntegrityCheck ??
                 true,
             useDarkEmailViewer:
                 s.useDarkEmailViewer ?? defaults.useDarkEmailViewer ?? true,
@@ -658,14 +696,44 @@
                             <div class="text-sm text-muted-foreground">
                                 {m.settings_danger_devtools_hint()}
                             </div>
+                            {#if $hostIntegrityFailed}
+                                <div class="text-xs text-destructive">
+                                    {m.settings_danger_devtools_blocked_hint()}
+                                </div>
+                            {/if}
                         </div>
                         <Button
                                 variant="destructive"
-                                class="cursor-pointer hover:cursor-pointer"
+                                class="cursor-pointer hover:cursor-pointer devtools-btn"
                                 onclick={() => OpenDevTools()}
+                                disabled={$hostIntegrityFailed}
                             >
                                 {m.settings_danger_devtools_btn_label()}
                             </Button>
+                    </div>
+                    <Separator />
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+                    >
+                        <div class="space-y-1">
+                            <Label class="text-sm"
+                                >{m.settings_danger_tray_icon_label()}</Label
+                            >
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_danger_tray_icon_hint()}
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                <strong>{m.settings_danger_tray_icon_info()}</strong>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Switch
+                                checked={trayIconEnabled}
+                                class="cursor-pointer hover:cursor-pointer"
+                                disabled={savingTrayIcon}
+                                onCheckedChange={toggleTrayIcon}
+                            />
+                        </div>
                     </div>
                     <Separator />
                     <div
@@ -835,6 +903,17 @@
 
                     <Separator />
 
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.enableHostIntegrityCheck}
+                        labelText={m.settings_danger_host_integrity_label()}
+                        hintText={m.settings_danger_host_integrity_hint()}
+                        infoText={m.settings_danger_host_integrity_info()}
+                        type="danger"
+                        runningInDevMode={!runningInDevMode}
+                    />
+
+                    <Separator />
+
                     <!-- Test crash handler buttons -->
                     <div
                         class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
@@ -873,6 +952,25 @@
                         SDK: {config
                             ? `${config.SDKDecoderSemver} (${config.SDKDecoderReleaseChannel})`
                             : m.settings_not_available()}
+                        <br />
+                        <br />
+                        <span class="inline-flex items-center gap-1">
+                            Hostname:
+                            {#if evaluateHostname(machineData?.Hostname ?? "")}
+                                <CircleCheck class="size-4" />
+                            {:else}
+                                <CircleX class="size-4" />
+                            {/if}
+                        </span>
+                        <br />
+                        <span class="inline-flex items-center gap-1">
+                            TREGCC AD:
+                            {#if isInsideTREGCCADDomain(machineData?.ADDomain ?? "")}
+                                <CircleCheck class="size-4" />
+                            {:else}
+                                <CircleX class="size-4" />
+                            {/if}
+                        </span>
                     </div>
                 </Card.Content>
             </Card.Root>
@@ -904,3 +1002,14 @@
         {/if}
     </div>
 </div>
+
+<style>
+    /* Overrides the button base's `disabled:pointer-events-none` so hovering
+       a host-integrity-disabled button still shows a "not-allowed" cursor
+       instead of falling through to whatever is behind it. Native `disabled`
+       already blocks clicks/activation regardless of pointer-events. */
+    :global(button.devtools-btn:disabled) {
+        pointer-events: auto;
+        cursor: not-allowed;
+    }
+</style>

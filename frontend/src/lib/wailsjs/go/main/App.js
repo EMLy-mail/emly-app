@@ -46,6 +46,10 @@ export function GetExportAttachmentFolder() {
   return window['go']['main']['App']['GetExportAttachmentFolder']();
 }
 
+export function GetExtendedMachineData() {
+  return window['go']['main']['App']['GetExtendedMachineData']();
+}
+
 export function GetImageViewerData() {
   return window['go']['main']['App']['GetImageViewerData']();
 }
@@ -180,6 +184,10 @@ export function SetCurrentMailFilePath(arg1) {
 
 export function SetExportAttachmentFolder(arg1) {
   return window['go']['main']['App']['SetExportAttachmentFolder'](arg1);
+}
+
+export function SetTrayIconEnabled(arg1) {
+  return window['go']['main']['App']['SetTrayIconEnabled'](arg1);
 }
 
 export function ShowOpenFileDialog() {
