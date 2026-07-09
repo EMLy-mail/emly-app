@@ -16,6 +16,8 @@
 13) Aggiunto un controllo di idoneità del dispositivo (hostname e dominio Active Directory): se il dispositivo non risulta approvato per l'utilizzo di EMLy, viene mostrato un avviso dedicato, il corpo delle email viene sfocato, l'apertura degli allegati e delle email PEC viene bloccata (con toast esplicativo), e il pulsante "Apri DevTools" nelle Impostazioni viene disabilitato. Il controllo può essere disattivato dalle Impostazioni (Zona Pericolosa).
 14) Aggiunta una pagina "Privacy Policy" (raggiungibile dalla footerbar), che descrive quali dati EMLy raccoglie, cosa resta sul dispositivo e cosa viene eventualmente inviato al servizio di segnalazione bug di 3gIT.
 15) Fixato un bug dove il controllo di idoneità del dispositivo poteva non attivarsi in produzione a causa di una race condition tra il caricamento asincrono dei dati macchina e il controllo stesso.
+16) Aggiunto nelle Impostazioni (Zona Pericolosa) un controllo di rilevamento dell'IPC di EMLy Updater: verifica che la named pipe sia attiva inviando una richiesta reale e che la risposta ricevuta sia valida.
+17) Aggiunto nelle Impostazioni (Zona Pericolosa) un pulsante "Esegui controllo di sicurezza" che apre un riepilogo con hostname, dominio AD, stato di installazione/avvio di EMLy Updater, stato della sua IPC e un doppio controllo incrociato (hostname/dominio AD visti dall'app confrontati con quelli visti dal servizio via IPC), con uno stato finale Perfetto/Utilizzabile/Limitato.
 
 # 1.7.9 (2026-06-23)
 1) Fixato un bug dove la finestra non veniva portata in primo piano quando si apriva una mail con EMLy già in esecuzione.

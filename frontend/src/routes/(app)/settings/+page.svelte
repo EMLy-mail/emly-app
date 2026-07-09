@@ -14,12 +14,16 @@
         CircleCheck,
         CircleX,
         Loader2,
+        OctagonX,
+        TriangleAlert,
     } from "@lucide/svelte";
     import type { EMLy_GUI_Settings } from "$lib/types";
     import { toast } from "svelte-sonner";
     import { It, Us } from "svelte-flags";
     import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
     import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+    import * as Dialog from "$lib/components/ui/dialog/index.js";
+    import { Badge } from "$lib/components/ui/badge/index.js";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { Checkbox } from "$lib/components/ui/checkbox/index.js";
     import {
@@ -30,6 +34,7 @@
         dangerZoneEnabled,
         unsavedChanges,
         hostIntegrityFailed,
+        runningInDebugMode,
     } from "$lib/stores/app";
     import { LogDebug, LogInfo } from "$lib/wailsjs/runtime/runtime";
     import { settingsStore } from "$lib/stores/settings.svelte";
@@ -43,12 +48,15 @@
         SetExportAttachmentFolder,
         SetTrayIconEnabled,
         OpenDevTools,
-        GetEMLyUpdaterStatus,
-        RestartApp
+        RestartApp,
+        GetUpdaterADStatus,
+        GetUpdaterSystemInfo,
     } from "$lib/wailsjs/go/main/App";
     import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
     import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
-    import { isInsideADDomain, isInsideTREGCCADDomain, evaluateHostname } from '$lib/utils/hostIntegrity';
+    import { updaterStatusStore } from '$lib/stores/updater-status.svelte.js';
+    import { isInsideADDomain, isInsideTREGCCADDomain, evaluateHostname, isDevMachine } from '$lib/utils/hostIntegrity';
+    import { logIPCRequest, logIPCResponse, logIPCError } from '$lib/utils/ipcLog';
 
     let { data } = $props();
     let config = $derived(data.config);
@@ -223,7 +231,9 @@
         const settings = normalizeSettings(form);
         const languageChanged =
             settings.selectedLanguage !== lastSaved.selectedLanguage;
-
+        const hostIntegrityCheckChanged =
+            settings.enableHostIntegrityCheck !==
+            lastSaved.enableHostIntegrityCheck;
         try {
             settingsStore.update(settings);
         } catch {
@@ -235,6 +245,9 @@
         form = settings;
 
         if (languageChanged) {
+            await setLanguage(settings.selectedLanguage);
+            location.reload();
+        } else if (hostIntegrityCheckChanged) {
             await setLanguage(settings.selectedLanguage);
             location.reload();
         } else {
@@ -317,35 +330,127 @@
         })();
     });
 
-    // Lazily checks (once) the EMLy Updater's installed/running state, when
-    // the danger zone becomes visible. Can be re-run via refreshUpdaterStatus.
-    let updaterInstalled = $state<boolean | null>(null);
-    let updaterRunning = $state<boolean | null>(null);
-    let checkingUpdaterStatus = $state(false);
+    // EMLy Updater's local (service) status and IPC pipe status are fetched
+    // once, app-wide, from the root (app)/+layout.svelte onMount — read the
+    // shared updaterStatusStore here rather than re-fetching.
 
-    async function refreshUpdaterStatus() {
-        checkingUpdaterStatus = true;
-        // Sleep for 250ms
-        await new Promise((resolve) => setTimeout(resolve, 250));
+    // "Run safety check" — a one-shot diagnostic combining host identity
+    // (hostname/AD domain) with the EMLy Updater's local + IPC status, plus
+    // a cross-check of AD domain/hostname as seen by the IPC-connected
+    // SYSTEM-privileged service vs. this (unprivileged) process, as a
+    // double failsafe against a spoofed/compromised local view.
+    type SafetyCheckStanding = "perfect" | "usable" | "limited";
+
+    type SafetyCheckResult = {
+        hostnameOk: boolean;
+        adDomainOk: boolean;
+        updaterInstalled: boolean;
+        updaterRunning: boolean;
+        ipcInstalled: boolean;
+        ipcResponding: boolean;
+        crossCheckOk: boolean;
+        hostIntegrityToggleOk: boolean;
+        standing: SafetyCheckStanding;
+    };
+
+    let safetyCheckDialogOpen = $state(false);
+    let runningSafetyCheck = $state(false);
+    let safetyCheckResult = $state<SafetyCheckResult | null>(null);
+
+    async function runSafetyCheck() {
+        runningSafetyCheck = true;
         try {
-            const status = await GetEMLyUpdaterStatus();
-            LogDebug(`EMLy Updater status: ${JSON.stringify(status)}`);
-            updaterInstalled = status.Installed;
-            updaterRunning = status.Running;
-        } catch (err) {
-            LogDebug(`EMLy Updater status check failed: ${err}`);
-            updaterInstalled = false;
-            updaterRunning = false;
+            await updaterStatusStore.refreshUpdaterStatus();
+            await updaterStatusStore.checkUpdaterIPCStatus();
+
+            const hostname = machineData?.Hostname ?? "";
+            const adDomain = machineData?.ADDomain ?? "";
+
+            const hostnameOk = evaluateHostname(hostname);
+            const adDomainOk = isInsideTREGCCADDomain(adDomain);
+
+            const updaterInstalled = !!updaterStatusStore.installed;
+            const updaterRunning = !!updaterStatusStore.running;
+            const ipcInstalled = !!updaterStatusStore.ipcActive;
+            const ipcResponding = !!updaterStatusStore.ipcValid;
+
+            let crossCheckOk = false;
+            if (ipcInstalled && ipcResponding) {
+                try {
+                    logIPCRequest("GetUpdaterADStatus");
+                    logIPCRequest("GetUpdaterSystemInfo");
+                    const [adStatus, sysInfo] = await Promise.all([
+                        GetUpdaterADStatus(),
+                        GetUpdaterSystemInfo(),
+                    ]);
+                    logIPCResponse("GetUpdaterADStatus", adStatus);
+                    logIPCResponse("GetUpdaterSystemInfo", sysInfo);
+                    crossCheckOk =
+                        adStatus.ADDomain === adDomain &&
+                        sysInfo.Hostname === hostname;
+                } catch (err) {
+                    logIPCError("GetUpdaterADStatus/GetUpdaterSystemInfo", err);
+                    LogDebug(`Safety check IPC cross-check failed: ${err}`);
+                    crossCheckOk = false;
+                }
+            }
+
+            // The Host Integrity toggle must be on — the only exemption is
+            // an actual DEBUG MODE build ($runningInDebugMode, the Go-side
+            // build flag), never merely running under `wails dev`/vite
+            // (`dev`) and never a recognized dev machine (which only
+            // bypasses the hostname/AD checks above). Disabling it outside
+            // of a debug build forces a Limited standing regardless of
+            // every other result.
+            const isDebugBuild = $runningInDebugMode;
+            const hostIntegrityToggleOk =
+                settingsStore.settings.enableHostIntegrityCheck ||
+                isDebugBuild;
+
+            let standing: SafetyCheckStanding;
+            if (!hostIntegrityToggleOk) {
+                standing = "limited";
+            } else if (
+                hostnameOk &&
+                adDomainOk &&
+                updaterInstalled &&
+                updaterRunning &&
+                ipcInstalled &&
+                ipcResponding &&
+                crossCheckOk
+            ) {
+                standing = "perfect";
+            } else if (
+                hostnameOk &&
+                adDomainOk &&
+                updaterInstalled &&
+                !updaterRunning
+            ) {
+                standing = "usable";
+            } else {
+                standing = "limited";
+            }
+
+            safetyCheckResult = {
+                hostnameOk,
+                adDomainOk,
+                updaterInstalled,
+                updaterRunning,
+                ipcInstalled,
+                ipcResponding,
+                crossCheckOk,
+                hostIntegrityToggleOk,
+                standing,
+            };
         } finally {
-            checkingUpdaterStatus = false;
+            runningSafetyCheck = false;
         }
     }
 
-    $effect(() => {
-        if (($dangerZoneEnabled || dev) && updaterInstalled === null) {
-            refreshUpdaterStatus();
-        }
-    });
+    function openSafetyCheckDialog() {
+        safetyCheckDialogOpen = true;
+        runSafetyCheck();
+    }
 
     // Sync theme with email viewer dark mode
     $effect(() => {
@@ -736,49 +841,25 @@
                         </div>
                     </div>
                     <Separator />
+    
                     <div
-                        class="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-card p-4"
+                        class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
                     >
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="space-y-1">
-                                <Label class="text-sm"
-                                    >{m.settings_danger_updater_check_label()}</Label
-                                >
-                                <div class="text-sm text-muted-foreground">
-                                    {m.settings_danger_updater_check_hint()}
-                                </div>
-                                <div class="flex items-center gap-4">
-                            <div class="flex items-center gap-1.5 text-sm">
-                                {#if updaterInstalled}
-                                    <CircleCheck class="size-4 text-green-500" />
-                                {:else}
-                                    <CircleX class="size-4 text-red-500" />
-                                {/if}
-                                {m.settings_danger_updater_installed_label()}
-                            </div>
-                            <div class="flex items-center gap-1.5 text-sm">
-                                {#if updaterRunning}
-                                    <CircleCheck class="size-4 text-green-500" />
-                                {:else}
-                                    <CircleX class="size-4 text-red-500" />
-                                {/if}
-                                {m.settings_danger_updater_running_label()}
-                            </div>
-                        </div>
-                            </div>
-                            <Button
-                                variant="destructive"
-                                class="cursor-pointer hover:cursor-pointer"
-                                onclick={refreshUpdaterStatus}
-                                disabled={checkingUpdaterStatus}
+                        <div class="space-y-1">
+                            <Label class="text-sm"
+                                >{m.settings_danger_safety_check_label()}</Label
                             >
-                                {#if checkingUpdaterStatus}
-                                    <Loader2 class="size-4 animate-spin" />
-                                {/if}
-                                {m.settings_danger_updater_refresh_btn()}
-                            </Button>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_danger_safety_check_hint()}
+                            </div>
                         </div>
-                        
+                        <Button
+                            variant="destructive"
+                            class="cursor-pointer hover:cursor-pointer"
+                            onclick={openSafetyCheckDialog}
+                        >
+                            {m.settings_danger_safety_check_btn()}
+                        </Button>
                     </div>
                     <Separator />
                     <div
@@ -799,6 +880,7 @@
                                 href="/"
                                 class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
                                 style="text-decoration: none;"
+                                id="reload-ui-btn"
                             >
                                 {m.settings_danger_reload_button_ui()}
                             </a>
@@ -908,8 +990,9 @@
                         labelText={m.settings_danger_host_integrity_label()}
                         hintText={m.settings_danger_host_integrity_hint()}
                         infoText={m.settings_danger_host_integrity_info()}
-                        type="danger"
+                        type="danger-bypass"
                         runningInDevMode={!runningInDevMode}
+                        machineData={machineData}
                     />
 
                     <Separator />
@@ -975,6 +1058,143 @@
                 </Card.Content>
             </Card.Root>
         {/if}
+
+        <Dialog.Root bind:open={safetyCheckDialogOpen}>
+            <Dialog.Content class="sm:max-w-md">
+                <Dialog.Header>
+                    <Dialog.Title>{m.settings_safety_check_dialog_title()}</Dialog.Title>
+                    <Dialog.Description>
+                        {m.settings_safety_check_dialog_description()}
+                    </Dialog.Description>
+                </Dialog.Header>
+
+                {#if runningSafetyCheck && !safetyCheckResult}
+                    <div class="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                        <Loader2 class="size-4 animate-spin" />
+                        {m.settings_safety_check_running()}
+                    </div>
+                {:else if safetyCheckResult}
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_hostname()}
+                            {#if safetyCheckResult.hostnameOk}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_ad_domain()}
+                            {#if safetyCheckResult.adDomainOk}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_updater_installed()}
+                            {#if safetyCheckResult.updaterInstalled}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_updater_running()}
+                            {#if safetyCheckResult.updaterRunning}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_ipc_installed()}
+                            {#if safetyCheckResult.ipcInstalled}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_ipc_responding()}
+                            {#if safetyCheckResult.ipcResponding}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_cross_check()}
+                            {#if safetyCheckResult.crossCheckOk}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            {m.settings_safety_check_item_host_integrity_toggle()}
+                            {#if safetyCheckResult.hostIntegrityToggleOk}
+                                <CircleCheck class="size-4 text-green-500" />
+                            {:else}
+                                <CircleX class="size-4 text-red-500" />
+                            {/if}
+                        </div>
+
+                        <Separator />
+
+                        <div class="flex items-center justify-between gap-2 pt-1">
+                            <span class="text-sm font-medium">
+                                {m.settings_safety_check_standing_label()}
+                            </span>
+                            {#if safetyCheckResult.standing === "perfect"}
+                                <Badge class="bg-green-600 text-white border-transparent">
+                                    <CircleCheck />
+                                    {m.settings_safety_check_standing_perfect()}
+                                </Badge>
+                            {:else if safetyCheckResult.standing === "usable"}
+                                <Badge class="bg-yellow-500 text-black border-transparent">
+                                    <TriangleAlert />
+                                    {m.settings_safety_check_standing_usable()}
+                                </Badge>
+                            {:else}
+                                <Badge variant="destructive">
+                                    <OctagonX /> 
+                                    {m.settings_safety_check_standing_limited()}
+                                </Badge>
+                            {/if}
+                        </div>
+                        <div class="text-xs text-muted-foreground">
+                            {#if safetyCheckResult.standing === "perfect"}
+                                {m.settings_safety_check_standing_perfect_hint()}
+                            {:else if safetyCheckResult.standing === "usable"}
+                                {m.settings_safety_check_standing_usable_hint()}
+                            {:else}
+                                {m.settings_safety_check_standing_limited_hint()}
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
+
+                <Dialog.Footer>
+                    <Button
+                        variant="outline"
+                        class="cursor-pointer hover:cursor-pointer"
+                        onclick={runSafetyCheck}
+                        disabled={runningSafetyCheck}
+                    >
+                        {#if runningSafetyCheck}
+                            <Loader2 class="size-4 animate-spin" />
+                        {/if}
+                        {m.settings_safety_check_rerun_btn()}
+                    </Button>
+                    <Dialog.Close
+                        class={`${buttonVariants({ variant: "destructive" })} cursor-pointer hover:cursor-pointer`}
+                    >
+                        {m.settings_safety_check_close_btn()}
+                    </Dialog.Close>
+                </Dialog.Footer>
+            </Dialog.Content>
+        </Dialog.Root>
 
         {#if !runningInDevMode}
             <AlertDialog.Root bind:open={dangerWarningOpen}>
