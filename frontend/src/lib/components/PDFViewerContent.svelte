@@ -19,6 +19,7 @@
   import * as m from "$lib/paraglide/messages.js";
   import { Rotate } from "@embedpdf/plugin-rotate/svelte";
   import { saveAttachmentNatively } from "$lib/utils/attachment-download";
+  import "$lib/styles/viewer-toolbar.css";
 
   let readerCSSStylesheet = `height: 100%; width: 100%; overflow: auto; background: var(--muted); ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:var(--muted-foreground)}::-webkit-scrollbar-corner{background:transparent}`;
 
@@ -156,72 +157,6 @@
     background: var(--background);
     color: var(--foreground);
     user-select: none;
-  }
-
-  .toolbar {
-    height: 50px;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    flex-shrink: 0;
-    z-index: 10;
-  }
-
-  .title {
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0.9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 50%;
-  }
-
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .separator {
-    width: 1px;
-    height: 18px;
-    background: var(--border);
-    margin: 0 4px;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--muted);
-    color: var(--foreground);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-  }
-
-  .btn:hover {
-    background: var(--accent);
-    color: var(--accent-foreground);
-  }
-
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .btn:disabled:hover {
-    background: var(--muted);
-    color: var(--foreground);
   }
 
   .page-info {

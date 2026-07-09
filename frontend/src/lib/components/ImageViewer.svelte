@@ -10,6 +10,7 @@
   } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages.js";
   import { saveAttachmentNatively } from "$lib/utils/attachment-download";
+  import "$lib/styles/viewer-toolbar.css";
 
   interface Props {
     base64Data: string;
@@ -100,21 +101,21 @@
       <button class="btn" onclick={downloadImage} title={m.mail_download_btn_title()}>
         <Download size="16" />
       </button>
-      <div class="sep"></div>
+      <div class="separator"></div>
       <button class="btn" onclick={() => zoom(0.1)} title={m.pdf_zoom_in()}>
         <ZoomIn size="16" />
       </button>
       <button class="btn" onclick={() => zoom(-0.1)} title={m.pdf_zoom_out()}>
         <ZoomOut size="16" />
       </button>
-      <div class="sep"></div>
+      <div class="separator"></div>
       <button class="btn" onclick={() => rotate(-90)} title={m.pdf_rotate_left()}>
         <RotateCcw size="16" />
       </button>
       <button class="btn" onclick={() => rotate(90)} title={m.pdf_rotate_right()}>
         <RotateCw size="16" />
       </button>
-      <div class="sep"></div>
+      <div class="separator"></div>
       <button class="btn" onclick={reset} title={m.image_reset_btn()}>
         <AlignHorizontalSpaceAround size="16" />
       </button>
@@ -160,61 +161,6 @@
     overflow: hidden;
     background: var(--background);
     color: var(--foreground);
-  }
-
-  .toolbar {
-    height: 50px;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    flex-shrink: 0;
-  }
-
-  .title {
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0.9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 50%;
-    margin: 0;
-  }
-
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .sep {
-    width: 1px;
-    height: 18px;
-    background: var(--border);
-    margin: 0 4px;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--muted);
-    color: var(--foreground);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn:hover {
-    background: var(--accent);
-    color: var(--accent-foreground);
   }
 
   .image-area {
