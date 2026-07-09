@@ -29,8 +29,7 @@
         Info,
         Music,
         TriangleAlert,
-        ShieldAlert,
-        Lock,
+        ShieldAlert
     } from "@lucide/svelte";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { toast } from "svelte-sonner";
@@ -52,11 +51,8 @@
     } from "$lib/wailsjs/go/main/App";
     import { settingsStore } from "$lib/stores/settings.svelte.js";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
-    import { systemInfoStore } from "$lib/stores/system-info.svelte.js";
-    import {
-        evaluateHostname,
-        isInsideTREGCCADDomain,
-    } from "$lib/utils/hostIntegrity";
+    import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
+    import { updaterStatusStore } from "$lib/stores/updater-status.svelte.js";
 
     let versionInfo: utils.Config | null = $state(null);
     let isMaximized = $state(false);
@@ -132,21 +128,24 @@
             configMissingDialogOpen = true;
         }
         runningInDebugMode.set(await IsAppInDebugMode());
-    });
 
-    $effect(() => {
-        if (hostIntegrityChecked) return;
-        const machineInfo = systemInfoStore.data;
-        if (!machineInfo) return;
-        if (!settingsStore.settings.enableHostIntegrityCheck) return;
-
-        hostIntegrityChecked = true;
-        const hostnameOk = evaluateHostname(machineInfo.Hostname);
-        const domainOk = isInsideTREGCCADDomain(machineInfo.ADDomain);
-        if (!hostnameOk || !domainOk) {
-            hostIntegrityFailed.set(true);
-            hostIntegrityDialogOpen = true;
+        if (!hostIntegrityChecked) {
+            hostIntegrityChecked = true;
+            const failed = await ensureHostIntegrityChecked();
+            if (failed) {
+                hostIntegrityDialogOpen = true;
+            }
         }
+
+        // Kick off the EMLy Updater status checks app-wide, so any page
+        // reading updaterStatusStore already has (or is fetching) fresh
+        // data instead of triggering its own round trip. checkUpdaterIPCStatus
+        // bails out immediately if the service turns out to be missing/not
+        // running, so chaining it after refreshUpdaterStatus avoids a
+        // pointless pipe round trip.
+        updaterStatusStore
+            .refreshUpdaterStatus()
+            .then(() => updaterStatusStore.checkUpdaterIPCStatus());
     });
 
     async function detectDebugging() {
@@ -351,16 +350,6 @@
             onclick={() => {
                 const p = page.url.pathname as string;
                 if (p !== "/credits" && p !== "/credits/") goto("/credits");
-            }}
-            style="cursor: pointer; opacity: 0.7;"
-            class="hover:opacity-100 transition-opacity"
-        />
-        <Lock
-            size="16"
-            title={m.layout_privacy_policy_label()}
-            onclick={() => {
-                const p = page.url.pathname as string;
-                if (p !== "/privacy" && p !== "/privacy/") goto("/privacy");
             }}
             style="cursor: pointer; opacity: 0.7;"
             class="hover:opacity-100 transition-opacity"
