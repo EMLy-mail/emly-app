@@ -8,6 +8,7 @@ import {
 } from "$lib/wailsjs/go/main/App";
 import DOMPurify from "dompurify";
 import type { internal } from "$lib/wailsjs/go/models";
+import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
 
 export const load: PageLoad = async () => {
   try {
@@ -33,6 +34,12 @@ export const load: PageLoad = async () => {
       }
 
       if (emlContent) {
+        // Must resolve before the page mounts: the host integrity check is
+        // async, and the component reads `hostIntegrityFailed` synchronously
+        // on mount to decide whether to block a PEC opened at startup (e.g.
+        // via double-click). Without this await, that block would race the
+        // check and lose.
+        await ensureHostIntegrityChecked();
         emlContent.body = DOMPurify.sanitize(emlContent.body || "");
         return { email: emlContent };
       }

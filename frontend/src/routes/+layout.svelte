@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { setupConsoleLogger } from '$lib/utils/logger-hook';
-	import { GetExtendedMachineData, GetMachineData } from '$lib/wailsjs/go/main/App';
-	import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
+	import { ensureHostIntegrityChecked } from '$lib/utils/hostIntegrityCheck';
 	import "./layout.css";
 	
 	let { children } = $props();
@@ -39,17 +38,9 @@
 		// Clear the pre-Svelte crash hint timeout now that JS has loaded
 		clearTimeout((window as any).__emlyLoadTimeout);
 
-		// Fase 1 – Recupero dati macchina
+		// Fase 1 – Recupero dati macchina + verifica integrità host
 		if (stepEl) stepEl.textContent = t('Recupero dati...', 'Fetching data...');
-		try {
-			if(systemInfoStore.data) {
-				return;
-			}
-			const info = await GetExtendedMachineData();
-			systemInfoStore.setData(info);
-		} catch (e) {
-			console.error('Failed to fetch machine data', e);
-		}
+		await ensureHostIntegrityChecked();
 
 		// Fase 2 – Caricamento layout
 		if (stepEl) stepEl.textContent = t('Caricamento layout...', 'Loading layout...');
