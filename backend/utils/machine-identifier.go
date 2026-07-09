@@ -58,6 +58,61 @@ func GetMachineInfo() (*MachineInfo, error) {
 	// 3. Get Version Info
 	logger.Debug("GetMachineInfo: fetching Windows version info")
 	t3 := time.Now()
+	version, err := getWindowsVersionInfo()
+	logger.Debug("GetMachineInfo: fetched Windows version info", "duration_ms", time.Since(t3).Milliseconds())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Windows version info: %w", err)
+	}
+	info.Version = version
+
+	// 4. Get HWID (Windows specific via wmic)
+	logger.Debug("GetMachineInfo: fetching HWID")
+	t4 := time.Now()
+	hwid, err := getHWID()
+	logger.Debug("GetMachineInfo: fetched HWID", "duration_ms", time.Since(t4).Milliseconds())
+	if err != nil {
+		// Preserves a pre-existing quirk: when both HWID strategies fail on
+		// Windows, GetMachineInfo returns here without CPU/RAM info instead
+		// of continuing. Not corrected as part of this refactor.
+		info.HWID = "N/A for " + runtime.GOOS
+		return info, nil
+	}
+	info.HWID = hwid
+
+	// 5. Get CPU Info
+	logger.Debug("GetMachineInfo: fetching CPU info")
+	t6 := time.Now()
+	cpuInfo, err := getCPUInfo()
+	elapsed6 := time.Since(t6).Milliseconds()
+	if err == nil {
+		logger.Debug("GetMachineInfo: fetched CPU info", "duration_ms", elapsed6)
+		info.CPU = *cpuInfo
+	} else {
+		logger.Debug("GetMachineInfo: CPU info failed", "error", err, "duration_ms", elapsed6)
+	}
+
+	// 7. Get RAM Info
+	logger.Debug("GetMachineInfo: fetching RAM info")
+	t8 := time.Now()
+	ramInfo, err := getRAMInfo()
+	elapsed8 := time.Since(t8).Milliseconds()
+	if err == nil {
+		logger.Debug("GetMachineInfo: fetched RAM info", "duration_ms", elapsed8)
+		info.RAM = *ramInfo
+	} else {
+		logger.Debug("GetMachineInfo: RAM info failed", "error", err, "duration_ms", elapsed8)
+	}
+
+	logger.Debug("GetMachineInfo: completed", "duration_ms", time.Since(start).Milliseconds())
+	return info, nil
+}
+
+// getWindowsVersionInfo reads the OS product name, edition and build info
+// from the registry and formats it into a single display string. Registry
+// read failures are silently ignored (fields just come back empty), matching
+// the pre-existing behavior; the error return exists only for consistency
+// with the other get*Info helpers and is currently always nil.
+func getWindowsVersionInfo() (string, error) {
 	k, _ := registry.OpenKey(
 		registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\Windows NT\CurrentVersion`,
@@ -87,78 +142,56 @@ func GetMachineInfo() (*MachineInfo, error) {
 		}
 	}
 
-	info.Version = fmt.Sprintf("%s %s %s (Build %s.%d)", product, display, edition, build, ubr)
-	logger.Debug("GetMachineInfo: fetched Windows version info", "duration_ms", time.Since(t3).Milliseconds())
+	return fmt.Sprintf("%s %s %s (Build %s.%d)", product, display, edition, build, ubr), nil
+}
 
-	// 3. Get HWID (Windows specific via wmic)
-	logger.Debug("GetMachineInfo: fetching HWID")
-	t4 := time.Now()
-	// Fallback or different implementation needed for Linux/Mac if required
-	if runtime.GOOS == "windows" {
-		wmicCmd := exec.Command("wmic", "csproduct", "get", "uuid")
-		wmicCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
-		out, err := wmicCmd.Output()
-		if err == nil {
-			// Parse output which looks like "UUID \n <UUID> \n\n"
-			lines := strings.Split(string(out), "\n")
-			for _, line := range lines {
-				trimmed := strings.TrimSpace(line)
-				if trimmed != "" && trimmed != "UUID" {
-					info.HWID = trimmed
-					break
-				}
-			}
-		}
-
-		// Fallback to machineid library if wmic fails or returns empty, as it has multiple strategies for Windows
-		if info.HWID == "" {
-			logger.Debug("WMIC failed or was empty, fallback to machineid.ProtectedID")
-			out, err := machineid.ProtectedID("emly-machine-id")
-			if err != nil {
-				logger.Warn("GetMachineInfo: machineid.ProtectedID failed", "error", err)
-				info.HWID = "N/A for " + runtime.GOOS
-				return info, nil
-			}
-			info.HWID = out
-		}
-	} else {
+// getHWID returns a best-effort hardware identifier for this machine: on
+// Windows it tries wmic csproduct first, falling back to
+// machineid.ProtectedID; on other platforms it uses machineid.ProtectedID
+// directly.
+//
+// On Windows, if both strategies fail, it returns an error - GetMachineInfo
+// treats that as fatal and returns early without collecting CPU/RAM info,
+// a pre-existing quirk preserved as-is (not corrected by this refactor). On
+// other platforms a machineid failure is only logged; this returns an empty
+// string with a nil error, also matching the pre-existing behavior.
+func getHWID() (string, error) {
+	if runtime.GOOS != "windows" {
 		id, err := machineid.ProtectedID("emly-machine-id")
 		if err != nil {
 			logger.Warn("GetMachineInfo: machineid.ProtectedID failed", "error", err)
-			info.HWID = "N/A for " + runtime.GOOS
 		}
-		info.HWID = id
+		return strings.TrimSpace(id), nil
 	}
-	info.HWID = strings.TrimSpace(info.HWID)
 
-	logger.Debug("GetMachineInfo: fetched HWID", "duration_ms", time.Since(t4).Milliseconds())
-
-	// 5. Get CPU Info
-	logger.Debug("GetMachineInfo: fetching CPU info")
-	t6 := time.Now()
-	cpuInfo, err := getCPUInfo()
-	elapsed6 := time.Since(t6).Milliseconds()
+	var hwid string
+	wmicCmd := exec.Command("wmic", "csproduct", "get", "uuid")
+	wmicCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	out, err := wmicCmd.Output()
 	if err == nil {
-		logger.Debug("GetMachineInfo: fetched CPU info", "duration_ms", elapsed6)
-		info.CPU = *cpuInfo
-	} else {
-		logger.Debug("GetMachineInfo: CPU info failed", "error", err, "duration_ms", elapsed6)
+		// Parse output which looks like "UUID \n <UUID> \n\n"
+		lines := strings.Split(string(out), "\n")
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if trimmed != "" && trimmed != "UUID" {
+				hwid = trimmed
+				break
+			}
+		}
 	}
 
-	// 7. Get RAM Info
-	logger.Debug("GetMachineInfo: fetching RAM info")
-	t8 := time.Now()
-	ramInfo, err := getRAMInfo()
-	elapsed8 := time.Since(t8).Milliseconds()
-	if err == nil {
-		logger.Debug("GetMachineInfo: fetched RAM info", "duration_ms", elapsed8)
-		info.RAM = *ramInfo
-	} else {
-		logger.Debug("GetMachineInfo: RAM info failed", "error", err, "duration_ms", elapsed8)
+	// Fallback to machineid library if wmic fails or returns empty, as it has multiple strategies for Windows
+	if hwid == "" {
+		logger.Debug("WMIC failed or was empty, fallback to machineid.ProtectedID")
+		out, err := machineid.ProtectedID("emly-machine-id")
+		if err != nil {
+			logger.Warn("GetMachineInfo: machineid.ProtectedID failed", "error", err)
+			return "", err
+		}
+		hwid = out
 	}
 
-	logger.Debug("GetMachineInfo: completed", "duration_ms", time.Since(start).Milliseconds())
-	return info, nil
+	return strings.TrimSpace(hwid), nil
 }
 
 func getCPUInfo() (*ghw.CPUInfo, error) {
