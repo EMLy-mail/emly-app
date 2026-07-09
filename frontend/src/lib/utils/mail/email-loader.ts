@@ -3,9 +3,6 @@
  */
 
 import {
-  ReadEML,
-  ReadMSG,
-  ReadPEC,
   ReadAuto,
   DetectEmailFormat,
   ShowOpenFileDialog,
@@ -80,51 +77,6 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
     const finishTime = new Date();
     const loadTime = finishTime.getTime() - startTime.getTime();
     console.log(`Parse -> Email, load and encode B64 -> time took  ${loadTime} ms`);
-    return { success: true, email, filePath };
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Failed to load email:', error);
-    return { success: false, error: errorMessage };
-  }
-}
-
-/**
- * Loads an email using the explicit per-format readers (legacy path).
- * Prefer loadEmailFromPath for new code.
- */
-export async function loadEmailFromPathLegacy(filePath: string): Promise<LoadEmailResult> {
-  const fileType = getEmailFileType(filePath);
-
-  if (!fileType) {
-    return {
-      success: false,
-      error: 'Invalid file type. Only .eml and .msg files are supported.',
-    };
-  }
-
-  try {
-    let email: internal.EmailData;
-
-    if (fileType === 'msg') {
-      email = await ReadMSG(filePath);
-    } else {
-      try {
-        email = await ReadPEC(filePath);
-      } catch {
-        email = await ReadEML(filePath);
-      }
-    }
-
-    if (email?.body) {
-      const trimmed = email.body.trim();
-      if (looksLikeBase64(trimmed)) {
-        const decoded = tryDecodeBase64(trimmed);
-        if (decoded) {
-          email.body = decoded;
-        }
-      }
-    }
-
     return { success: true, email, filePath };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
