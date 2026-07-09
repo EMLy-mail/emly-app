@@ -2,15 +2,9 @@
     import { page } from "$app/state";
     import * as m from "$lib/paraglide/messages.js";
     import { dev } from "$app/environment";
-    import { onMount } from "svelte";
-    import {
-        WindowMinimise,
-        WindowMaximise,
-        WindowUnmaximise,
-        WindowIsMaximised,
-        Quit,
-    } from "$lib/wailsjs/runtime/runtime";
+    import { Quit } from "$lib/wailsjs/runtime/runtime";
     import { GetLogsDir, OpenFolderInExplorer } from "$lib/wailsjs/go/main/App";
+    import TitleBar from "$lib/components/TitleBar.svelte";
 
     async function openLogs() {
         try {
@@ -20,48 +14,10 @@
             console.error("Failed to open logs folder", e);
         }
     }
-
-    let isMaximized = $state(false);
-    let windowFocused = $state(true);
-
-    async function toggleMaximize() {
-        if (isMaximized) {
-            WindowUnmaximise();
-        } else {
-            WindowMaximise();
-        }
-        isMaximized = !isMaximized;
-    }
-
-    WindowIsMaximised().then((v) => (isMaximized = v));
-
-    onMount(() => {
-        window.addEventListener("focus", () => (windowFocused = true));
-        window.addEventListener("blur", () => (windowFocused = false));
-    });
 </script>
 
 <div class="app-layout">
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        class="titlebar"
-        ondblclick={toggleMaximize}
-        style="--wails-draggable:drag"
-    >
-        <div class="title">EMLy</div>
-
-        <div class="controls" style:opacity={windowFocused ? 1 : 0.4}>
-            <button class="btn" onmousedown={() => WindowMinimise()}>─</button>
-            <button class="btn" onmousedown={toggleMaximize}>
-                {#if isMaximized}
-                    ❐
-                {:else}
-                    ☐
-                {/if}
-            </button>
-            <button class="btn close" onmousedown={() => Quit()}>✕</button>
-        </div>
-    </div>
+    <TitleBar />
 
     <div class="page">
         <div class="error-container">
@@ -114,54 +70,6 @@
         flex-direction: column;
         height: 100vh;
         overflow: hidden;
-    }
-
-    .titlebar {
-        height: 32px;
-        background: var(--background);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-left: 12px;
-        -webkit-app-region: drag;
-        user-select: none;
-        flex: 0 0 32px;
-        z-index: 50;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .title {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--muted-foreground);
-    }
-
-    .controls {
-        display: flex;
-        height: 100%;
-    }
-
-    .btn {
-        width: 46px;
-        height: 100%;
-        border: none;
-        background: transparent;
-        color: var(--foreground);
-        font-size: 14px;
-        cursor: pointer;
-        -webkit-app-region: no-drag;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn:hover {
-        background: var(--accent);
-    }
-
-    .close:hover {
-        background: #e81123;
-        color: white;
     }
 
     .page {

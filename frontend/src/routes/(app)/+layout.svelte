@@ -35,14 +35,8 @@
     import { toast } from "svelte-sonner";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import BugReportDialog from "$lib/components/BugReportDialog.svelte";
+    import TitleBar from "$lib/components/TitleBar.svelte";
 
-    import {
-        WindowMinimise,
-        WindowMaximise,
-        WindowUnmaximise,
-        WindowIsMaximised,
-        Quit,
-    } from "$lib/wailsjs/runtime/runtime";
     import { RefreshCcwDot } from "@lucide/svelte";
     import {
         IsDebuggerRunning,
@@ -55,17 +49,11 @@
     import { updaterStatusStore } from "$lib/stores/updater-status.svelte.js";
 
     let versionInfo: utils.Config | null = $state(null);
-    let isMaximized = $state(false);
-    let windowFocused = $state(true);
     let isDebugerOn: boolean = $state(false);
     let isDebbugerProtectionOn: boolean = $state(true);
     let configMissingDialogOpen = $state(false);
     let hostIntegrityDialogOpen = $state(false);
     let hostIntegrityChecked = false;
-
-    async function syncMaxState() {
-        isMaximized = await WindowIsMaximised();
-    }
 
     $effect(() => {
         $inspect("hostIntegrityDialogOpen", hostIntegrityDialogOpen);
@@ -83,36 +71,10 @@
         }
     });
 
-    async function toggleMaximize() {
-        console.log("isMaximized: ", isMaximized);
-        if (isMaximized) {
-            console.log("Unmaximizing window");
-            WindowUnmaximise();
-        } else {
-            console.log("Maximizing window");
-            WindowMaximise();
-        }
-        isMaximized = !isMaximized;
-    }
-
-    function minimize() {
-        WindowMinimise();
-    }
-
-    function closeWindow() {
-        Quit();
-    }
-
-    function onTitlebarDblClick() {
-        toggleMaximize();
-    }
-
     onMount(async () => {
         // Log the entire local storage
         console.log("Local Storage Contents:");
         console.log(localStorage);
-        window.addEventListener("focus", () => (windowFocused = true));
-        window.addEventListener("blur", () => (windowFocused = false));
         if (dev) dangerZoneEnabled.set(true);
         if (browser && isDebbugerProtectionOn) {
             detectDebugging();
@@ -196,18 +158,11 @@
             sidebarOpen.set(true);
         }
     });
-
-    syncMaxState();
 </script>
 
 <div class="app">
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        class="titlebar"
-        ondblclick={onTitlebarDblClick}
-        style="--wails-draggable:drag"
-    >
-        <div class="title">
+    <TitleBar>
+        {#snippet titleContent()}
             <bold>EMLy</bold>
             <div class="version-wrapper">
                 <version class="inline">
@@ -254,25 +209,8 @@
                     </div>
                 {/if}
             </div>
-        </div>
-
-        <div
-            class="controls"
-            style:opacity={windowFocused ? 1 : 0.4}
-        >
-            <button class="btn" onmousedown={minimize}>─</button>
-
-            <button class="btn" onmousedown={toggleMaximize}>
-                {#if isMaximized}
-                    ❐
-                {:else}
-                    ☐
-                {/if}
-            </button>
-
-            <button class="btn close" onmousedown={closeWindow}>✕</button>
-        </div>
-    </div>
+        {/snippet}
+    </TitleBar>
 
     <div
         class="content"
@@ -457,21 +395,6 @@
         color: var(--foreground);
     }
 
-    .titlebar {
-        height: 32px;
-        background: var(--background);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-left: 12px;
-        -webkit-app-region: drag;
-        user-select: none;
-        flex: 0 0 32px;
-        z-index: 50;
-        position: relative;
-        border-bottom: 1px solid var(--border);
-    }
-
     .footerbar {
         height: 32px;
         background: var(--background);
@@ -485,19 +408,15 @@
         border-top: 1px solid var(--border);
     }
 
-    .title {
-        font-size: 13px;
-        opacity: 0.9;
-        color: var(--muted-foreground);
-    }
-
-    .title bold {
+    /* Rendered via TitleBar's titleContent snippet, defined (and thus
+       scoped) here rather than in TitleBar.svelte itself. */
+    bold {
         font-weight: 600;
         color: var(--foreground);
         opacity: 0.7;
     }
 
-    .title version {
+    version {
         display: inline-flex;
         align-items: center;
         gap: 4px;
@@ -505,7 +424,7 @@
         opacity: 0.6;
     }
 
-    .title version debug {
+    version debug {
         display: inline-flex;
         align-items: center;
         gap: 4px;
@@ -514,7 +433,7 @@
         font-weight: 600;
     }
 
-    .title version dev {
+    version dev {
         display: inline-flex;
         align-items: center;
         gap: 4px;
@@ -578,37 +497,6 @@
     .tooltip-item .channel {
         color: var(--muted-foreground);
         font-size: 10px;
-    }
-
-    .controls {
-        display: flex;
-        height: 100%;
-        opacity: 0.5;
-    }
-
-    .btn {
-        width: 46px;
-        height: 100%;
-        border: none;
-        background: transparent;
-        color: var(--foreground);
-        font-size: 14px;
-        cursor: pointer;
-        -webkit-app-region: no-drag;
-    }
-
-    .btn:hover {
-        background: var(--accent);
-    }
-
-    .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        background: var(--muted);
-    }
-
-    .close:hover {
-        background: #e81123;
     }
 
     .content {
