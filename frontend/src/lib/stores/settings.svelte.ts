@@ -6,7 +6,7 @@ import { setLocale } from "$lib/paraglide/runtime";
 
 const STORAGE_KEY = "emly_gui_settings";
 
-const defaults: EMLy_GUI_Settings = {
+export const defaultSettings: EMLy_GUI_Settings = {
     selectedLanguage: "it",
     useBuiltinPreview: true,
     useBuiltinPDFViewer: true,
@@ -23,7 +23,7 @@ const defaults: EMLy_GUI_Settings = {
 };
 
 class SettingsStore {
-    settings = $state<EMLy_GUI_Settings>({ ...defaults });
+    settings = $state<EMLy_GUI_Settings>({ ...defaultSettings });
     hasHydrated = $state(false);
     wasReset = $state(false);
 
@@ -91,7 +91,7 @@ class SettingsStore {
     }
     
     reset() {
-        this.settings = { ...defaults };
+        this.settings = { ...defaultSettings };
         if (this.settings.theme) {
             applyTheme(this.settings.theme);
         }

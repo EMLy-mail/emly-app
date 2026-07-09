@@ -37,7 +37,7 @@
         runningInDebugMode,
     } from "$lib/stores/app";
     import { LogDebug, LogInfo } from "$lib/wailsjs/runtime/runtime";
-    import { settingsStore } from "$lib/stores/settings.svelte";
+    import { settingsStore, defaultSettings } from "$lib/stores/settings.svelte";
     import * as m from "$lib/paraglide/messages";
     import { setLocale } from "$lib/paraglide/runtime";
     import { mailState } from "$lib/stores/mail-state.svelte.js";
@@ -147,22 +147,6 @@
         "png"
     ];
 
-    const defaults: EMLy_GUI_Settings = {
-        selectedLanguage: "it",
-        useBuiltinPreview: true,
-        useBuiltinPDFViewer: true,
-        previewFileSupportedTypes: ["jpg", "jpeg", "png"],
-        enableAttachedDebuggerProtection: true,
-        enableHostIntegrityCheck: true,
-        useDarkEmailViewer: true,
-        reduceMotion: false,
-        theme: "dark",
-        enableLinkClickConfirmation: true,
-        enableTabMode: true,
-        openAttachmentsAsTab: true,
-        fixEmailTextContrast: true,
-    };
-
     async function setLanguage(
         lang: EMLy_GUI_Settings["selectedLanguage"] | null,
     ) {
@@ -178,41 +162,41 @@
     function normalizeSettings(s: EMLy_GUI_Settings): EMLy_GUI_Settings {
         return {
             selectedLanguage:
-                s.selectedLanguage || defaults.selectedLanguage || "en",
+                s.selectedLanguage || defaultSettings.selectedLanguage || "en",
             useBuiltinPreview: !!s.useBuiltinPreview,
             useBuiltinPDFViewer:
-                s.useBuiltinPDFViewer ?? defaults.useBuiltinPDFViewer ?? true,
+                s.useBuiltinPDFViewer ?? defaultSettings.useBuiltinPDFViewer ?? true,
             previewFileSupportedTypes:
                 s.previewFileSupportedTypes ||
-                defaults.previewFileSupportedTypes ||
+                defaultSettings.previewFileSupportedTypes ||
                 [],
             enableAttachedDebuggerProtection:
                 s.enableAttachedDebuggerProtection ??
-                defaults.enableAttachedDebuggerProtection ??
+                defaultSettings.enableAttachedDebuggerProtection ??
                 true,
             enableHostIntegrityCheck:
                 s.enableHostIntegrityCheck ??
-                defaults.enableHostIntegrityCheck ??
+                defaultSettings.enableHostIntegrityCheck ??
                 true,
             useDarkEmailViewer:
-                s.useDarkEmailViewer ?? defaults.useDarkEmailViewer ?? true,
-            reduceMotion: s.reduceMotion ?? defaults.reduceMotion ?? false,
-            theme: s.theme || defaults.theme || "light",
+                s.useDarkEmailViewer ?? defaultSettings.useDarkEmailViewer ?? true,
+            reduceMotion: s.reduceMotion ?? defaultSettings.reduceMotion ?? false,
+            theme: s.theme || defaultSettings.theme || "light",
             enableLinkClickConfirmation:
                 s.enableLinkClickConfirmation ??
-                defaults.enableLinkClickConfirmation ??
+                defaultSettings.enableLinkClickConfirmation ??
                 false,
             enableTabMode:
                 s.enableTabMode ??
-                defaults.enableTabMode ??
+                defaultSettings.enableTabMode ??
                 false,
             openAttachmentsAsTab:
                 s.openAttachmentsAsTab ??
-                defaults.openAttachmentsAsTab ??
+                defaultSettings.openAttachmentsAsTab ??
                 false,
             fixEmailTextContrast:
                 s.fixEmailTextContrast ??
-                defaults.fixEmailTextContrast ??
+                defaultSettings.fixEmailTextContrast ??
                 false,
         };
     }
@@ -256,8 +240,8 @@
     }
 
     async function resetToDefaults() {
-        form = normalizeSettings(defaults);
-        lastSaved = normalizeSettings(defaults);
+        form = normalizeSettings(defaultSettings);
+        lastSaved = normalizeSettings(defaultSettings);
 
         // Save to storage
         if (browser) {
@@ -269,7 +253,7 @@
                     dangerZoneEnabled.set(false);
                     LogDebug("Reset danger zone setting to false.");
                 }
-                LogInfo("Settings reset to defaults.");
+                LogInfo("Settings reset to defaultSettings.");
             } catch {
                 toast.error(m.settings_toast_reset_failed());
                 return;
@@ -307,7 +291,7 @@
         // Ensure we don't update if the values are already practically identical to avoid loops
         if (
             settingsStore.hasHydrated &&
-            isSameSettings(lastSaved, defaults) &&
+            isSameSettings(lastSaved, defaultSettings) &&
             !isSameSettings(lastSaved, settingsStore.settings)
         ) {
             // Ensure we normalize when syncing from store too
