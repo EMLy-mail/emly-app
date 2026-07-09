@@ -25,16 +25,6 @@ import (
 // Bug Report Types
 // =============================================================================
 
-// BugReportResult contains paths to the generated bug report files.
-type BugReportResult struct {
-	// FolderPath is the path to the bug report folder in temp
-	FolderPath string `json:"folderPath"`
-	// ScreenshotPath is the path to the captured screenshot file
-	ScreenshotPath string `json:"screenshotPath"`
-	// MailFilePath is the path to the copied mail file (empty if no mail loaded)
-	MailFilePath string `json:"mailFilePath"`
-}
-
 // BugReportInput contains the user-provided bug report details.
 type BugReportInput struct {
 	// Name is the user's name
@@ -69,67 +59,6 @@ type SubmitBugReportResult struct {
 // Bug Report Methods
 // =============================================================================
 
-// CreateBugReportFolder creates a folder in temp with screenshot and optionally
-// the current mail file. This is used for the legacy bug report flow.
-//
-// Returns:
-//   - *BugReportResult: Paths to created files
-//   - error: Error if folder creation or file operations fail
-func (a *App) CreateBugReportFolder() (*BugReportResult, error) {
-	// Create unique folder name with timestamp
-	timestamp := time.Now().Format("20060102_150405")
-	folderName := fmt.Sprintf("emly_bugreport_%s", timestamp)
-
-	// Create folder in temp directory
-	tempDir := os.TempDir()
-	bugReportFolder := filepath.Join(tempDir, folderName)
-
-	if err := os.MkdirAll(bugReportFolder, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create bug report folder: %w", err)
-	}
-
-	result := &BugReportResult{
-		FolderPath: bugReportFolder,
-	}
-
-	// Take and save screenshot
-	screenshotResult, err := a.TakeScreenshot()
-	if err != nil {
-		return nil, fmt.Errorf("failed to take screenshot: %w", err)
-	}
-
-	screenshotData, err := base64.StdEncoding.DecodeString(screenshotResult.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode screenshot: %w", err)
-	}
-
-	screenshotPath := filepath.Join(bugReportFolder, screenshotResult.Filename)
-	if err := os.WriteFile(screenshotPath, screenshotData, 0644); err != nil {
-		return nil, fmt.Errorf("failed to save screenshot: %w", err)
-	}
-	result.ScreenshotPath = screenshotPath
-
-	// Copy currently loaded mail file if one exists
-	if a.CurrentMailFilePath != "" {
-		mailData, err := os.ReadFile(a.CurrentMailFilePath)
-		if err != nil {
-			// Log but don't fail - screenshot is still valid
-			pkglogger.Warn("failed to read mail file for bug report", "error", err.Error())
-		} else {
-			mailFilename := filepath.Base(a.CurrentMailFilePath)
-			mailFilePath := filepath.Join(bugReportFolder, mailFilename)
-
-			if err := os.WriteFile(mailFilePath, mailData, 0644); err != nil {
-				pkglogger.Warn("failed to copy mail file for bug report", "error", err.Error())
-			} else {
-				result.MailFilePath = mailFilePath
-			}
-		}
-	}
-
-	return result, nil
-}
-
 // SubmitBugReport creates a complete bug report with user input, saves all files,
 // and creates a zip archive ready for submission.
 //
@@ -148,6 +77,43 @@ func (a *App) CreateBugReportFolder() (*BugReportResult, error) {
 //   - *SubmitBugReportResult: Paths to the zip file and folder
 //   - error: Error if any file operation fails
 func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugReportResult, error) {
+	bugReportFolder, zipPath, machineInfo, err := a.buildBugReportFolder(input)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &SubmitBugReportResult{
+		ZipPath:    zipPath,
+		FolderPath: bugReportFolder,
+	}
+
+	// Attempt to upload to the bug report API server (only if reachable)
+	if !a.CheckBugReportAPI() {
+		pkglogger.Warn("bug report API is offline, skipping upload")
+		result.UploadError = "Bug report API is offline"
+	} else {
+		reportID, uploadErr := a.uploadBugReport(bugReportFolder, input, currEnv, machineInfo)
+		if uploadErr != nil {
+			pkglogger.Warn("bug report upload failed, falling back to local zip", "error", uploadErr.Error())
+			result.UploadError = uploadErr.Error()
+		} else {
+			result.Uploaded = true
+			result.ReportID = reportID
+		}
+	}
+
+	return result, nil
+}
+
+// buildBugReportFolder writes the local bug report files (screenshot, mail
+// file, localStorage/config snapshots, report.txt, system_info.txt) to a
+// fresh temp folder and zips it. It's the local-file half of SubmitBugReport,
+// kept separate from the upload step so each can be read on its own.
+//
+// Returns the created folder path, the path to its zip archive, and the
+// machine info gathered along the way (nil if it couldn't be collected -
+// this is not fatal, unlike a failure to create the folder/report/zip).
+func (a *App) buildBugReportFolder(input BugReportInput) (folderPath string, zipPath string, machineInfo *utils.ExtendedMachineInfo, err error) {
 	// Create unique folder name with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	folderName := fmt.Sprintf("emly_bugreport_%s", timestamp)
@@ -157,7 +123,7 @@ func (a *App) SubmitBugReport(input BugReportInput, currEnv string) (*SubmitBugR
 	bugReportFolder := filepath.Join(tempDir, folderName)
 
 	if err := os.MkdirAll(bugReportFolder, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create bug report folder: %w", err)
+		return "", "", nil, fmt.Errorf("failed to create bug report folder: %w", err)
 	}
 
 	// Save the pre-captured screenshot (captured before dialog opened)
@@ -218,12 +184,13 @@ Generated: %s
 
 	reportPath := filepath.Join(bugReportFolder, "report.txt")
 	if err := os.WriteFile(reportPath, []byte(reportContent), 0644); err != nil {
-		return nil, fmt.Errorf("failed to save report file: %w", err)
+		return "", "", nil, fmt.Errorf("failed to save report file: %w", err)
 	}
 
 	// Get and save machine/system information
-	machineInfo, err := utils.GetExtendedMachineInfo()
-	if err == nil && machineInfo != nil {
+	info, infoErr := utils.GetExtendedMachineInfo()
+	if infoErr == nil && info != nil {
+		machineInfo = info
 		sysInfoContent := fmt.Sprintf(`System Information
 ==================
 
@@ -239,10 +206,10 @@ EMLy Configuration
 SDK Version: %s
 GUI Version: %s
 Language: %s
-`, machineInfo.Hostname, machineInfo.OS, machineInfo.Version, machineInfo.HWID,
-			machineInfo.InternalIP, machineInfo.ADDomain,
-			machineInfo.EMLyConfig.SDKDecoderSemver, machineInfo.EMLyConfig.GUISemver,
-			machineInfo.EMLyConfig.Language)
+`, info.Hostname, info.OS, info.Version, info.HWID,
+			info.InternalIP, info.ADDomain,
+			info.EMLyConfig.SDKDecoderSemver, info.EMLyConfig.GUISemver,
+			info.EMLyConfig.Language)
 
 		sysInfoPath := filepath.Join(bugReportFolder, "system_info.txt")
 		if err := os.WriteFile(sysInfoPath, []byte(sysInfoContent), 0644); err != nil {
@@ -251,32 +218,12 @@ Language: %s
 	}
 
 	// Create zip archive of the folder
-	zipPath := bugReportFolder + ".zip"
-	if err := zipFolder(bugReportFolder, zipPath); err != nil {
-		return nil, fmt.Errorf("failed to create zip file: %w", err)
+	bugReportZip := bugReportFolder + ".zip"
+	if err := zipFolder(bugReportFolder, bugReportZip); err != nil {
+		return "", "", nil, fmt.Errorf("failed to create zip file: %w", err)
 	}
 
-	result := &SubmitBugReportResult{
-		ZipPath:    zipPath,
-		FolderPath: bugReportFolder,
-	}
-
-	// Attempt to upload to the bug report API server (only if reachable)
-	if !a.CheckBugReportAPI() {
-		pkglogger.Warn("bug report API is offline, skipping upload")
-		result.UploadError = "Bug report API is offline"
-	} else {
-		reportID, uploadErr := a.uploadBugReport(bugReportFolder, input, currEnv, machineInfo)
-		if uploadErr != nil {
-			pkglogger.Warn("bug report upload failed, falling back to local zip", "error", uploadErr.Error())
-			result.UploadError = uploadErr.Error()
-		} else {
-			result.Uploaded = true
-			result.ReportID = reportID
-		}
-	}
-
-	return result, nil
+	return bugReportFolder, bugReportZip, machineInfo, nil
 }
 
 // uploadBugReport uploads the bug report files from the temp folder to the
