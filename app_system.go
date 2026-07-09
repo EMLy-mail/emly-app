@@ -10,14 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"unicode/utf8"
 
 	pkglogger "emly/backend/logger"
+	"emly/backend/utils/mail"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 )
 
 // =============================================================================
@@ -117,20 +115,7 @@ func (a *App) OpenDefaultAppsSettings() error {
 // Returns:
 //   - string: UTF-8 encoded string
 func (a *App) ConvertToUTF8(s string) string {
-	// If already valid UTF-8, return as-is
-	if utf8.ValidString(s) {
-		return s
-	}
-
-	// Assume Windows-1252 (superset of ISO-8859-1)
-	// This is the most common encoding for legacy Western European text
-	decoder := charmap.Windows1252.NewDecoder()
-	decoded, _, err := transform.String(decoder, s)
-	if err != nil {
-		// Return original if decoding fails
-		return s
-	}
-	return decoded
+	return internal.ConvertToUTF8(s)
 }
 
 // =============================================================================
