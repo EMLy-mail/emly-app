@@ -1,28 +1,28 @@
 /**
- * Dark theme HTML/CSS injected into the email body iframe
- * - Applies dark theme matching the main app
- * - Removes default body margins
- * - Intercepts link clicks and notifies parent via postMessage for security confirmation
- * - Prevents Ctrl+Wheel zoom in iframe
- * - Styles links, tables, and common email elements for dark mode
+ * Builds the HTML/CSS/JS injected into the email body iframe.
+ * - Applies the requested theme (dark matches the main app; light is the
+ *   original plain styling)
+ * - Removes default body margins, styles links/images (and, in dark mode,
+ *   tables/hr/blockquote/pre/code for readable rich-text emails)
+ * - Prevents Ctrl+Wheel zoom in the iframe
+ * - When linksEnabled is true, intercepts link clicks and notifies the
+ *   parent via postMessage (`emly-link-click`) for a security confirmation
+ *   dialog; when false, links are visually non-clickable and clicks are
+ *   forwarded as `emly-link-disabled-click` instead
+ *
+ * Scrollbar styling is only included when dark === linksEnabled, matching
+ * the four hand-written variants this replaced (present in the all-dark and
+ * all-light-no-links combos, absent in the other two) - preserved as-is
+ * rather than "fixed", since that asymmetry predates this refactor.
  */
-export const IFRAME_UTIL_HTML_DARK = `<style>
-  body {
-    margin: 0;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #0d0d0d;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.5;
-  }
-  a {
-    color: #60a5fa !important;
-    cursor: pointer !important;
-  }
-  img {
-    max-width: 100%;
-    height: auto;
-  }
+function buildIframeHTML({ dark, linksEnabled }: { dark: boolean; linksEnabled: boolean }): string {
+  const bg = dark ? '#0d0d0d' : '#ffffff';
+  const textColor = dark ? 'rgba(255, 255, 255, 0.9)' : '#1a1a1a';
+  const linkColor = dark ? '#60a5fa' : '#2563eb';
+  const cursor = linksEnabled ? 'pointer' : 'default';
+
+  const richTextStyles = dark
+    ? `
   table {
     border-color: rgba(255, 255, 255, 0.15) !important;
   }
@@ -46,7 +46,14 @@ export const IFRAME_UTIL_HTML_DARK = `<style>
   pre {
     padding: 12px;
     overflow-x: auto;
-  }
+  }`
+    : '';
+
+  const scrollbarThumb = dark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.2)';
+  const scrollbarThumbHover = dark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.4)';
+  const scrollbarStyles =
+    dark === linksEnabled
+      ? `
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -55,131 +62,52 @@ export const IFRAME_UTIL_HTML_DARK = `<style>
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
+    background: ${scrollbarThumb};
     border-radius: 6px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: ${scrollbarThumbHover};
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
-  }
-</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();var h=a.getAttribute('href')||'';if(h&&(h.startsWith('http')||h.startsWith('https')||h.startsWith('mailto:')||h.startsWith('ftp'))){window.parent.postMessage({type:'emly-link-click',url:a.href},'*');}}},{capture:true});<\/script>`;
+  }`
+      : '';
 
-/**
- * Light theme HTML/CSS injected into the email body iframe (original styling)
- * - Standard white background
- * - Removes default body margins
- * - Intercepts link clicks and notifies parent via postMessage for security confirmation
- * - Prevents Ctrl+Wheel zoom in iframe
- */
-export const IFRAME_UTIL_HTML_LIGHT = `<style>
+  const clickScript = linksEnabled
+    ? `document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();var h=a.getAttribute('href')||'';if(h&&(h.startsWith('http')||h.startsWith('https')||h.startsWith('mailto:')||h.startsWith('ftp'))){window.parent.postMessage({type:'emly-link-click',url:a.href},'*');}}},{capture:true});`
+    : `document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();window.parent.postMessage({type:'emly-link-disabled-click'},'*');}},{capture:true});`;
+
+  return `<style>
   body {
     margin: 0;
     padding: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #ffffff;
-    color: #1a1a1a;
+    background-color: ${bg};
+    color: ${textColor};
     line-height: 1.5;
   }
   a {
-    color: #2563eb !important;
-    cursor: pointer !important;
+    color: ${linkColor} !important;
+    cursor: ${cursor} !important;
   }
   img {
     max-width: 100%;
     height: auto;
-  }
-</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();var h=a.getAttribute('href')||'';if(h&&(h.startsWith('http')||h.startsWith('https')||h.startsWith('mailto:')||h.startsWith('ftp'))){window.parent.postMessage({type:'emly-link-click',url:a.href},'*');}}},{capture:true});<\/script>`;
+  }${richTextStyles}${scrollbarStyles}
+</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});${clickScript}<\/script>`;
+}
 
-/**
- * Dark theme HTML/CSS injected into the email body iframe — links disabled
- * Links are visually non-clickable (cursor: default) but clicks are intercepted
- * via JS and forwarded to the parent as 'emly-link-disabled-click' messages.
- */
-export const IFRAME_UTIL_HTML_DARK_NO_LINKS = `<style>
-  body {
-    margin: 0;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #0d0d0d;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.5;
-  }
-  a {
-    cursor: default !important;
-    color: #60a5fa !important;
-  }
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-  table {
-    border-color: rgba(255, 255, 255, 0.15) !important;
-  }
-  td, th {
-    border-color: rgba(255, 255, 255, 0.15) !important;
-  }
-  hr {
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  blockquote {
-    border-left: 3px solid rgba(255, 255, 255, 0.2);
-    margin-left: 0;
-    padding-left: 16px;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  pre, code {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
-    padding: 2px 6px;
-  }
-  pre {
-    padding: 12px;
-    overflow-x: auto;
-  }
-</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();window.parent.postMessage({type:'emly-link-disabled-click'},'*');}},{capture:true});<\/script>`;
+/** Dark theme, link-click confirmation enabled. */
+export const IFRAME_UTIL_HTML_DARK = buildIframeHTML({ dark: true, linksEnabled: true });
 
-/**
- * Light theme HTML/CSS injected into the email body iframe — links disabled
- * Links are visually non-clickable (cursor: default) but clicks are intercepted
- * via JS and forwarded to the parent as 'emly-link-disabled-click' messages.
- */
-export const IFRAME_UTIL_HTML_LIGHT_NO_LINKS = `<style>
-  body {
-    margin: 0;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #ffffff;
-    color: #1a1a1a;
-    line-height: 1.5;
-  }
-  a {
-    cursor: default !important;
-    color: #2563eb !important;
-  }
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.4);
-  }
-  ::-webkit-scrollbar-corner {
-    background: transparent;
-  }
-</style><script>function handleWheel(e){if(e.ctrlKey){e.preventDefault();}}document.addEventListener('wheel',handleWheel,{passive:false});document.addEventListener('click',function(e){var a=e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();window.parent.postMessage({type:'emly-link-disabled-click'},'*');}},{capture:true});<\/script>`;
+/** Light theme, link-click confirmation enabled. */
+export const IFRAME_UTIL_HTML_LIGHT = buildIframeHTML({ dark: false, linksEnabled: true });
+
+/** Dark theme, links visually disabled (clicks forwarded as `emly-link-disabled-click`). */
+export const IFRAME_UTIL_HTML_DARK_NO_LINKS = buildIframeHTML({ dark: true, linksEnabled: false });
+
+/** Light theme, links visually disabled (clicks forwarded as `emly-link-disabled-click`). */
+export const IFRAME_UTIL_HTML_LIGHT_NO_LINKS = buildIframeHTML({ dark: false, linksEnabled: false });
 
 /**
  * Default iframe HTML (dark theme for backwards compatibility)
