@@ -6,14 +6,7 @@
     import { Label } from "$lib/components/ui/label";
     import { Separator } from "$lib/components/ui/separator";
     import { Switch } from "$lib/components/ui/switch";
-    import {
-        ChevronLeft,
-        Flame,
-        Sun,
-        Moon,
-        CircleCheck,
-        CircleX,
-    } from "@lucide/svelte";
+    import { ChevronLeft, Flame, Sun, Moon } from "@lucide/svelte";
     import type { EMLy_GUI_Settings } from "$lib/types";
     import { toast } from "svelte-sonner";
     import { It, Us } from "svelte-flags";
@@ -47,7 +40,6 @@
     import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
     import SafetyCheckDialog from "$lib/components/settings/SafetyCheckDialog.svelte";
     import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
-    import { isInsideADDomain, isInsideTREGCCADDomain, evaluateHostname, isDevMachine } from '$lib/utils/hostIntegrity';
 
     let { data } = $props();
     let config = $derived(data.config);
