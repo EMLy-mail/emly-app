@@ -890,25 +890,6 @@
                         SDK: {config
                             ? `${config.SDKDecoderSemver} (${config.SDKDecoderReleaseChannel})`
                             : m.settings_not_available()}
-                        <br />
-                        <br />
-                        <span class="inline-flex items-center gap-1">
-                            Hostname:
-                            {#if evaluateHostname(machineData?.Hostname ?? "")}
-                                <CircleCheck class="size-4" />
-                            {:else}
-                                <CircleX class="size-4" />
-                            {/if}
-                        </span>
-                        <br />
-                        <span class="inline-flex items-center gap-1">
-                            TREGCC AD:
-                            {#if isInsideTREGCCADDomain(machineData?.ADDomain ?? "")}
-                                <CircleCheck class="size-4" />
-                            {:else}
-                                <CircleX class="size-4" />
-                            {/if}
-                        </span>
                     </div>
                 </Card.Content>
             </Card.Root>
