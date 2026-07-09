@@ -10,12 +10,13 @@
         Package,
         Globe,
         GitMerge,
-        Mail,
         BadgeInfo,
     } from "@lucide/svelte";
     import * as m from "$lib/paraglide/messages";
     import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
     import "@risadams/pride-flags/dist/pride-flags.css";
+    import ContributorCard from "$lib/components/ContributorCard.svelte";
+    import { CONTRIBUTOR_PROFILES } from "$lib/data/contributors";
 
     let { data } = $props();
     let config = $derived(data.config);
@@ -215,39 +216,12 @@
                 <Card.Content class="space-y-4">
                     {#each teamData as member}
                         {#if member}
-                            <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div
-                                class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
-                            >
-                                <img
-                                    src={gravatarUrls[member.id]}
-                                    alt={member.name}
-                                    class="h-14 w-14 rounded-full border-2 border-primary/20 z-0 select-none"
-                                />
-                                <div class="flex-1 z-0">
-                                    <div class="font-medium">
-                                        {member.name} ({member.login})
-                                    </div>
-                                    {#if member.id === 278996585}
-                                        <div class="text-sm text-primary/80">
-                                            {m.credits_role_lead_developer()}
-                                        </div>
-                                        <div
-                                            class="text-sm text-muted-foreground mt-1"
-                                        >
-                                            {m.credits_foisx_desc()}
-                                        </div>
-                                        <a
-                                            href="mailto:f.fois@3git.eu"
-                                            class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
-                                        >
-                                            <Mail class="size-3" />
-                                            f.fois@3git.eu
-                                        </a>
-                                    {/if}
-                                </div>
-                            </div>
+                            <ContributorCard
+                                contributor={member}
+                                avatarUrl={gravatarUrls[member.id]}
+                                profile={CONTRIBUTOR_PROFILES[member.id]}
+                                showLogin
+                            />
                         {/if}
                     {/each}
                     <div class="text-center text-sm text-muted-foreground pt-2">
@@ -299,62 +273,13 @@
                     <div class="space-y-3">
                         {#each specialThanksData as contributor}
                             {#if contributor}
-                                <div
-                                    class="flex items-start gap-4 rounded-lg border bg-card p-4 relative overflow-hidden"
-                                >
-                                    <img
-                                        src={gravatarUrls[contributor.id]}
-                                        alt={contributor.name}
-                                        class="h-14 w-14 rounded-full border-2 border-primary/20 z-0 select-none"
-                                    />
-                                    <div class="flex-1 z-0">
-                                        <div class="font-medium">
-                                            {contributor.name}
-                                        </div>
-                                        {#if contributor.id === 35636667}
-                                            <div
-                                                class="text-sm text-primary/80"
-                                            >
-                                                {m.credits_role_go_contributor()}
-                                            </div>
-                                            <div
-                                                class="text-sm text-muted-foreground mt-1"
-                                            >
-                                                {m.credits_laky64_desc()}
-                                            </div>
-                                            {#if contributor.email}
-                                                <a
-                                                    href="mailto:{contributor.email}"
-                                                    class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
-                                                >
-                                                    <Mail class="size-3" />
-                                                    {contributor.email}
-                                                </a>
-                                            {/if}
-                                        {/if}
-                                        {#if contributor.id === 20886839}
-                                            <div
-                                                class="text-sm text-primary/80"
-                                            >
-                                                {m.credits_role_ui_ux_feedback_advisor()}
-                                            </div>
-                                            <div
-                                                class="text-sm text-muted-foreground mt-1"
-                                            >
-                                                {m.credits_amber_desc()}
-                                            </div>
-                                            {#if contributor.email}
-                                                <a
-                                                    href="mailto:{contributor.email}"
-                                                    class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-2 transition-colors relative z-20"
-                                                >
-                                                    <Mail class="size-3" />
-                                                    {contributor.email}
-                                                </a>
-                                            {/if}
-                                        {/if}
-                                    </div>
-                                </div>
+                                <ContributorCard
+                                    {contributor}
+                                    avatarUrl={gravatarUrls[contributor.id]}
+                                    profile={CONTRIBUTOR_PROFILES[
+                                        contributor.id
+                                    ]}
+                                />
                             {/if}
                         {/each}
                     </div>
