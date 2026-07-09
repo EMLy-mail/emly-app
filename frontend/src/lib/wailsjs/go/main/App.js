@@ -14,10 +14,6 @@ export function ConvertToUTF8(arg1) {
   return window['go']['main']['App']['ConvertToUTF8'](arg1);
 }
 
-export function CreateBugReportFolder() {
-  return window['go']['main']['App']['CreateBugReportFolder']();
-}
-
 export function DetectEmailFormat(arg1) {
   return window['go']['main']['App']['DetectEmailFormat'](arg1);
 }

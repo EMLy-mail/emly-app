@@ -195,22 +195,6 @@ export namespace main {
 	        this.configData = source["configData"];
 	    }
 	}
-	export class BugReportResult {
-	    folderPath: string;
-	    screenshotPath: string;
-	    mailFilePath: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new BugReportResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.folderPath = source["folderPath"];
-	        this.screenshotPath = source["screenshotPath"];
-	        this.mailFilePath = source["mailFilePath"];
-	    }
-	}
 	export class EMLyUpdaterStatus {
 	    Installed: boolean;
 	    Running: boolean;
