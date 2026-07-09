@@ -2,15 +2,11 @@
     import {
         X,
         MailOpen,
-        Image,
-        FileText,
-        File,
         ShieldCheck,
         ShieldAlert,
         Loader2,
         Download,
         Info,
-        FolderOpen,
     } from "@lucide/svelte";
     import { dev } from "$app/environment";
     import {
@@ -19,7 +15,6 @@
         hostIntegrityFailed,
     } from "$lib/stores/app";
     import { onDestroy, onMount } from "svelte";
-    import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { toast } from "svelte-sonner";
     import {
         EventsOn,
@@ -31,34 +26,19 @@
     import { mailState } from "$lib/stores/mail-state.svelte";
     import type { internal } from "$lib/wailsjs/go/models";
     import * as m from "$lib/paraglide/messages";
-    import {
-        showDefaultAttachmentToast,
-        cancelCurrentToast,
-    } from "$lib/utils/open-default-attachment-toast";
-    import {
-        saveAttachmentNatively,
-        saveAllAttachmentsNatively,
-    } from "$lib/utils/attachment-download";
-    import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+    import { cancelCurrentToast } from "$lib/utils/open-default-attachment-toast";
+    import { saveAllAttachmentsNatively } from "$lib/utils/attachment-download";
+    import LinkConfirmationDialog from "$lib/components/LinkConfirmationDialog.svelte";
+    import MailDebugInfoDialog from "$lib/components/MailDebugInfoDialog.svelte";
+    import EmailAttachmentsList from "$lib/components/EmailAttachmentsList.svelte";
 
-    import {
-        DetectEmailFormat,
-        OpenFolderInExplorer,
-    } from "$lib/wailsjs/go/main/App";
-    import { Button } from "$lib/components/ui/button/index.js";
     import {
         IFRAME_UTIL_HTML_DARK,
         IFRAME_UTIL_HTML_DARK_NO_LINKS,
         IFRAME_UTIL_HTML_LIGHT,
         IFRAME_UTIL_HTML_LIGHT_NO_LINKS,
         IFRAME_CONTRAST_FIX_JS,
-        CONTENT_TYPES,
-        PEC_FILES,
         arrayBufferToBase64,
-        openPDFAttachment,
-        openImageAttachment,
-        openEMLAttachment,
-        openDocAttachment,
         openAndLoadEmail,
         loadEmailFromPath,
         processEmailBody,
@@ -92,8 +72,6 @@
     let pendingLinkUrl = $state("");
     let disabledLinkClickCount = $state(0);
     let debugModalOpen = $state(false);
-    let debugFormat = $state("");
-    let debugFormatLoading = $state(false);
 
     const LINK_HINT_TOAST_ID = "emly-link-hint";
 
@@ -143,53 +121,6 @@
     // ============================================================================
     // Event Handlers
     // ============================================================================
-
-    async function openDebugModal() {
-        debugModalOpen = true;
-        debugFormat = "";
-        const fp = activeFilePath;
-        if (fp) {
-            debugFormatLoading = true;
-            try {
-                debugFormat = (await DetectEmailFormat(fp)) as string;
-            } catch {
-                debugFormat = "unknown";
-            }
-            debugFormatLoading = false;
-        }
-    }
-
-    function getDebugFolderPath(filePath: string): string {
-        const lastSep = Math.max(
-            filePath.lastIndexOf("/"),
-            filePath.lastIndexOf("\\"),
-        );
-        return lastSep >= 0 ? filePath.substring(0, lastSep) : filePath;
-    }
-
-    function getDebugFormatLabel(): string {
-        if (debugFormatLoading) return "…";
-        if (!activeFilePath && !activeEmail?.isPec)
-            return activeEmail ? "EML" : "—";
-        const fmt = debugFormat.toLowerCase();
-        if (fmt === "msg") return "MSG";
-        if (fmt === "eml" || fmt === "")
-            return activeEmail?.isPec ? "EML (PEC)" : "EML";
-        if (fmt === "unknown") return m.debug_info_format_unknown();
-        return fmt.toUpperCase();
-    }
-
-    function getBodyInfo(): string {
-        const body = activeEmail?.body;
-        if (!body) return m.debug_info_body_none();
-        const trimmed = body.trimStart();
-        const isHtmlBody =
-            trimmed.startsWith("<") ||
-            /<!doctype html/i.test(trimmed) ||
-            /<html/i.test(trimmed);
-        const kb = (body.length / 1024).toFixed(1);
-        return `${isHtmlBody ? m.debug_info_body_html() : m.debug_info_body_text()}, ${kb} KB`;
-    }
 
     function onClear() {
         cancelCurrentToast();
@@ -256,26 +187,6 @@
 
         isLoading = false;
         loadingText = "";
-    }
-
-    async function handleOpenPDF(base64Data: string, filename: string) {
-        if (isAttachmentBlocked()) return;
-        await openPDFAttachment(base64Data, filename);
-    }
-
-    async function handleOpenImage(base64Data: string, filename: string) {
-        if (isAttachmentBlocked()) return;
-        await openImageAttachment(base64Data, filename);
-    }
-
-    async function handleOpenEML(base64Data: string, filename: string) {
-        if (isAttachmentBlocked()) return;
-        await openEMLAttachment(base64Data, filename);
-    }
-
-    async function handleOpenDoc(base64Data: string, filename: string) {
-        if (isAttachmentBlocked()) return;
-        await openDocAttachment(base64Data, filename);
     }
 
     function handleWheel(event: WheelEvent) {
@@ -435,148 +346,21 @@
         window.removeEventListener("message", handleIframeMessage);
     });
 
-    // ============================================================================
-    // Helpers
-    // ============================================================================
-
-    function getAttachmentClass(att: {
-        contentType: string;
-        filename: string;
-    }): string {
-        if (att.contentType.startsWith(CONTENT_TYPES.IMAGE)) return "image";
-        if (
-            att.contentType === CONTENT_TYPES.PDF ||
-            att.filename.toLowerCase().endsWith(".pdf")
-        )
-            return "pdf";
-        if (att.filename.toLowerCase().endsWith(".eml")) return "eml";
-        return "file";
-    }
-
-    function isPecSignature(filename: string, isPec: boolean): boolean {
-        return isPec && filename.toLowerCase().endsWith(PEC_FILES.SIGNATURE);
-    }
-
-    function isPecCertificate(filename: string, isPec: boolean): boolean {
-        return isPec && filename.toLowerCase() === PEC_FILES.CERTIFICATE;
-    }
 </script>
 
-<AlertDialog.Root bind:open={linkDialogOpen}>
-    <AlertDialog.Content>
-        <AlertDialog.Header>
-            <AlertDialog.Title>{m.mail_link_security_title()}</AlertDialog.Title
-            >
-            <AlertDialog.Description>
-                {m.mail_link_security_description()}
-            </AlertDialog.Description>
-        </AlertDialog.Header>
-        <div class="link-url-box">
-            <span class="link-url-label"
-                >{m.mail_link_security_url_label()}</span
-            >
-            <span class="link-url-value">{pendingLinkUrl}</span>
-        </div>
-        <AlertDialog.Footer>
-            <AlertDialog.Cancel onclick={onCancelOpenLink}
-                >{m.mail_link_security_cancel()}</AlertDialog.Cancel
-            >
-            <AlertDialog.Action onclick={onConfirmOpenLink}
-                >{m.mail_link_security_open()}</AlertDialog.Action
-            >
-        </AlertDialog.Footer>
-    </AlertDialog.Content>
-</AlertDialog.Root>
+<LinkConfirmationDialog
+    bind:open={linkDialogOpen}
+    url={pendingLinkUrl}
+    onConfirm={onConfirmOpenLink}
+    onCancel={onCancelOpenLink}
+/>
 
 {#if dev || $runningInDebugMode}
-    <Dialog.Root bind:open={debugModalOpen}>
-        <Dialog.Content class="debug-dialog-content">
-            <Dialog.Header>
-                <Dialog.Title class="debug-dialog-title">
-                    <Info size="16" />
-                    {m.debug_info_title()}
-                </Dialog.Title>
-                <Dialog.Description
-                    >{m.debug_info_description()}</Dialog.Description
-                >
-            </Dialog.Header>
-
-            <div class="debug-grid">
-                <span class="debug-label">{m.debug_info_format()}</span>
-                <span class="debug-value">
-                    {#if debugFormatLoading}
-                        <Loader2 size="12" class="spinner" />
-                    {:else}
-                        {getDebugFormatLabel()}
-                    {/if}
-                </span>
-
-                <span class="debug-label">{m.debug_info_pec()}</span>
-                <span class="debug-value">
-                    {#if activeEmail?.isPec}
-                        <span class="pec-badge"
-                            ><ShieldCheck size="11" /> PEC</span
-                        >
-                    {:else}
-                        {m.debug_info_no()}
-                    {/if}
-                </span>
-
-                <span class="debug-label">{m.debug_info_inner_email()}</span>
-                <span class="debug-value"
-                    >{activeEmail?.hasInnerEmail
-                        ? m.debug_info_yes()
-                        : m.debug_info_no()}</span
-                >
-
-                <span class="debug-label">{m.debug_info_attachments()}</span>
-                <span class="debug-value">
-                    {activeEmail?.attachments?.length ?? 0}
-                    {#if activeEmail?.attachments && activeEmail.attachments.length > 0}
-                        <ul class="debug-att-list">
-                            {#each activeEmail.attachments as att}
-                                <li>
-                                    <span class="mono">{att.filename}</span>
-                                    <span class="debug-content-type"
-                                        >{att.contentType}</span
-                                    >
-                                </li>
-                            {/each}
-                        </ul>
-                    {/if}
-                </span>
-
-                <span class="debug-label">{m.debug_info_body()}</span>
-                <span class="debug-value">{getBodyInfo()}</span>
-
-                <span class="debug-label">{m.debug_info_date_raw()}</span>
-                <span class="debug-value mono">{activeEmail?.date || "—"}</span>
-
-                <span class="debug-label">{m.debug_info_file()}</span>
-                <span class="debug-value mono debug-filepath"
-                    >{activeFilePath || "—"}</span
-                >
-            </div>
-
-            <Dialog.Footer>
-                {#if activeFilePath}
-                    <Button
-                        variant="outline"
-                        onclick={() =>
-                            OpenFolderInExplorer(
-                                getDebugFolderPath(activeFilePath!),
-                            )}
-                    >
-                        <FolderOpen size="14" />
-                        {m.debug_info_show_in_explorer()}
-                    </Button>
-                {/if}
-                <Button onclick={() => (debugModalOpen = false)}
-                    >{m.debug_info_close()}</Button
-                >
-            </Dialog.Footer>
-        </Dialog.Content>
-    </Dialog.Root>
+    <MailDebugInfoDialog
+        bind:open={debugModalOpen}
+        {activeEmail}
+        {activeFilePath}
+    />
 {/if}
 
 <div class="panel fill" class:embedded aria-label={m.mail_panel_label()}>
@@ -617,7 +401,7 @@
                             {#if dev || $runningInDebugMode}
                                 <button
                                     class="debug-info-btn"
-                                    onclick={openDebugModal}
+                                    onclick={() => (debugModalOpen = true)}
                                     title="Debug Info"
                                     aria-label="Mostra info di debug"
                                 >
@@ -723,134 +507,7 @@
                 </div>
 
                 <!-- Attachments -->
-                <div class="email-attachments">
-                    <span class="att-section-label">{m.mail_attachments()}</span
-                    >
-                    <div class="att-list">
-                        {#if activeEmail.attachments && activeEmail.attachments.length > 0}
-                            {#each activeEmail.attachments as att}
-                                {@const base64 = arrayBufferToBase64(att.data)}
-                                {@const isImage = att.contentType.startsWith(
-                                    CONTENT_TYPES.IMAGE,
-                                )}
-                                {@const isPdf =
-                                    att.contentType === CONTENT_TYPES.PDF ||
-                                    att.filename.toLowerCase().endsWith(".pdf")}
-                                {@const isEml = att.filename
-                                    .toLowerCase()
-                                    .endsWith(".eml")}
-                                {@const isDoc =
-                                    att.contentType === CONTENT_TYPES.DOCX ||
-                                    att.contentType === CONTENT_TYPES.DOC ||
-                                    att.filename
-                                        .toLowerCase()
-                                        .endsWith(".docx") ||
-                                    att.filename.toLowerCase().endsWith(".doc")}
-                                {@const isPecSig = isPecSignature(
-                                    att.filename,
-                                    activeEmail.isPec,
-                                )}
-                                {@const isPecCert = isPecCertificate(
-                                    att.filename,
-                                    activeEmail.isPec,
-                                )}
-
-                                {#if isImage}
-                                    <button
-                                        class="att-btn image"
-                                        class:integrity-blocked={$hostIntegrityFailed}
-                                        onclick={() =>
-                                            handleOpenImage(
-                                                base64,
-                                                att.filename,
-                                            )}
-                                        title={$hostIntegrityFailed
-                                            ? m.mail_attachments_disabled_hint()
-                                            : undefined}
-                                    >
-                                        <Image size="16" />
-                                        <span class="att-name"
-                                            >{att.filename}</span
-                                        >
-                                    </button>
-                                {:else if isPdf}
-                                    <button
-                                        class="att-btn pdf"
-                                        class:integrity-blocked={$hostIntegrityFailed}
-                                        onclick={() =>
-                                            handleOpenPDF(base64, att.filename)}
-                                        title={$hostIntegrityFailed
-                                            ? m.mail_attachments_disabled_hint()
-                                            : undefined}
-                                    >
-                                        <FileText size="16" />
-                                        <span class="att-name"
-                                            >{att.filename}</span
-                                        >
-                                    </button>
-                                {:else if isEml}
-                                    <button
-                                        class="att-btn eml"
-                                        class:integrity-blocked={$hostIntegrityFailed}
-                                        onclick={() =>
-                                            handleOpenEML(base64, att.filename)}
-                                        title={$hostIntegrityFailed
-                                            ? m.mail_attachments_disabled_hint()
-                                            : undefined}
-                                    >
-                                        <MailOpen size="16" />
-                                        <span class="att-name"
-                                            >{att.filename}</span
-                                        >
-                                    </button>
-                                {:else if isDoc}
-                                    <button
-                                        class="att-btn doc"
-                                        class:integrity-blocked={$hostIntegrityFailed}
-                                        onclick={() =>
-                                            handleOpenDoc(base64, att.filename)}
-                                        title={$hostIntegrityFailed
-                                            ? m.mail_attachments_disabled_hint()
-                                            : undefined}
-                                    >
-                                        <FileText size="16" />
-                                        <span class="att-name"
-                                            >{att.filename}</span
-                                        >
-                                    </button>
-                                {:else}
-                                    <button
-                                        class="att-btn file"
-                                        class:integrity-blocked={$hostIntegrityFailed}
-                                        onclick={() => {
-                                            if (isAttachmentBlocked()) return;
-                                            showDefaultAttachmentToast({
-                                                onSave: () =>
-                                                    void saveAttachmentNatively(
-                                                        base64,
-                                                        att.filename,
-                                                    ),
-                                                onReset: () => {},
-                                            });
-                                        }}
-                                        title={$hostIntegrityFailed
-                                            ? m.mail_attachments_disabled_hint()
-                                            : undefined}
-                                    >
-                                        <File size="16" />
-                                        <span class="att-name"
-                                            >{att.filename}</span
-                                        >
-                                    </button>
-                                {/if}
-                            {/each}
-                        {:else}
-                            <span class="att-empty"
-                                >{m.mail_no_attachments()}</span
-                            >
-                        {/if}
-                    </div>
-                </div>
+                <EmailAttachmentsList attachments={activeEmail.attachments} />
 
                 <!-- Email Body -->
                 <div
@@ -1028,107 +685,6 @@
         font-weight: 500;
     }
 
-    .email-attachments {
-        padding: 10px 16px;
-        border-bottom: 1px solid var(--border);
-        background: var(--muted);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        overflow-x: auto;
-    }
-
-    .att-section-label {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--muted-foreground);
-        flex-shrink: 0;
-    }
-
-    .att-list {
-        display: flex;
-        gap: 8px;
-    }
-
-    .att-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        height: 28px;
-        padding: 0 10px;
-        border-radius: 6px;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--foreground);
-        font-size: 12px;
-        cursor: pointer;
-        text-decoration: none;
-        max-width: 200px;
-    }
-
-    .att-btn:hover {
-        background: var(--accent);
-        color: var(--accent-foreground);
-    }
-
-    /* Not `:disabled` on purpose: the button stays interactive so hover
-       still shows the title tooltip and click still fires (to surface the
-       "blocked by integrity check" toast) instead of being swallowed. */
-    .att-btn.integrity-blocked {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    .att-btn.integrity-blocked:hover {
-        background: transparent;
-        color: var(--foreground);
-    }
-
-    .att-btn.image {
-        color: #4ade80;
-        border-color: rgba(74, 222, 128, 0.3);
-    }
-    .att-btn.image:hover {
-        color: #86efac;
-    }
-
-    .att-btn.pdf {
-        color: #f87171;
-        border-color: rgba(248, 113, 113, 0.3);
-    }
-    .att-btn.pdf:hover {
-        color: #fca5a5;
-    }
-
-    .att-btn.eml {
-        color: hsl(49, 80%, 49%);
-        border-color: rgba(224, 206, 39, 0.3);
-    }
-    .att-btn.eml:hover {
-        color: hsl(49, 80%, 65%);
-    }
-
-    .att-btn.doc {
-        color: #60a5fa;
-        border-color: rgba(96, 165, 250, 0.3);
-    }
-    .att-btn.doc:hover {
-        color: #93c5fd;
-    }
-
-    .att-name {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        min-width: 0;
-    }
-
-    .att-btn :global(svg) {
-        flex-shrink: 0;
-    }
-
     .email-body-wrapper {
         flex: 1;
         background: #0d0d0d;
@@ -1263,12 +819,6 @@
         background: transparent;
     }
 
-    .att-empty {
-        font-size: 11px;
-        color: var(--muted-foreground);
-        font-style: italic;
-    }
-
     .pec-badge {
         display: inline-flex;
         align-items: center;
@@ -1318,91 +868,5 @@
         opacity: 1;
         background: var(--muted);
         color: var(--foreground);
-    }
-
-    :global(.debug-dialog-content) {
-        max-width: 520px !important;
-    }
-
-    :global(.debug-dialog-title) {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .debug-grid {
-        display: grid;
-        grid-template-columns: 110px 1fr;
-        gap: 6px 12px;
-        font-size: 13px;
-        padding: 4px 0;
-    }
-
-    .debug-label {
-        color: var(--muted-foreground);
-        font-weight: 500;
-        text-align: right;
-        padding-top: 1px;
-    }
-
-    .debug-value {
-        color: var(--foreground);
-        word-break: break-all;
-    }
-
-    .debug-filepath {
-        word-break: break-all;
-        user-select: all;
-    }
-
-    .mono {
-        font-family: monospace;
-        font-size: 12px;
-    }
-
-    .debug-att-list {
-        list-style: none;
-        padding: 0;
-        margin: 4px 0 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .debug-att-list li {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .debug-content-type {
-        font-size: 11px;
-        color: var(--muted-foreground);
-    }
-
-    .link-url-box {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        background: var(--muted);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin: 4px 0;
-    }
-
-    .link-url-label {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--muted-foreground);
-    }
-
-    .link-url-value {
-        font-size: 12px;
-        color: var(--foreground);
-        word-break: break-all;
-        font-family: monospace;
     }
 </style>
