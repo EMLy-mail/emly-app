@@ -70,6 +70,18 @@ export function GetStartupFile() {
   return window['go']['main']['App']['GetStartupFile']();
 }
 
+export function GetUpdaterADStatus() {
+  return window['go']['main']['App']['GetUpdaterADStatus']();
+}
+
+export function GetUpdaterIPCStatus() {
+  return window['go']['main']['App']['GetUpdaterIPCStatus']();
+}
+
+export function GetUpdaterSystemInfo() {
+  return window['go']['main']['App']['GetUpdaterSystemInfo']();
+}
+
 export function GetViewerData() {
   return window['go']['main']['App']['GetViewerData']();
 }

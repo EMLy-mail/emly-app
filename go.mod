@@ -3,7 +3,9 @@ module emly
 go 1.26
 
 require (
+	github.com/Microsoft/go-winio v0.6.2
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/hashicorp/go-version v1.9.0
 	github.com/jaypipes/ghw v0.24.0
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
 	github.com/mbndr/figlet4go v0.0.0-20190224160619-d6cef5b186ea
@@ -11,6 +13,7 @@ require (
 	github.com/wailsapp/wails/v2 v2.13.0
 	golang.org/x/sys v0.46.0
 	golang.org/x/text v0.39.0
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/ini.v1 v1.67.3
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
