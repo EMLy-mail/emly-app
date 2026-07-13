@@ -4,33 +4,8 @@ on:
     branches: ["**"]
   workflow_dispatch:
 jobs:
-  frontend-check:
-    name: Frontend syntax check
-    runs-on: blacksmith-4vcpu-windows-2025
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "lts/*"
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: bun install
-
-      - name: Type/syntax check (svelte-check)
-        working-directory: frontend
-        run: bun run check
-
-  backend-check:
-    name: Backend syntax check
+  syntax-check:
+    name: Syntax check (frontend + backend)
     runs-on: blacksmith-4vcpu-windows-2025
     steps:
       - name: Checkout code
@@ -56,6 +31,10 @@ jobs:
         working-directory: frontend
         run: bun install
 
+      - name: Type/syntax check frontend (svelte-check)
+        working-directory: frontend
+        run: bun run check
+
       - name: Build frontend (required for Go embed)
         working-directory: frontend
         run: bun run build
@@ -64,5 +43,5 @@ jobs:
         shell: pwsh
         run: ./scripts/vendor-wails-patch.ps1
 
-      - name: Syntax check (go vet)
+      - name: Syntax check backend (go vet)
         run: go vet ./...
