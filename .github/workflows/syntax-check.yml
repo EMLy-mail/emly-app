@@ -1,0 +1,47 @@
+name: Syntax Check
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+jobs:
+  syntax-check:
+    name: Syntax check (frontend + backend)
+    runs-on: blacksmith-4vcpu-windows-2025
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "stable"
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "lts/*"
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Build frontend (generates Paraglide i18n modules & output for Go embed)
+        working-directory: frontend
+        run: bun run build
+
+      - name: Type/syntax check frontend (svelte-check)
+        working-directory: frontend
+        run: bun run check
+
+      - name: Vendor & patch Wails v2 (DevTools backport)
+        shell: pwsh
+        run: ./scripts/vendor-wails-patch.ps1
+
+      - name: Syntax check backend (go vet)
+        run: go vet ./...
