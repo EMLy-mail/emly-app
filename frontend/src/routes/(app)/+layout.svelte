@@ -10,6 +10,7 @@
         dangerZoneEnabled,
         runningInDebugMode,
         hostIntegrityFailed,
+        hostIntegrityStanding,
     } from "$lib/stores/app";
     import { onMount } from "svelte";
     import * as m from "$lib/paraglide/messages.js";
@@ -46,7 +47,6 @@
     import { settingsStore } from "$lib/stores/settings.svelte.js";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
     import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
-    import { updaterStatusStore } from "$lib/stores/updater-status.svelte.js";
 
     let versionInfo: utils.Config | null = $state(null);
     let isDebugerOn: boolean = $state(false);
@@ -58,6 +58,22 @@
     $effect(() => {
         $inspect("hostIntegrityDialogOpen", hostIntegrityDialogOpen);
     })
+
+    // Opens the failed-integrity dialog whenever the gate flips true — not
+    // just right after the initial check, since the fuller Updater/IPC
+    // cross-check can upgrade the standing to "limited" later in the
+    // background (see hostIntegrityCheck.ts).
+    $effect(() => {
+        if ($hostIntegrityFailed) {
+            hostIntegrityDialogOpen = true;
+        }
+    });
+
+    $effect(() => {
+        if ($hostIntegrityStanding === "acceptable") {
+            toast.warning(m.host_integrity_partial_toast());
+        }
+    });
 
     beforeNavigate(({ cancel, to }) => {
         const normalize = (p: string) => p.replace(/\/+$/, "") || "/";
@@ -93,21 +109,11 @@
 
         if (!hostIntegrityChecked) {
             hostIntegrityChecked = true;
-            const failed = await ensureHostIntegrityChecked();
-            if (failed) {
-                hostIntegrityDialogOpen = true;
-            }
+            // The failed/dialog-open reaction happens in the $effect above,
+            // which also covers the background Updater/IPC cross-check
+            // upgrading the standing to "limited" after this resolves.
+            await ensureHostIntegrityChecked();
         }
-
-        // Kick off the EMLy Updater status checks app-wide, so any page
-        // reading updaterStatusStore already has (or is fetching) fresh
-        // data instead of triggering its own round trip. checkUpdaterIPCStatus
-        // bails out immediately if the service turns out to be missing/not
-        // running, so chaining it after refreshUpdaterStatus avoids a
-        // pointless pipe round trip.
-        updaterStatusStore
-            .refreshUpdaterStatus()
-            .then(() => updaterStatusStore.checkUpdaterIPCStatus());
     });
 
     async function detectDebugging() {

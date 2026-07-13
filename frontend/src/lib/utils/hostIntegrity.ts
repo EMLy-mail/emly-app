@@ -46,3 +46,42 @@ export const isInsideTREGCCADDomain = (adDomain: string): boolean => {
     }
     return adDomain === "TREGCC" || adDomain === "tregcc.local";
 }
+
+export type HostIntegrityStanding = "perfect" | "acceptable" | "limited";
+
+// Single source of truth for the tri-state host integrity standing, shared
+// between the automatic app-wide check (hostIntegrityCheck.ts) and the
+// manual Safety Check dialog, so both always agree on the same result for
+// the same inputs.
+export const deriveHostIntegrityStanding = (params: {
+    hostnameOk: boolean;
+    adDomainOk: boolean;
+    hostIntegrityToggleOk: boolean;
+    updaterInstalled: boolean;
+    updaterRunning: boolean;
+    ipcActive: boolean;
+    ipcResponding: boolean;
+    crossCheckOk: boolean;
+}): HostIntegrityStanding => {
+    const {
+        hostnameOk,
+        adDomainOk,
+        hostIntegrityToggleOk,
+        updaterInstalled,
+        updaterRunning,
+        ipcActive,
+        ipcResponding,
+        crossCheckOk,
+    } = params;
+
+    if (!hostIntegrityToggleOk || !hostnameOk || !adDomainOk) {
+        return "limited";
+    }
+    if (ipcActive && ipcResponding && !crossCheckOk) {
+        return "limited";
+    }
+    if (updaterInstalled && updaterRunning && ipcActive && ipcResponding && crossCheckOk) {
+        return "perfect";
+    }
+    return "acceptable";
+}

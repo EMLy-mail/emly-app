@@ -23,6 +23,8 @@
     import {
         evaluateHostname,
         isInsideTREGCCADDomain,
+        deriveHostIntegrityStanding,
+        type HostIntegrityStanding,
     } from "$lib/utils/hostIntegrity";
     import { logIPCRequest, logIPCResponse, logIPCError } from "$lib/utils/ipcLog";
 
@@ -35,8 +37,6 @@
     // a cross-check of AD domain/hostname as seen by the IPC-connected
     // SYSTEM-privileged service vs. this (unprivileged) process, as a
     // double failsafe against a spoofed/compromised local view.
-    type SafetyCheckStanding = "perfect" | "usable" | "limited";
-
     type SafetyCheckResult = {
         hostnameOk: boolean;
         adDomainOk: boolean;
@@ -46,7 +46,7 @@
         ipcResponding: boolean;
         crossCheckOk: boolean;
         hostIntegrityToggleOk: boolean;
-        standing: SafetyCheckStanding;
+        standing: HostIntegrityStanding;
     };
 
     let runningSafetyCheck = $state(false);
@@ -102,29 +102,16 @@
                 settingsStore.settings.enableHostIntegrityCheck ||
                 isDebugBuild;
 
-            let standing: SafetyCheckStanding;
-            if (!hostIntegrityToggleOk) {
-                standing = "limited";
-            } else if (
-                hostnameOk &&
-                adDomainOk &&
-                updaterInstalled &&
-                updaterRunning &&
-                ipcInstalled &&
-                ipcResponding &&
-                crossCheckOk
-            ) {
-                standing = "perfect";
-            } else if (
-                hostnameOk &&
-                adDomainOk &&
-                updaterInstalled &&
-                !updaterRunning
-            ) {
-                standing = "usable";
-            } else {
-                standing = "limited";
-            }
+            const standing = deriveHostIntegrityStanding({
+                hostnameOk,
+                adDomainOk,
+                hostIntegrityToggleOk,
+                updaterInstalled,
+                updaterRunning,
+                ipcActive: ipcInstalled,
+                ipcResponding,
+                crossCheckOk,
+            });
 
             safetyCheckResult = {
                 hostnameOk,
@@ -241,10 +228,10 @@
                             <CircleCheck />
                             {m.settings_safety_check_standing_perfect()}
                         </Badge>
-                    {:else if safetyCheckResult.standing === "usable"}
+                    {:else if safetyCheckResult.standing === "acceptable"}
                         <Badge class="bg-yellow-500 text-black border-transparent">
                             <TriangleAlert />
-                            {m.settings_safety_check_standing_usable()}
+                            {m.settings_safety_check_standing_acceptable()}
                         </Badge>
                     {:else}
                         <Badge variant="destructive">
@@ -256,8 +243,8 @@
                 <div class="text-xs text-muted-foreground">
                     {#if safetyCheckResult.standing === "perfect"}
                         {m.settings_safety_check_standing_perfect_hint()}
-                    {:else if safetyCheckResult.standing === "usable"}
-                        {m.settings_safety_check_standing_usable_hint()}
+                    {:else if safetyCheckResult.standing === "acceptable"}
+                        {m.settings_safety_check_standing_acceptable_hint()}
                     {:else}
                         {m.settings_safety_check_standing_limited_hint()}
                     {/if}

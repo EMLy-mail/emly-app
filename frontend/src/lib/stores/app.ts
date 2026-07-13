@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
 import { browser } from "$app/environment";
+import type { HostIntegrityStanding } from "$lib/utils/hostIntegrity";
 
 const storedDebug = browser
   ? sessionStorage.getItem("debugWindowInSettings") === "true"
@@ -13,6 +14,8 @@ export const sidebarOpen = writable<boolean>(true);
 export const bugReportDialogOpen = writable<boolean>(false);
 export const runningInDebugMode = writable<boolean>(false);
 export const hostIntegrityFailed = writable<boolean>(false);
+// null = not yet determined (Updater/IPC check still running in the background).
+export const hostIntegrityStanding = writable<HostIntegrityStanding | null>(null);
 
 export type AppEvent = {
   id: string;
