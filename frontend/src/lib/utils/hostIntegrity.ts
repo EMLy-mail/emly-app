@@ -4,6 +4,7 @@ export const hostnameWhitelist = [
     "STRAN1-PC",
     "COSE1-PC",
     "RM094",
+    "FOISX-PC"
 ]
 
 export const devHostnameWhitelist = [
@@ -16,7 +17,7 @@ export const isDevMachine = (hostname: string, adDomain: string): boolean => {
         if(hostname === "DESKTOP-7PDPATV" && adDomain === "WORKGROUP") {
             return true;
         }
-        else if(hostname === "FOISX-PC" && adDomain === "TREGCC") {
+        else if(hostname === "FOISX-PC" && (adDomain === "TREGCC" || adDomain === "tregcc.local")) {
             return true;
         }
         else {
@@ -43,5 +44,5 @@ export const isInsideTREGCCADDomain = (adDomain: string): boolean => {
     if (!isInsideADDomain(adDomain)) {
         return false;
     }
-    return adDomain === "TREGCC";
+    return adDomain === "TREGCC" || adDomain === "tregcc.local";
 }

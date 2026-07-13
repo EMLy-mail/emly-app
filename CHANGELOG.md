@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+# 2.0.1 (2026-07-13)
+1) Fixato un bug nella rilevazione del domain AD.
+
 # 2.0.0 (2026-07-01, 2026-07-02, 2026-07-04, 2026-07-07, 2026-07-08, 2026-07-09)
 1) Fixati vari bug
 2) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
