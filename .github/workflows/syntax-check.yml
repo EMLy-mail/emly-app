@@ -31,13 +31,13 @@ jobs:
         working-directory: frontend
         run: bun install
 
+      - name: Build frontend (generates Paraglide i18n modules & output for Go embed)
+        working-directory: frontend
+        run: bun run build
+
       - name: Type/syntax check frontend (svelte-check)
         working-directory: frontend
         run: bun run check
-
-      - name: Build frontend (required for Go embed)
-        working-directory: frontend
-        run: bun run build
 
       - name: Vendor & patch Wails v2 (DevTools backport)
         shell: pwsh
