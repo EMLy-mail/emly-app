@@ -1,13 +1,11 @@
 # Changelog EMLy
 
-# 1.8.1 (2026-07-02)
-1) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
-
-# 1.8.0 (2026-06-01)
+# 1.8.0 (2026-07-01, 2026-07-02)
 1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
 2) Aggiornate dipendenze lato Frontend.
 3) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
 4) Fixati vari bug
+5) Backportata da Wails v3 la funzione per aprire programmaticamente la finestra DevTools di WebView2 (`App.OpenDevTools()`), applicata a Wails v2.12.0 tramite patch su `vendor/` (non fork) per evitare di dover ripullare e ripatchare manualmente i sorgenti ad ogni bump di versione.
 
 # 1.7.9 (2026-06-23)
 1) Fixato un bug dove la finestra non veniva portata in primo piano quando si apriva una mail con EMLy già in esecuzione.
