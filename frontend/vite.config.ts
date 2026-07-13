@@ -65,9 +65,6 @@ export default defineConfig({
 			'tailwind-variants',
 		],
 	},
-	esbuild: {
-		target: 'es2022',
-	},
 	build: {
 		target: 'es2022',
 	}
