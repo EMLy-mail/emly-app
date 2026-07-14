@@ -12,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 
+	pkglogger "emly/backend/logger"
+	"emly/backend/utils"
 	"emly/backend/utils/mail"
 
 	"golang.org/x/sys/windows/registry"
@@ -132,6 +134,21 @@ func (a *App) ConvertToUTF8(s string) string {
 func (a *App) OpenFolderInExplorer(folderPath string) error {
 	cmd := exec.Command("explorer", folderPath)
 	return cmd.Start()
+}
+
+// GetNearestDomainController resolves the Active Directory domain
+// controller nearest to this machine via the native DsGetDcName Win32 API
+// (site-aware). Pass an empty domain to resolve the DC for the machine's
+// own AD domain.
+//
+// Returns the DC's DNS name and the AD site it belongs to.
+func (a *App) GetNearestDomainController(domain string) (*utils.DomainControllerInfo, error) {
+	info, err := utils.GetNearestDomainController(domain)
+	if err != nil {
+		pkglogger.Error("GetNearestDomainController: failed to resolve DC", "domain", domain, "error", err.Error())
+		return nil, err
+	}
+	return info, nil
 }
 
 // GetLogsDir returns the path to the EMLy logs directory.
