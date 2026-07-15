@@ -3,9 +3,11 @@ package utils
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"emly/backend/logger"
 
+	"golang.org/x/mod/semver"
 	"gopkg.in/ini.v1"
 )
 
@@ -25,6 +27,19 @@ type EMLyConfig struct {
 	LogLevel                 string `ini:"LOG_LEVEL"`
 	ExportAttachmentFolder   string `ini:"EXPORT_ATTACHMENT_FOLDER"`
 	DisableTrayIcon          bool   `ini:"DISABLE_TRAY_ICON"`
+}
+
+// isValidGUIVersion reports whether version — the raw GUI_SEMVER value
+// from config.ini, normally stored without a "v" prefix (e.g. "2.0.1") —
+// is a valid semantic version per golang.org/x/mod/semver, which requires
+// the "v" prefix. A value that already starts with "v" is used as-is so
+// this stays a no-op for callers that pass an already-prefixed string.
+func isValidGUIVersion(version string) bool {
+	v := version
+	if !strings.HasPrefix(v, "v") {
+		v = "v" + v
+	}
+	return semver.IsValid(v)
 }
 
 // LoadConfig reads the config.ini file at the given path and returns a Config struct
