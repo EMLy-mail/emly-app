@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"unsafe"
 
 	"emly/backend/logger"
 
@@ -57,7 +60,40 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
+	if !isValidGUIVersion(config.EMLy.GUISemver) {
+		logger.Log("Invalid GUI_SEMVER in config:", config.EMLy.GUISemver)
+		fatalInvalidGUIVersion(config.EMLy.GUISemver)
+	}
+
 	return config, nil
+}
+
+// fatalInvalidGUIVersion shows a native Win32 error messagebox and
+// terminates the process. LoadConfig is called both before Wails starts
+// (main.go, before wails.Run) and from every runtime reload/binding call
+// (Settings, tray, heartbeat), so a Wails context.Context isn't always
+// available — hence a native dialog instead of runtime.MessageDialog.
+// Reuses the user32.dll handle already opened in screenshot_windows.go.
+func fatalInvalidGUIVersion(version string) {
+	const (
+		mbOK        = 0x00000000
+		mbIconError = 0x00000010
+	)
+
+	title := "EMLy - Errore di configurazione"
+	message := fmt.Sprintf(
+		"La versione configurata (%q) non è un formato semver valido.\nControllare il campo GUI_SEMVER in config.ini.\n\nEMLy verrà chiuso.",
+		version,
+	)
+
+	titlePtr, errTitle := syscall.UTF16PtrFromString(title)
+	messagePtr, errMessage := syscall.UTF16PtrFromString(message)
+	if errTitle == nil && errMessage == nil {
+		messageBoxW := user32.NewProc("MessageBoxW")
+		messageBoxW.Call(0, uintptr(unsafe.Pointer(messagePtr)), uintptr(unsafe.Pointer(titlePtr)), uintptr(mbOK|mbIconError))
+	}
+
+	os.Exit(1)
 }
 
 func SaveConfig(path string, config *Config) error {
