@@ -1,0 +1,312 @@
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/binding/generate.go b/vendor/github.com/wailsapp/wails/v2/internal/binding/generate.go
+index 77edc98..f7b1bfa 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/binding/generate.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/binding/generate.go
+@@ -33,6 +33,45 @@ func init() {
+ 	valueTypeIndex = mapRegex.SubexpIndex("valueType")
+ }
+ 
++var jsIdentifierRegex = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
++
++var jsReservedWords = map[string]bool{
++	"break": true, "case": true, "catch": true, "class": true, "const": true,
++	"continue": true, "debugger": true, "default": true, "delete": true, "do": true,
++	"else": true, "export": true, "extends": true, "finally": true, "for": true,
++	"function": true, "if": true, "import": true, "in": true, "instanceof": true,
++	"new": true, "return": true, "super": true, "switch": true, "this": true,
++	"throw": true, "try": true, "typeof": true, "var": true, "void": true,
++	"while": true, "with": true, "yield": true, "let": true, "static": true,
++	"await": true, "async": true, "enum": true, "implements": true, "interface": true,
++	"package": true, "private": true, "protected": true, "public": true, "null": true,
++	"true": true, "false": true, "arguments": true, "eval": true,
++}
++
++// paramArgName returns the JS/TS parameter name to emit: the real Go
++// parameter name when it's a valid, non-reserved JS identifier, otherwise
++// the historical "arg<N>" fallback (index is 0-based; N is 1-based).
++func paramArgName(name string, index int) string {
++	if name != "" && jsIdentifierRegex.MatchString(name) && !jsReservedWords[name] {
++		return name
++	}
++	return fmt.Sprintf("arg%d", index+1)
++}
++
++// formatJSDoc renders a Go doc comment as a JSDoc block comment. It escapes
++// literal "*/" sequences so they can't prematurely close the block comment.
++func formatJSDoc(comment string) string {
++	lines := strings.Split(strings.TrimRight(comment, "\n"), "\n")
++	var b strings.Builder
++	b.WriteString("/**")
++	for _, line := range lines {
++		line = strings.ReplaceAll(line, "*/", "*\\/")
++		b.WriteString("\n * " + line)
++	}
++	b.WriteString("\n */")
++	return b.String()
++}
++
+ func (b *Bindings) GenerateGoBindings(baseDir string) error {
+ 	store := b.db.store
+ 	var obfuscatedBindings map[string]int
+@@ -70,11 +109,13 @@ func (b *Bindings) GenerateGoBindings(baseDir string) error {
+ 
+ 				// Generate JS
+ 				var args slicer.StringSlicer
+-				for count := range methodDetails.Inputs {
+-					arg := fmt.Sprintf("arg%d", count+1)
+-					args.Add(arg)
++				for count, input := range methodDetails.Inputs {
++					args.Add(paramArgName(input.Name, count))
+ 				}
+ 				argsString := args.Join(", ")
++				if methodDetails.Comments != "" {
++					jsoutput.WriteString("\n" + formatJSDoc(methodDetails.Comments))
++				}
+ 				jsoutput.WriteString(fmt.Sprintf("\nexport function %s(%s) {", methodName, argsString))
+ 				jsoutput.WriteString("\n")
+ 				if b.obfuscate {
+@@ -86,11 +127,14 @@ func (b *Bindings) GenerateGoBindings(baseDir string) error {
+ 				jsoutput.WriteString("\n}\n")
+ 
+ 				// Generate TS
++				if methodDetails.Comments != "" {
++					tsBody.WriteString("\n" + formatJSDoc(methodDetails.Comments))
++				}
+ 				tsBody.WriteString(fmt.Sprintf("\nexport function %s(", methodName))
+ 
+ 				args.Clear()
+ 				for count, input := range methodDetails.Inputs {
+-					arg := fmt.Sprintf("arg%d", count+1)
++					arg := paramArgName(input.Name, count)
+ 					entityName := entityFullReturnType(input.TypeName, b.tsPrefix, b.tsSuffix, &importNamespaces)
+ 					args.Add(arg + ":" + goTypeToTypescriptType(entityName, &importNamespaces))
+ 				}
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/binding/reflect.go b/vendor/github.com/wailsapp/wails/v2/internal/binding/reflect.go
+index c254d0f..b54975c 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/binding/reflect.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/binding/reflect.go
+@@ -70,6 +70,7 @@ func (b *Bindings) getMethods(value interface{}) ([]*BoundMethod, error) {
+ 	structName := structType.Elem().Name()
+ 	structNameNormalized := normalizeStructName(structName)
+ 	pkgPath := strings.TrimSuffix(structType.Elem().String(), fmt.Sprintf(".%s", structName))
++	srcCache := newSourceCache()
+ 
+ 	// Process Methods
+ 	for i := 0; i < structType.NumMethod(); i++ {
+@@ -82,6 +83,8 @@ func (b *Bindings) getMethods(value interface{}) ([]*BoundMethod, error) {
+ 			continue
+ 		}
+ 
++		src := srcCache.lookup(methodDef, structName)
++
+ 		// Create new method
+ 		boundMethod := &BoundMethod{
+ 			Path: &BoundedMethodPath{
+@@ -91,7 +94,7 @@ func (b *Bindings) getMethods(value interface{}) ([]*BoundMethod, error) {
+ 			},
+ 			Inputs:   nil,
+ 			Outputs:  nil,
+-			Comments: "",
++			Comments: src.comment,
+ 			Method:   method,
+ 		}
+ 
+@@ -101,7 +104,11 @@ func (b *Bindings) getMethods(value interface{}) ([]*BoundMethod, error) {
+ 		var inputs []*Parameter
+ 		for inputIndex := 0; inputIndex < inputParamCount; inputIndex++ {
+ 			input := methodType.In(inputIndex)
+-			thisParam := newParameter("", input)
++			var paramName string
++			if inputIndex < len(src.paramNames) && src.paramNames[inputIndex] != "_" {
++				paramName = src.paramNames[inputIndex]
++			}
++			thisParam := newParameter(paramName, input)
+ 
+ 			thisInput := input
+ 
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/binding/source.go b/vendor/github.com/wailsapp/wails/v2/internal/binding/source.go
+new file mode 100644
+index 0000000..d7ef12e
+--- /dev/null
++++ b/vendor/github.com/wailsapp/wails/v2/internal/binding/source.go
+@@ -0,0 +1,13 @@
++package binding
++
++// methodSource holds the parameter names and doc comment extracted from Go
++// source for a single bound method. It is populated only in builds tagged
++// "bindings" (see source_ast.go) - i.e. only during `wails generate module
++// -tags bindings` / `wails build -tags bindings`, which is the only place
++// generated .js/.d.ts output is produced. In all other builds
++// (source_stub.go) this is always the zero value, which callers must treat
++// as "no extra info available" and fall back to argN names / no comment.
++type methodSource struct {
++	paramNames []string
++	comment    string
++}
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/binding/source_ast.go b/vendor/github.com/wailsapp/wails/v2/internal/binding/source_ast.go
+new file mode 100644
+index 0000000..56dde70
+--- /dev/null
++++ b/vendor/github.com/wailsapp/wails/v2/internal/binding/source_ast.go
+@@ -0,0 +1,134 @@
++//go:build bindings
++
++package binding
++
++import (
++	"go/ast"
++	"go/parser"
++	"go/token"
++	"reflect"
++	"runtime"
++	"strings"
++)
++
++// sourceCache parses each distinct Go source file at most once and caches
++// the result (including parse failures, as a nil entry), since a single
++// bound struct typically has many methods spread across a handful of files
++// and getMethods is only called once per bound struct per process - no
++// concurrency-safety or eviction is needed.
++type sourceCache struct {
++	fset  *token.FileSet
++	files map[string]*ast.File // absolute path -> parsed file; nil = parse failed
++}
++
++func newSourceCache() *sourceCache {
++	return &sourceCache{fset: token.NewFileSet(), files: make(map[string]*ast.File)}
++}
++
++// lookup resolves parameter names and the doc comment for the method
++// described by methodDef (obtained via reflect.Type.Method(i) on the bound
++// struct's pointer type), whose Go receiver type name is receiverName (e.g.
++// "App"). It never returns an error: any failure (no runtime symbol, file
++// unreadable, parse error, no matching *ast.FuncDecl - e.g. a method
++// promoted from an embedded type) simply yields a zero methodSource, and
++// callers fall back to the historical (argN, no comment) behavior.
++func (c *sourceCache) lookup(methodDef reflect.Method, receiverName string) methodSource {
++	pc := methodDef.Func.Pointer()
++	fn := runtime.FuncForPC(pc)
++	if fn == nil {
++		return methodSource{}
++	}
++	file, _ := fn.FileLine(pc)
++	if file == "" {
++		return methodSource{}
++	}
++
++	astFile, cached := c.files[file]
++	if !cached {
++		parsed, err := parser.ParseFile(c.fset, file, nil, parser.ParseComments)
++		if err != nil {
++			parsed = nil
++		}
++		c.files[file] = parsed
++		astFile = parsed
++	}
++	if astFile == nil {
++		return methodSource{}
++	}
++
++	fd := findFuncDecl(astFile, receiverName, methodDef.Name)
++	if fd == nil {
++		return methodSource{}
++	}
++
++	var comment string
++	if fd.Doc != nil {
++		comment = strings.TrimSpace(fd.Doc.Text())
++	}
++	return methodSource{
++		paramNames: extractParamNames(fd),
++		comment:    comment,
++	}
++}
++
++// findFuncDecl scans the top-level declarations of f for a method with the
++// given receiver type name and method name.
++func findFuncDecl(f *ast.File, receiverName, methodName string) *ast.FuncDecl {
++	for _, decl := range f.Decls {
++		fd, ok := decl.(*ast.FuncDecl)
++		if !ok || fd.Recv == nil || fd.Name.Name != methodName {
++			continue
++		}
++		if receiverTypeName(fd.Recv) != receiverName {
++			continue
++		}
++		return fd
++	}
++	return nil
++}
++
++// receiverTypeName extracts the bare type name from a method's receiver
++// field list, unwrapping pointer receivers (*T) and simple generic
++// receivers (T[P]). Returns "" if it can't be determined, which safely
++// fails the match in findFuncDecl.
++func receiverTypeName(recv *ast.FieldList) string {
++	if recv == nil || len(recv.List) != 1 {
++		return ""
++	}
++	expr := recv.List[0].Type
++	if star, ok := expr.(*ast.StarExpr); ok {
++		expr = star.X
++	}
++	switch t := expr.(type) {
++	case *ast.Ident:
++		return t.Name
++	case *ast.IndexExpr: // generic receiver: T[P]
++		if ident, ok := t.X.(*ast.Ident); ok {
++			return ident.Name
++		}
++	}
++	return ""
++}
++
++// extractParamNames flattens a FuncDecl's parameter field list into one
++// name per parameter, in declaration order (the receiver is separate from
++// fd.Type.Params). Grouped names (e.g. "a, b string") expand to one entry
++// per name; a field with no names (unnamed parameter) contributes a single
++// "" placeholder so positional indices still line up with reflect's
++// methodType.NumIn().
++func extractParamNames(fd *ast.FuncDecl) []string {
++	if fd.Type.Params == nil {
++		return nil
++	}
++	var names []string
++	for _, field := range fd.Type.Params.List {
++		if len(field.Names) == 0 {
++			names = append(names, "")
++			continue
++		}
++		for _, n := range field.Names {
++			names = append(names, n.Name)
++		}
++	}
++	return names
++}
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/binding/source_stub.go b/vendor/github.com/wailsapp/wails/v2/internal/binding/source_stub.go
+new file mode 100644
+index 0000000..4111e55
+--- /dev/null
++++ b/vendor/github.com/wailsapp/wails/v2/internal/binding/source_stub.go
+@@ -0,0 +1,21 @@
++//go:build !bindings
++
++package binding
++
++import "reflect"
++
++// sourceCache is a zero-cost stand-in for regular dev/production builds
++// (anything not built with `-tags bindings`, which only
++// `wails generate module -tags bindings` / `wails build -tags bindings`
++// use). Those builds call binding.NewBindings purely to route frontend
++// calls to Go methods at runtime and never touch generated .js/.d.ts
++// output, so there is no reason to parse Go source on every app startup,
++// nor to depend on Go source files being present alongside a shipped
++// production binary.
++type sourceCache struct{}
++
++func newSourceCache() *sourceCache { return &sourceCache{} }
++
++func (c *sourceCache) lookup(_ reflect.Method, _ string) methodSource {
++	return methodSource{}
++}
