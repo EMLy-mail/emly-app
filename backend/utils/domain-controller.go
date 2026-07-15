@@ -14,7 +14,7 @@ import (
 var (
 	modNetapi32       = windows.NewLazySystemDLL("netapi32.dll")
 	procDsGetDcNameW  = modNetapi32.NewProc("DsGetDcNameW")
-	procNetApiBufFree = modNetapi32.NewProc("NetApiBufFree")
+	procNetApiBufferFree = modNetapi32.NewProc("NetApiBufferFree")
 )
 
 // DS_RETURN_DNS_NAME asks DsGetDcNameW to return the domain controller's
@@ -78,7 +78,7 @@ func GetNearestDomainController(domain string) (*DomainControllerInfo, error) {
 		logger.Error("GetNearestDomainController: DsGetDcNameW failed", "error", err.Error(), "code", ret)
 		return nil, fmt.Errorf("DsGetDcName failed: %w", err)
 	}
-	defer procNetApiBufFree.Call(uintptr(unsafe.Pointer(infoPtr)))
+	defer procNetApiBufferFree.Call(uintptr(unsafe.Pointer(infoPtr)))
 
 	// DsGetDcName prefixes both names with "\\"; strip it for display/use.
 	dcName := strings.TrimPrefix(windows.UTF16PtrToString(infoPtr.DomainControllerName), `\\`)
