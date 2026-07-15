@@ -37,6 +37,8 @@ Fuori scope: validazione di `SDK_DECODER_SEMVER` (non è "la versione attuale" d
 
 ## Verifica
 
-`semver.IsValid` è puro e testabile senza toccare il path della messagebox/`os.Exit`. Aggiungere `backend/utils/ini-reader_test.go` con test tabellare sulla logica di normalizzazione+validazione (estratta in una funzione pura, es. `isValidSemver(version string) bool`, usata sia da `LoadConfig` sia dal test) coprendo: `"2.0.1"` valido, `"2.0.1-beta.1"` valido, `""` non valido, `"2.0"` non valido, `"latest"` non valido, `"v2.0.1"` (già con prefisso, non dovrebbe capitare da ini ma non deve rompere) valido.
+`semver.IsValid` è puro e testabile senza toccare il path della messagebox/`os.Exit`. Aggiungere `backend/utils/ini-reader_test.go` con test tabellare sulla logica di normalizzazione+validazione (estratta in una funzione pura, es. `isValidGUIVersion(version string) bool`, usata sia da `LoadConfig` sia dal test) coprendo: `"2.0.1"` valido, `"2.0.1-beta.1"` valido, `""` non valido, `"latest"` non valido, `"v2.0.1"` (già con prefisso, non dovrebbe capitare da ini ma non deve rompere) valido.
+
+Nota verificata empiricamente su `x/mod/semver` v0.38.0: `IsValid` è permissivo sulle componenti mancanti (`"v2.0"` e persino `"v2"` sono validi, il minor/patch mancante viene trattato come zero) — non richiede rigidamente tre componenti come SemVer 2.0.0 canonico. Il check quindi lascia passare `GUI_SEMVER = 2.0` o `= 2`; blocca solo valori davvero non numerici/malformati (`""`, `"latest"`, `"2.0.1.0"`, ecc.).
 
 Il path messagebox+`os.Exit` non è testabile via `go test` (termina il processo) — verifica manuale: impostare `GUI_SEMVER` a un valore non valido in `config.debug.ini`, avviare l'app in debug, confermare comparsa messagebox italiana e chiusura immediata; ripetere modificando il valore da Settings a runtime (se il flusso lo permette) per validare il reload path.
