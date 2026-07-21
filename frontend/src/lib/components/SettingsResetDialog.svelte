@@ -23,7 +23,7 @@
             </AlertDialog.Description>
         </AlertDialog.Header>
         <ul class="reset-list">
-            {#each entries as entry (entry.setting)}
+            {#each entries as entry (entry.id)}
                 <li class="reset-entry">
                     <span class="reset-setting">{entry.setting}</span>
                     <span class="reset-reason">{entry.reason}</span>
@@ -46,6 +46,8 @@
         margin: 4px 0;
         padding: 0;
         list-style: none;
+        max-height: 40vh;
+        overflow-y: auto;
     }
 
     .reset-entry {
