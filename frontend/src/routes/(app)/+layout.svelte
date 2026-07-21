@@ -111,6 +111,13 @@
         }
         runningInDebugMode.set(await IsAppInDebugMode());
 
+        // Independent of the integrity check below, and deliberately not
+        // awaited: a folder on an unreachable network share can take seconds
+        // to fail, and must not delay anything else. Started here, before
+        // the integrity check's IPC round trips, so it genuinely runs
+        // concurrently rather than only after integrity resolves.
+        void ensureExportFolderWritable();
+
         if (!hostIntegrityChecked) {
             hostIntegrityChecked = true;
             // The failed/dialog-open reaction happens in the $effect above,
@@ -118,11 +125,6 @@
             // upgrading the standing to "limited" after this resolves.
             await ensureHostIntegrityChecked();
         }
-
-        // Independent of the integrity check above, and deliberately not
-        // awaited together with it: a folder on an unreachable network share
-        // can take seconds to fail, and must not delay anything else.
-        void ensureExportFolderWritable();
     });
 
     async function detectDebugging() {

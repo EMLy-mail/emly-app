@@ -4,7 +4,7 @@
     import * as m from "$lib/paraglide/messages";
 
     let {
-        open = $bindable(false),
+        open,
         entries,
         onAcknowledge,
     }: {
@@ -14,7 +14,12 @@
     } = $props();
 </script>
 
-<AlertDialog.Root bind:open>
+<AlertDialog.Root
+    {open}
+    onOpenChange={(v) => {
+        if (!v) onAcknowledge();
+    }}
+>
     <AlertDialog.Content>
         <AlertDialog.Header>
             <AlertDialog.Title>{m.settings_reset_dialog_title()}</AlertDialog.Title>
