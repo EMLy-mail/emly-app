@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+# 1.8.1 (2026-07-21)
+1) HOTIFX: Cambiato endpoint API per chiusura server on-cloud.
+
 # 1.8.0 (2026-07-01, 2026-07-02)
 1) Aggiunto il supporto a EMLy di aprire direttamente vari formati di file immagine come lettore di default di Windows.
 2) Aggiornate dipendenze lato Frontend.
