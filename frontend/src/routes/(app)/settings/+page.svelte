@@ -33,6 +33,7 @@
         ReloadConfig,
         ShowOpenFolderDialog,
         SetExportAttachmentFolder,
+        CheckFolderWritable,
         SetTrayIconEnabled,
         OpenDevTools,
         RestartApp,
@@ -93,6 +94,21 @@
         try {
             const folder = await ShowOpenFolderDialog();
             if (!folder) return;
+
+            // The picker only returns folders that exist, so a failure here
+            // means EMLy is not allowed to write into it. Fall back to the
+            // default rather than leaving a previously configured custom
+            // folder active while the UI shows the default.
+            try {
+                await CheckFolderWritable(folder);
+            } catch (e) {
+                console.error("Export folder is not writable", e);
+                await SetExportAttachmentFolder("");
+                exportFolder = "";
+                toast.error(m.settings_export_folder_not_writable());
+                return;
+            }
+
             await SetExportAttachmentFolder(folder);
             exportFolder = folder;
             toast.success(m.settings_export_folder_saved());
