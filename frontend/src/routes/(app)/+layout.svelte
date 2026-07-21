@@ -47,6 +47,9 @@
     import { settingsStore } from "$lib/stores/settings.svelte.js";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
     import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
+    import { ensureExportFolderWritable } from "$lib/utils/export-folder-check";
+    import { settingsResetStore } from "$lib/stores/settings-reset.svelte";
+    import SettingsResetDialog from "$lib/components/SettingsResetDialog.svelte";
 
     let versionInfo: utils.Config | null = $state(null);
     let isDebugerOn: boolean = $state(false);
@@ -54,6 +57,7 @@
     let configMissingDialogOpen = $state(false);
     let hostIntegrityDialogOpen = $state(false);
     let hostIntegrityChecked = false;
+    let settingsResetDialogOpen = $derived(settingsResetStore.entries.length > 0);
 
     $effect(() => {
         $inspect("hostIntegrityDialogOpen", hostIntegrityDialogOpen);
@@ -114,6 +118,11 @@
             // upgrading the standing to "limited" after this resolves.
             await ensureHostIntegrityChecked();
         }
+
+        // Independent of the integrity check above, and deliberately not
+        // awaited together with it: a folder on an unreachable network share
+        // can take seconds to fail, and must not delay anything else.
+        void ensureExportFolderWritable();
     });
 
     async function detectDebugging() {
@@ -333,6 +342,12 @@
     </div>
 
     <BugReportDialog />
+
+    <SettingsResetDialog
+        open={settingsResetDialogOpen}
+        entries={settingsResetStore.entries}
+        onAcknowledge={() => settingsResetStore.clear()}
+    />
 
     <AlertDialog.Root bind:open={configMissingDialogOpen}>
         <AlertDialog.Content>

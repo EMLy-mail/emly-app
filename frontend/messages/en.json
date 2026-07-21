@@ -377,6 +377,7 @@
   "settings_export_folder_saved": "Attachment folder saved",
   "settings_export_folder_save_error": "Error while saving the folder",
   "settings_export_folder_not_writable": "EMLy cannot write into that folder: permission denied. The default folder has been restored.",
+  "settings_export_folder_reset_on_start": "The configured folder is no longer writable. The default folder has been restored.",
   "settings_danger_test_crash_label": "Test crash handler",
   "settings_danger_test_crash_hint": "Emits a HTTP 500 or 404 error to test the crash handler and error pages.",
   "settings_toast_load_error": "Default settings values have been restored due to an error.",
