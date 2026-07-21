@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"emly/backend/utils"
+	"emly/backend/utils/mail"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -144,6 +145,20 @@ func (a *App) GetExportAttachmentFolder() string {
 		return ""
 	}
 	return config.EMLy.ExportAttachmentFolder
+}
+
+// CheckFolderWritable verifies EMLy can actually create files in the given
+// folder, by writing a probe file there and removing it again. Used before
+// accepting a folder picked in Settings, and at startup to validate the
+// folder already stored in config.ini.
+//
+// Parameters:
+//   - folderPath: The folder to test; empty is always valid (Downloads default)
+//
+// Returns:
+//   - error: Error if the folder cannot be written to
+func (a *App) CheckFolderWritable(folderPath string) error {
+	return internal.CheckFolderWritable(folderPath)
 }
 
 // SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.

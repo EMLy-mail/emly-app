@@ -13,6 +13,20 @@ import {internal} from '../models';
 export function CheckBugReportAPI():Promise<boolean>;
 
 /**
+ * CheckFolderWritable verifies EMLy can actually create files in the given
+ * folder, by writing a probe file there and removing it again. Used before
+ * accepting a folder picked in Settings, and at startup to validate the
+ * folder already stored in config.ini.
+ * 
+ * Parameters:
+ *   - folderPath: The folder to test; empty is always valid (Downloads default)
+ * 
+ * Returns:
+ *   - error: Error if the folder cannot be written to
+ */
+export function CheckFolderWritable(folderPath:string):Promise<void>;
+
+/**
  * CheckIsDefaultEMLHandler checks if EMLy is registered as the default handler
  * for .eml files in Windows.
  * 
