@@ -380,5 +380,8 @@
   "settings_danger_test_crash_label": "Test crash handler",
   "settings_danger_test_crash_hint": "Emits a HTTP 500 or 404 error to test the crash handler and error pages.",
   "settings_toast_load_error": "Default settings values have been restored due to an error.",
-  "mail_file_external_app_opening_toast": "Opening file..."
+  "mail_file_external_app_opening_toast": "Opening file...",
+  "settings_reset_dialog_title": "Settings restored",
+  "settings_reset_dialog_description": "Some settings were restored to their default value because they could no longer be used:",
+  "settings_reset_dialog_confirm": "Understood"
 }
