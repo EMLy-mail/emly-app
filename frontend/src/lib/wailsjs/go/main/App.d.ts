@@ -5,108 +5,513 @@ import {main} from '../models';
 import {updateripc} from '../models';
 import {internal} from '../models';
 
+/**
+ * CheckBugReportAPI sends a GET request to the bug report API's /health
+ * endpoint with a short timeout. Returns true if the API responds with
+ * status 200, false otherwise. This is exposed to the frontend.
+ */
 export function CheckBugReportAPI():Promise<boolean>;
 
+/**
+ * CheckIsDefaultEMLHandler checks if EMLy is registered as the default handler
+ * for .eml files in Windows.
+ * 
+ * This works by:
+ *  1. Getting the current executable path
+ *  2. Reading the UserChoice registry key for .eml files
+ *  3. Finding the command associated with the chosen ProgId
+ *  4. Comparing the command with our executable
+ * 
+ * Returns:
+ *   - bool: True if EMLy is the default handler
+ *   - error: Error if registry access fails
+ */
 export function CheckIsDefaultEMLHandler():Promise<boolean>;
 
-export function ConvertToUTF8(arg1:string):Promise<string>;
+/**
+ * ConvertToUTF8 attempts to convert a string to valid UTF-8.
+ * If the string is already valid UTF-8, it's returned as-is.
+ * Otherwise, it assumes Windows-1252 encoding (common for legacy emails)
+ * and attempts to decode it.
+ * 
+ * This is particularly useful for email body content that may have been
+ * encoded with legacy Western European character sets.
+ * 
+ * Parameters:
+ *   - s: The string to convert
+ * 
+ * Returns:
+ *   - string: UTF-8 encoded string
+ */
+export function ConvertToUTF8(s:string):Promise<string>;
 
-export function DetectEmailFormat(arg1:string):Promise<string>;
+/**
+ * DetectEmailFormat inspects the file's binary content to determine its format.
+ */
+export function DetectEmailFormat(filePath:string):Promise<string>;
 
-export function ExportSettings(arg1:string):Promise<string>;
+/**
+ * ExportSettings opens a save dialog and exports the provided settings JSON
+ * to the selected file location.
+ * 
+ * The dialog is pre-configured with:
+ *   - Default filename: emly_settings.json
+ *   - Filter for JSON files
+ * 
+ * Parameters:
+ *   - settingsJSON: The JSON string containing all application settings
+ * 
+ * Returns:
+ *   - string: The path where settings were saved, or empty if cancelled
+ *   - error: Error if dialog or file operations fail
+ */
+export function ExportSettings(settingsJSON:string):Promise<string>;
 
-export function FrontendLog(arg1:string,arg2:string,arg3:string):Promise<void>;
+/**
+ * FrontendLog receives a log entry from the frontend and writes it using slog.
+ * The frontend should call this via the Wails binding:
+ * 
+ * 	await FrontendLog("INFO", "email loaded", '{"url":"/","userAgent":"..."}')
+ */
+export function FrontendLog(level:string,message:string,contextJSON:string):Promise<void>;
 
+/**
+ * GetConfig loads and returns the application configuration from config.ini.
+ * Returns nil if the configuration cannot be loaded.
+ */
 export function GetConfig():Promise<utils.Config>;
 
+/**
+ * GetCurrentMailFilePath returns the path of the currently loaded mail file.
+ * Used by bug reports to include the relevant email file.
+ */
 export function GetCurrentMailFilePath():Promise<string>;
 
+/**
+ * GetEMLyUpdaterStatus reports the installation and running state of the
+ * EMLy Updater. Installed requires all three of the following:
+ *  1. The "EMLyUpdater" Windows service is registered
+ *  2. The installation folder exists (%ProgramFiles%\EMLyUpdater)
+ *  3. The config folder exists (%ProgramData%\EMLyUpdater)
+ * 
+ * Every check reads state that a standard (non-administrator) account can
+ * already access, so no elevation is required.
+ */
 export function GetEMLyUpdaterStatus():Promise<main.EMLyUpdaterStatus>;
 
+/**
+ * GetExportAttachmentFolder returns the EXPORT_ATTACHMENT_FOLDER setting from
+ * config.ini, or an empty string if not set (meaning the Downloads folder).
+ */
 export function GetExportAttachmentFolder():Promise<string>;
 
 export function GetExtendedMachineData():Promise<utils.ExtendedMachineInfo>;
 
+/**
+ * GetImageViewerData checks CLI arguments and returns image data if running in image viewer mode.
+ * This is called by the viewer page on startup to get the image to display.
+ * 
+ * Returns:
+ *   - *ImageViewerData: Image data if in viewer mode, nil otherwise
+ *   - error: Error if reading the image file fails
+ */
 export function GetImageViewerData():Promise<main.ImageViewerData>;
 
+/**
+ * GetLogsDir returns the path to the EMLy logs directory.
+ */
 export function GetLogsDir():Promise<string>;
 
+/**
+ * GetMachineData retrieves system information about the current machine.
+ * Returns hostname, OS version, hardware ID, etc.
+ */
 export function GetMachineData():Promise<utils.MachineInfo>;
 
+/**
+ * GetNearestDomainController resolves the Active Directory domain
+ * controller nearest to this machine via the native DsGetDcName Win32 API
+ * (site-aware). Pass an empty domain to resolve the DC for the machine's
+ * own AD domain.
+ * 
+ * Returns the DC's DNS name and the AD site it belongs to.
+ */
+export function GetNearestDomainController(domain:string):Promise<utils.DomainControllerInfo>;
+
+/**
+ * GetPDFViewerData checks CLI arguments and returns PDF data if running in PDF viewer mode.
+ * This is called by the viewer page on startup to get the PDF to display.
+ * 
+ * Returns:
+ *   - *PDFViewerData: PDF data if in viewer mode, nil otherwise
+ *   - error: Error if reading the PDF file fails
+ */
 export function GetPDFViewerData():Promise<main.PDFViewerData>;
 
+/**
+ * GetStartupFile returns the file path if the app was launched with an email file argument.
+ * Returns an empty string if no file was specified at startup.
+ */
 export function GetStartupFile():Promise<string>;
 
+/**
+ * GetUpdaterADStatus queries the EMLyUpdater service over its local named
+ * pipe for its SYSTEM-authoritative AD domain status for this machine.
+ */
 export function GetUpdaterADStatus():Promise<updateripc.ADStatus>;
 
+/**
+ * GetUpdaterIPCStatus checks whether the EMLyUpdater service's IPC pipe is
+ * active and returns a valid response, by issuing a real SystemInfo
+ * request and inspecting the result. A failed round trip (service not
+ * installed/running, pipe not SYSTEM-owned, timeout, ...) is an expected,
+ * recoverable condition — it is reported via Active=false rather than as
+ * an error, matching the posture of GetEMLyUpdaterStatus.
+ */
 export function GetUpdaterIPCStatus():Promise<main.UpdaterIPCStatus>;
 
+/**
+ * GetUpdaterSystemInfo queries the EMLyUpdater service over its local named
+ * pipe for its SYSTEM-authoritative view of this machine's identity. This is
+ * a distinct source from GetExtendedMachineData (which runs unprivileged, in
+ * this process) — it does not replace it, and failure here (e.g. the
+ * updater service is not installed or not running) is an expected,
+ * recoverable condition, not a hard error for the caller to surface loudly.
+ */
 export function GetUpdaterSystemInfo():Promise<updateripc.SystemInfo>;
 
+/**
+ * GetViewerData checks CLI arguments and returns viewer data for any viewer mode.
+ * This is a unified method that detects both image and PDF viewer modes.
+ * 
+ * Returns:
+ *   - *ViewerData: Contains either ImageData or PDFData depending on mode
+ *   - error: Error if reading the file fails
+ */
 export function GetViewerData():Promise<main.ViewerData>;
 
+/**
+ * ImportSettings opens a file dialog for the user to select a settings JSON file
+ * and returns its contents.
+ * 
+ * The dialog is configured to only show JSON files.
+ * 
+ * Returns:
+ *   - string: The JSON content of the selected file, or empty if cancelled
+ *   - error: Error if dialog or file operations fail
+ */
 export function ImportSettings():Promise<string>;
 
 export function IsAppInDebugMode():Promise<boolean>;
 
+/**
+ * IsDebuggerRunning checks if a debugger is attached to the application.
+ * Used for anti-debugging protection in production builds.
+ */
 export function IsDebuggerRunning():Promise<boolean>;
 
+/**
+ * OpenDefaultAppsSettings opens the Windows Settings app to the Default Apps page.
+ * This allows users to easily set EMLy as the default handler for email files.
+ * 
+ * Returns:
+ *   - error: Error if launching settings fails
+ */
 export function OpenDefaultAppsSettings():Promise<void>;
 
+/**
+ * OpenDevTools opens the WebView2 developer tools window. Backported from
+ * Wails v3 (see patches/wails-v2-opendevtools.patch); no-op on macOS/Linux
+ * where no equivalent programmatic API is wired up in Wails v2.
+ */
 export function OpenDevTools():Promise<void>;
 
-export function OpenDocument(arg1:string,arg2:string):Promise<void>;
+/**
+ * OpenDocument saves a DOC/DOCX (or any Office document) to temp and opens it
+ * with the system's default application for that file type.
+ * 
+ * Parameters:
+ *   - base64Data: Base64-encoded document data
+ *   - filename: The original filename of the document
+ * 
+ * Returns:
+ *   - error: Error if saving or launching fails
+ */
+export function OpenDocument(base64Data:string,filename:string):Promise<void>;
 
-export function OpenEMLWindow(arg1:string,arg2:string):Promise<void>;
+/**
+ * OpenEMLWindow opens an EML attachment in a new EMLy window.
+ * The EML data is saved to a temp file and a new EMLy instance is launched.
+ * 
+ * This method tracks open EML files to prevent duplicate windows for the same file.
+ * The tracking is released when the viewer window is closed.
+ * 
+ * Parameters:
+ *   - base64Data: Base64-encoded EML file content
+ *   - filename: The original filename of the EML attachment
+ * 
+ * Returns:
+ *   - error: Error if the file is already open or if launching fails
+ */
+export function OpenEMLWindow(base64Data:string,filename:string):Promise<void>;
 
-export function OpenExplorerForPath(arg1:string):Promise<void>;
+/**
+ * OpenExplorerForPath opens Windows Explorer showing the specified file
+ * (selected) or folder.
+ * 
+ * Parameters:
+ *   - path: The full path to the file or folder to show in Explorer
+ * 
+ * Returns:
+ *   - error: Any execution errors
+ */
+export function OpenExplorerForPath(path:string):Promise<void>;
 
-export function OpenFolderInExplorer(arg1:string):Promise<void>;
+/**
+ * OpenFolderInExplorer opens the specified folder in Windows Explorer.
+ * This is used to show the user where bug report files are saved.
+ * 
+ * Parameters:
+ *   - folderPath: The path to the folder to open
+ * 
+ * Returns:
+ *   - error: Error if launching explorer fails
+ */
+export function OpenFolderInExplorer(folderPath:string):Promise<void>;
 
-export function OpenImage(arg1:string,arg2:string):Promise<void>;
+/**
+ * OpenImage saves an image to temp and opens it with the system's default image viewer.
+ * This is used when the user prefers external viewers over the built-in viewer.
+ * 
+ * Parameters:
+ *   - base64Data: Base64-encoded image data
+ *   - filename: The original filename of the image
+ * 
+ * Returns:
+ *   - error: Error if saving or launching fails
+ */
+export function OpenImage(base64Data:string,filename:string):Promise<void>;
 
-export function OpenImageWindow(arg1:string,arg2:string):Promise<void>;
+/**
+ * OpenImageWindow opens an image attachment in a new EMLy viewer window.
+ * The image data is saved to a temp file and a new EMLy instance is launched
+ * with the --view-image flag.
+ * 
+ * This method tracks open images to prevent duplicate windows for the same file.
+ * 
+ * Parameters:
+ *   - base64Data: Base64-encoded image data
+ *   - filename: The original filename of the image
+ * 
+ * Returns:
+ *   - error: Error if the image is already open or if launching fails
+ */
+export function OpenImageWindow(base64Data:string,filename:string):Promise<void>;
 
-export function OpenPDF(arg1:string,arg2:string):Promise<void>;
+/**
+ * OpenPDF saves a PDF to temp and opens it with the system's default PDF application.
+ * This is used when the user prefers external viewers over the built-in viewer.
+ * 
+ * Parameters:
+ *   - base64Data: Base64-encoded PDF data
+ *   - filename: The original filename of the PDF
+ * 
+ * Returns:
+ *   - error: Error if saving or launching fails
+ */
+export function OpenPDF(base64Data:string,filename:string):Promise<void>;
 
-export function OpenPDFWindow(arg1:string,arg2:string):Promise<void>;
+/**
+ * OpenPDFWindow opens a PDF attachment in a new EMLy viewer window.
+ * The PDF data is saved to a temp file and a new EMLy instance is launched
+ * with the --view-pdf flag.
+ * 
+ * This method tracks open PDFs to prevent duplicate windows for the same file.
+ * 
+ * Parameters:
+ *   - base64Data: Base64-encoded PDF data
+ *   - filename: The original filename of the PDF
+ * 
+ * Returns:
+ *   - error: Error if the PDF is already open or if launching fails
+ */
+export function OpenPDFWindow(base64Data:string,filename:string):Promise<void>;
 
-export function OpenURLInBrowser(arg1:string):Promise<void>;
+/**
+ * OpenURLInBrowser opens the specified URL in the system's default web browser.
+ * Only http://, https://, and mailto: schemes are accepted to prevent
+ * command injection via cmd /c start.
+ * 
+ * Parameters:
+ *   - url: The URL to open (must start with http://, https://, or mailto:)
+ * 
+ * Returns:
+ *   - error: Error if the scheme is not allowed or launching the browser fails
+ */
+export function OpenURLInBrowser(url:string):Promise<void>;
 
+/**
+ * QuitApp terminates the application.
+ * It first calls Wails Quit to properly close the window,
+ * then forces an exit with a specific code.
+ */
 export function QuitApp():Promise<void>;
 
-export function ReadAuto(arg1:string):Promise<internal.EmailData>;
+/**
+ * ReadAuto automatically detects the email file format and delegates to the
+ * appropriate reader.
+ */
+export function ReadAuto(filePath:string):Promise<internal.EmailData>;
 
-export function ReadEML(arg1:string):Promise<internal.EmailData>;
+/**
+ * ReadEML reads a standard .eml file and returns the parsed email data.
+ */
+export function ReadEML(filePath:string):Promise<internal.EmailData>;
 
-export function ReadMSG(arg1:string):Promise<internal.EmailData>;
+/**
+ * ReadMSG reads a Microsoft Outlook .msg file and returns the email data.
+ */
+export function ReadMSG(filePath:string):Promise<internal.EmailData>;
 
-export function ReadPEC(arg1:string):Promise<internal.EmailData>;
+/**
+ * ReadPEC reads a PEC (Posta Elettronica Certificata) .eml file.
+ */
+export function ReadPEC(filePath:string):Promise<internal.EmailData>;
 
+/**
+ * ReloadConfig re-reads config.ini from disk and returns the current configuration.
+ * Useful to reflect any manual edits to config.ini without restarting the app.
+ * 
+ * Returns:
+ *   - *utils.Config: The freshly loaded configuration
+ *   - error: Error if loading config fails
+ */
 export function ReloadConfig():Promise<utils.Config>;
 
 export function ReloadEMLyConfig():Promise<utils.EMLyConfig>;
 
+/**
+ * RestartApp performs a full application restart, including the Go backend.
+ * It schedules a new process via PowerShell with a short delay to ensure the
+ * single-instance lock is released before the new instance starts, then exits.
+ */
 export function RestartApp():Promise<void>;
 
-export function SaveAttachment(arg1:string,arg2:string):Promise<string>;
+/**
+ * SaveAttachment saves a base64-encoded attachment to disk without going
+ * through the WebView2 download manager. The target folder is the
+ * EXPORT_ATTACHMENT_FOLDER from config.ini if set, otherwise the user's
+ * Downloads folder. Existing files are never overwritten.
+ * 
+ * Parameters:
+ *   - filename: The name to save the file as
+ *   - base64Data: The base64-encoded attachment data
+ * 
+ * Returns:
+ *   - string: The full path where the file was saved
+ *   - error: Any decoding or file system errors
+ */
+export function SaveAttachment(filename:string,base64Data:string):Promise<string>;
 
-export function SaveConfig(arg1:utils.Config):Promise<void>;
+/**
+ * SaveConfig persists the provided configuration to config.ini.
+ * Returns an error if saving fails.
+ */
+export function SaveConfig(cfg:utils.Config):Promise<void>;
 
+/**
+ * SaveScreenshot captures and saves the screenshot to the system temp directory.
+ * This is a convenience method that captures and saves in one step.
+ * 
+ * Returns:
+ *   - string: The full path to the saved screenshot file
+ *   - error: Error if capture or save fails
+ */
 export function SaveScreenshot():Promise<string>;
 
+/**
+ * SaveScreenshotAs captures a screenshot and opens a save dialog for the user
+ * to choose where to save it.
+ * 
+ * Returns:
+ *   - string: The selected save path, or empty string if cancelled
+ *   - error: Error if capture, dialog, or save fails
+ */
 export function SaveScreenshotAs():Promise<string>;
 
-export function SetCurrentMailFilePath(arg1:string):Promise<void>;
+/**
+ * SetCurrentMailFilePath updates the path of the currently loaded mail file.
+ * This is called when the user opens a file via the file dialog.
+ */
+export function SetCurrentMailFilePath(filePath:string):Promise<void>;
 
-export function SetExportAttachmentFolder(arg1:string):Promise<void>;
+/**
+ * SetExportAttachmentFolder updates the EXPORT_ATTACHMENT_FOLDER setting in
+ * config.ini. An empty string resets to the default (Downloads folder).
+ * 
+ * Parameters:
+ *   - folderPath: The folder where downloaded attachments should be saved
+ * 
+ * Returns:
+ *   - error: Error if loading or saving config fails
+ */
+export function SetExportAttachmentFolder(folderPath:string):Promise<void>;
 
-export function SetTrayIconEnabled(arg1:boolean):Promise<void>;
+/**
+ * SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
+ * The system tray icon is only created at startup (see main.go), so this
+ * takes effect after the next restart (see RestartApp).
+ * 
+ * Parameters:
+ *   - enabled: whether the system tray icon should be shown on next startup
+ * 
+ * Returns:
+ *   - error: Error if loading or saving config fails
+ */
+export function SetTrayIconEnabled(enabled:boolean):Promise<void>;
 
+/**
+ * ShowOpenFileDialog displays the system file picker dialog filtered for email files.
+ */
 export function ShowOpenFileDialog():Promise<string>;
 
+/**
+ * ShowOpenFolderDialog displays the system directory picker dialog.
+ * Returns the selected folder path, or an empty string if cancelled.
+ */
 export function ShowOpenFolderDialog():Promise<string>;
 
-export function SubmitBugReport(arg1:main.BugReportInput,arg2:string):Promise<main.SubmitBugReportResult>;
+/**
+ * SubmitBugReport creates a complete bug report with user input, saves all files,
+ * and creates a zip archive ready for submission.
+ * 
+ * The bug report includes:
+ *   - User-provided description (report.txt)
+ *   - Screenshot (captured before dialog opens)
+ *   - Currently loaded mail file (if any)
+ *   - localStorage data (localStorage.json)
+ *   - Config.ini data (config.json)
+ *   - System information (hostname, OS version, hardware ID)
+ * 
+ * Parameters:
+ *   - input: User-provided bug report details including pre-captured screenshot, localStorage, and config data
+ * 
+ * Returns:
+ *   - *SubmitBugReportResult: Paths to the zip file and folder
+ *   - error: Error if any file operation fails
+ */
+export function SubmitBugReport(input:main.BugReportInput,currEnv:string):Promise<main.SubmitBugReportResult>;
 
+/**
+ * TakeScreenshot captures the current EMLy application window and returns it as base64 PNG.
+ * This uses Windows GDI API to capture the window contents, handling DWM composition
+ * for proper rendering of modern Windows applications.
+ * 
+ * The method automatically detects whether the app is in main mode or viewer mode
+ * and captures the appropriate window.
+ * 
+ * Returns:
+ *   - *ScreenshotResult: Contains base64 PNG data, dimensions, and suggested filename
+ *   - error: Error if window capture or encoding fails
+ */
 export function TakeScreenshot():Promise<main.ScreenshotResult>;
