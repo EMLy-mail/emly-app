@@ -9,7 +9,6 @@ import {
   ReadAuto,
   DetectEmailFormat,
   ShowOpenFileDialog,
-  SetCurrentMailFilePath,
   ConvertToUTF8,
 } from '$lib/wailsjs/go/main/App';
 import type { internal } from '$lib/wailsjs/go/models';
@@ -146,11 +145,6 @@ export async function openAndLoadEmail(): Promise<LoadEmailResult> {
     }
 
     const result = await loadEmailFromPath(filePath);
-
-    if (result.success && result.email) {
-      // Track the current mail file path for bug reports
-      await SetCurrentMailFilePath(filePath);
-    }
 
     return result;
   } catch (error: unknown) {

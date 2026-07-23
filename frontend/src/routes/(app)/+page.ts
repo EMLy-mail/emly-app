@@ -34,7 +34,7 @@ export const load: PageLoad = async () => {
 
       if (emlContent) {
         emlContent.body = DOMPurify.sanitize(emlContent.body || "");
-        return { email: emlContent };
+        return { email: emlContent, filePath: startupFile };
       }
     }
   } catch (e) {
