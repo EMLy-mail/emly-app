@@ -41,7 +41,7 @@ export const load: PageLoad = async () => {
         // check and lose.
         await ensureHostIntegrityChecked();
         emlContent.body = DOMPurify.sanitize(emlContent.body || "");
-        return { email: emlContent };
+        return { email: emlContent, filePath: startupFile };
       }
     }
   } catch (e) {

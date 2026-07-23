@@ -20,10 +20,10 @@
     if (data.email) {
       if (isPecOpenBlocked(data.email)) return;
       if (settingsStore.settings.enableTabMode) {
-        mailState.addTab(data.email);
+        mailState.addTab(data.email, data.filePath);
         sidebarOpen.set(false);
       } else {
-        mailState.setParams(data.email);
+        mailState.setParams(data.email, data.filePath);
       }
     } else if (data.loadError) {
       toast.error(m.mail_error_opening());
@@ -48,7 +48,7 @@
 
     if (!result.cancelled && result.success && result.email) {
       if (!isPecOpenBlocked(result.email)) {
-        mailState.addTab(result.email);
+        mailState.addTab(result.email, result.filePath);
         sidebarOpen.set(false);
       }
     } else if (result.error) {

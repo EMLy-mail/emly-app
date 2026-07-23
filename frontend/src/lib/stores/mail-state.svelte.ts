@@ -1,4 +1,5 @@
 import type { internal } from "$lib/wailsjs/go/models";
+import { SetCurrentMailFilePath } from "$lib/wailsjs/go/main/App";
 
 export type AppTab =
     | { id: string; type: "email"; email: internal.EmailData; filePath?: string }
@@ -18,6 +19,14 @@ class MailState {
         return tab?.type === "email" ? tab.email : null;
     }
 
+    // Keeps the Go-side "current mail file" (used by bug reports) pointed at
+    // whichever tab is actually active, instead of drifting to a stale tab.
+    private syncCurrentMailFilePath() {
+        const tab = this.tabs.find(t => t.id === this.activeTabId);
+        const filePath = tab?.type === "email" ? (tab.filePath ?? "") : "";
+        SetCurrentMailFilePath(filePath).catch(() => {});
+    }
+
     setParams(email: internal.EmailData | null, filePath?: string) {
         if (!email) {
             this.clear();
@@ -26,12 +35,14 @@ class MailState {
         const id = crypto.randomUUID();
         this.tabs = [{ id, type: "email", email, filePath }];
         this.activeTabId = id;
+        this.syncCurrentMailFilePath();
     }
 
     addTab(email: internal.EmailData, filePath?: string): string {
         const id = crypto.randomUUID();
         this.tabs = [...this.tabs, { id, type: "email", email, filePath }];
         this.activeTabId = id;
+        this.syncCurrentMailFilePath();
         return id;
     }
 
@@ -39,6 +50,7 @@ class MailState {
         const id = crypto.randomUUID();
         this.tabs = [...this.tabs, { id, type: "pdf", filename, base64Data }];
         this.activeTabId = id;
+        this.syncCurrentMailFilePath();
         return id;
     }
 
@@ -46,6 +58,7 @@ class MailState {
         const id = crypto.randomUUID();
         this.tabs = [...this.tabs, { id, type: "image", filename, base64Data }];
         this.activeTabId = id;
+        this.syncCurrentMailFilePath();
         return id;
     }
 
@@ -62,11 +75,13 @@ class MailState {
         this.tabs = newTabs;
         if (this.activeTabId === id) {
             this.activeTabId = newTabs[Math.max(0, idx - 1)]?.id ?? newTabs[0]?.id ?? null;
+            this.syncCurrentMailFilePath();
         }
     }
 
     setActiveTab(id: string) {
         this.activeTabId = id;
+        this.syncCurrentMailFilePath();
     }
 
     closeAllTabs() {
@@ -103,6 +118,7 @@ class MailState {
     clear() {
         this.tabs = [];
         this.activeTabId = null;
+        this.syncCurrentMailFilePath();
     }
 
     getAllTabs() {
