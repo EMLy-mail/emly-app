@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 1.8.2 (2026-07-23)
+1) Fixato un bug critico dove, in modalità Tab, il Bug Report allegava sempre la prima email aperta invece di quella nella scheda effettivamente selezionata.
+2) Fixato un bug dove, aprendo un nuovo file .EML/.MSG mentre EMLy era già in esecuzione con più schede aperte (email e/o allegati), la finestra veniva portata in primo piano ma non si passava alla scheda della nuova email se in quel momento era attiva una scheda di tipo allegato (PDF/immagine).
+
 # 1.8.1 (2026-07-21)
 1) HOTIFX: Cambiato endpoint API per chiusura server on-cloud.
 
