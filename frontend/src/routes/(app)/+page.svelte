@@ -9,8 +9,14 @@
   import * as m from "$lib/paraglide/messages.js";
   import { toast } from "svelte-sonner";
   import { X, Plus, Mail, FileText, Image, ChevronLeft, ChevronRight, Loader2 } from "@lucide/svelte";
-  import { openAndLoadEmail } from "$lib/utils/mail";
+  import { openAndLoadEmail, loadEmailFromPath, isEmailFile } from "$lib/utils/mail";
   import { onDestroy, onMount } from "svelte";
+  import {
+    EventsOn,
+    EventsEmit,
+    WindowShow,
+    WindowUnminimise,
+  } from "$lib/wailsjs/runtime/runtime";
 
   let { data } = $props();
 
@@ -46,6 +52,8 @@
     setTimeout(updateScrollState, 0);
   });
 
+  let unregisterLaunchArgs = () => {};
+
   onMount(() => {
     if (data.email) {
       if (settingsStore.settings.enableTabMode) {
@@ -57,9 +65,42 @@
     } else if (data.loadError) {
       toast.error(m.mail_error_opening());
     }
+
+    // Handles files opened while the app is already running (second-instance
+    // launch). Registered once here at the page level - not per-tab - so it
+    // fires regardless of which tab (mail or attachment) currently has focus.
+    unregisterLaunchArgs = EventsOn("launchArgs", async (args: string[]) => {
+      if (!args || args.length === 0 || isAddingTab) return;
+
+      for (const arg of args) {
+        if (isEmailFile(arg)) {
+          isAddingTab = true;
+
+          const result = await loadEmailFromPath(arg);
+
+          if (result.success && result.email) {
+            if (settingsStore.settings.enableTabMode) {
+              mailState.addTab(result.email, result.filePath);
+            } else {
+              mailState.setParams(result.email, result.filePath);
+            }
+            sidebarOpen.set(false);
+            WindowUnminimise();
+            WindowShow();
+            EventsEmit("bringOnTop");
+          } else if (result.error) {
+            toast.error(m.mail_error_opening());
+          }
+
+          isAddingTab = false;
+          break;
+        }
+      }
+    });
   });
 
   onDestroy(() => {
+    unregisterLaunchArgs();
     if (!settingsStore.settings.enableTabMode) {
       mailState.getAllTabs().forEach((tab) => {
         if (tab.id !== mailState.getActiveTabId()) {

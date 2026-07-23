@@ -17,10 +17,6 @@
     import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { toast } from "svelte-sonner";
     import {
-        EventsOn,
-        EventsEmit,
-        WindowShow,
-        WindowUnminimise,
         BrowserOpenURL,
     } from "$lib/wailsjs/runtime/runtime";
     import { mailState } from "$lib/stores/mail-state.svelte";
@@ -55,9 +51,7 @@
         openEMLAttachment,
         openDocAttachment,
         openAndLoadEmail,
-        loadEmailFromPath,
         processEmailBody,
-        isEmailFile,
     } from "$lib/utils/mail";
     import { settingsStore } from "$lib/stores/settings.svelte";
 
@@ -79,7 +73,6 @@
     // State
     // ============================================================================
 
-    let unregisterEvents = () => {};
     let isLoading = $state(false);
     let loadingText = $state("");
     let linkDialogOpen = $state(false);
@@ -347,60 +340,12 @@
     // Lifecycle
     // ============================================================================
 
-    onMount(async () => {
+    onMount(() => {
         window.addEventListener("message", handleIframeMessage);
-
-        unregisterEvents = EventsOn("launchArgs", async (args: string[]) => {
-            console.log("got event launchArgs:", args);
-
-            // In tab mode: only the active tab handles this event
-            if (tabId !== null && tabId !== mailState.activeTabId) return;
-
-            if (!args || args.length === 0) return;
-
-            for (const arg of args) {
-                if (isEmailFile(arg)) {
-                    console.log("Loading file from second instance:", arg);
-                    isLoading = true;
-                    loadingText = m.layout_loading_text();
-
-                    if (arg.toLowerCase().endsWith(".msg")) {
-                        loadingText = m.mail_loading_msg_conversion();
-                    }
-
-                    const result = await loadEmailFromPath(arg);
-
-                    if (result.success && result.email) {
-                        
-                        if (tabId !== null) {
-                            // In tab mode: open in a new tab
-                            mailState.addTab(result.email, result.filePath);
-                            sidebarOpen.set(false);
-                        } else {
-                            mailState.setParams(result.email, result.filePath);
-                            sidebarOpen.set(false);
-                        }
-                        WindowUnminimise();
-                        WindowShow();
-                        EventsEmit("bringOnTop");
-                    } else if (result.error) {
-                        console.error("Failed to load email:", result.error);
-                        toast.error(m.mail_error_opening());
-                    }
-
-                    isLoading = false;
-                    loadingText = "";
-                    break;
-                }
-            }
-        });
     });
 
     onDestroy(() => {
         cancelCurrentToast();
-        if (unregisterEvents) {
-            unregisterEvents();
-        }
         window.removeEventListener("message", handleIframeMessage);
     });
 
