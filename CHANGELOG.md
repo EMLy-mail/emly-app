@@ -1,7 +1,8 @@
 # Changelog EMLy
 
-# 2.0.1 (2026-07-13)
+# 2.0.1 (2026-07-13, 2026-07-21)
 1) Fixato un bug nella rilevazione del domain AD.
+2) La cartella di download degli allegati viene ora verificata: se non è scrivibile, al momento della scelta viene rifiutata con un avviso, e all'avvio viene ripristinata quella predefinita segnalandolo con una finestra di riepilogo delle impostazioni ripristinate.
 
 # 2.0.0 (2026-07-01, 2026-07-02, 2026-07-04, 2026-07-07, 2026-07-08, 2026-07-09)
 1) Fixati vari bug

@@ -378,6 +378,11 @@
   "settings_export_folder_reset": "Ripristina predefinita",
   "settings_export_folder_saved": "Cartella allegati salvata",
   "settings_export_folder_save_error": "Errore durante il salvataggio della cartella",
+  "settings_export_folder_not_writable": "EMLy non può scrivere in quella cartella: permessi negati. È stata ripristinata la cartella predefinita.",
+  "settings_export_folder_reset_on_start": "La cartella configurata non è più scrivibile. È stata ripristinata la cartella predefinita.",
   "settings_toast_load_error": "Impossibile caricare le impostazioni. Sono stati ripristinati i valori predefiniti.",
-  "mail_file_external_app_opening_toast": "Apertura file..."
+  "mail_file_external_app_opening_toast": "Apertura file...",
+  "settings_reset_dialog_title": "Impostazioni ripristinate",
+  "settings_reset_dialog_description": "Alcune impostazioni sono state riportate al valore predefinito perché non erano più utilizzabili:",
+  "settings_reset_dialog_confirm": "Ho capito"
 }
