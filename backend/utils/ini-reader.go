@@ -1,14 +1,13 @@
 package utils
 
 import (
+	"emly/backend/logger"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
-
-	"emly/backend/logger"
 
 	"golang.org/x/mod/semver"
 	"gopkg.in/ini.v1"
@@ -32,16 +31,17 @@ type EMLyConfig struct {
 	DisableTrayIcon          bool   `ini:"DISABLE_TRAY_ICON"`
 }
 
-// isValidGUIVersion reports whether version — the raw GUI_SEMVER value
+// checkSemver reports whether version — the raw GUI_SEMVER value
 // from config.ini, normally stored without a "v" prefix (e.g. "2.0.1") —
 // is a valid semantic version per golang.org/x/mod/semver, which requires
 // the "v" prefix. A value that already starts with "v" is used as-is so
 // this stays a no-op for callers that pass an already-prefixed string.
-func isValidGUIVersion(version string) bool {
+func checkSemver(version string) bool {
 	v := version
 	if !strings.HasPrefix(v, "v") {
 		v = "v" + v
 	}
+	v = semver.Canonical(v)
 	return semver.IsValid(v)
 }
 
@@ -60,7 +60,12 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	if !isValidGUIVersion(config.EMLy.GUISemver) {
+	if !checkSemver(config.EMLy.SDKDecoderSemver) {
+		logger.Log("Invalid SDK_DECODER_SEMVER in config:", config.EMLy.SDKDecoderSemver)
+		return nil, fmt.Errorf("invalid SDK_DECODER_SEMVER in config: %q", config.EMLy.SDKDecoderSemver)
+	}
+
+	if !checkSemver(config.EMLy.GUISemver) {
 		logger.Log("Invalid GUI_SEMVER in config:", config.EMLy.GUISemver)
 		fatalInvalidGUIVersion(config.EMLy.GUISemver)
 	}

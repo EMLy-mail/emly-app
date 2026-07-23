@@ -16,9 +16,9 @@ func TestIsValidGUIVersion(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := isValidGUIVersion(tc.version)
+			got := checkSemver(tc.version)
 			if got != tc.want {
-				t.Errorf("isValidGUIVersion(%q) = %v, want %v", tc.version, got, tc.want)
+				t.Errorf("checkSemver(%q) = %v, want %v", tc.version, got, tc.want)
 			}
 		})
 	}

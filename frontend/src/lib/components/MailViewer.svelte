@@ -196,6 +196,9 @@
     }
 
     function handleIframeMessage(event: MessageEvent) {
+        // Only react to messages coming from this instance's own iframe.
+        if (!iframeEl || event.source !== iframeEl.contentWindow) return;
+
         if (event.data?.type === "emly-link-disabled-click") {
             disabledLinkClickCount++;
             if (disabledLinkClickCount >= 2) {
@@ -517,6 +520,7 @@
                     class:integrity-blurred={$hostIntegrityFailed}
                 >
                     <iframe
+                        bind:this={iframeEl}
                         srcdoc={activeEmail.body +
                             iframeUtilHtml +
                             contrastFixScript}

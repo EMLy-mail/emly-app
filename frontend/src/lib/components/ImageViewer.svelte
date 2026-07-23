@@ -52,10 +52,22 @@
 
   function rotate(deg: number) {
     rotation += deg;
+    clampTranslate();
+  }
+
+  // Keep translate anchored to the container center as scale changes,
+  // otherwise the image drifts based on whatever pan offset was already applied.
+  function zoomTo(newScaleRaw: number) {
+    const newScale = Math.max(0.01, Math.min(50, newScaleRaw));
+    const ratio = newScale / scale;
+    translateX *= ratio;
+    translateY *= ratio;
+    scale = newScale;
+    clampTranslate();
   }
 
   function zoom(factor: number) {
-    scale = Math.max(0.01, scale + factor);
+    zoomTo(scale + factor);
   }
 
   function reset() {
@@ -71,7 +83,22 @@
   function handleWheel(e: WheelEvent) {
     e.preventDefault();
     const delta = -e.deltaY * 0.001;
-    scale = Math.max(0.01, Math.min(50, scale + delta));
+    zoomTo(scale + delta);
+  }
+
+  function clampTranslate() {
+    if (!imgElement || !containerElement) return;
+    const rotated = (((rotation % 180) + 180) % 180) !== 0;
+    const iw = rotated ? imgElement.naturalHeight : imgElement.naturalWidth;
+    const ih = rotated ? imgElement.naturalWidth : imgElement.naturalHeight;
+    const scaledW = iw * scale;
+    const scaledH = ih * scale;
+    const cw = containerElement.clientWidth;
+    const ch = containerElement.clientHeight;
+    const maxX = Math.max(0, (scaledW - cw) / 2);
+    const maxY = Math.max(0, (scaledH - ch) / 2);
+    translateX = Math.min(maxX, Math.max(-maxX, translateX));
+    translateY = Math.min(maxY, Math.max(-maxY, translateY));
   }
 
   function handleMouseDown(e: MouseEvent) {
@@ -87,6 +114,7 @@
     e.preventDefault();
     translateX = e.clientX - startX;
     translateY = e.clientY - startY;
+    clampTranslate();
   }
 
   function handleMouseUp() {
