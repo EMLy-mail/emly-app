@@ -10,7 +10,7 @@ export const defaultSettings: EMLy_GUI_Settings = {
     selectedLanguage: "it",
     useBuiltinPreview: true,
     useBuiltinPDFViewer: true,
-    previewFileSupportedTypes: ["jpg", "jpeg", "png"],
+    previewFileSupportedTypes: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff"],
     enableAttachedDebuggerProtection: true,
     enableHostIntegrityCheck: true,
     useDarkEmailViewer: true,

@@ -143,7 +143,11 @@
     const availablePreviewFileSupportedTypes: EMLy_GUI_Settings["previewFileSupportedTypes"] = [
         "jpg",
         "jpeg",
-        "png"
+        "png",
+        "bmp",
+        "gif",
+        "webp",
+        "tiff",
     ];
 
     async function setLanguage(
@@ -559,7 +563,7 @@
                             />
                             <Label
                                 for={"preview-" + type}
-                                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
                                 {type.toUpperCase()} (.{type})
                             </Label>

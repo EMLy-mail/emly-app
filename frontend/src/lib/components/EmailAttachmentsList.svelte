@@ -14,6 +14,7 @@
     } from "$lib/utils/mail";
     import { showDefaultAttachmentToast } from "$lib/utils/open-default-attachment-toast";
     import { saveAttachmentNatively } from "$lib/utils/attachment-download";
+    import { settingsStore } from "$lib/stores/settings.svelte";
 
     let { attachments }: { attachments: mailfmt.EmailAttachment[] | undefined } =
         $props();
@@ -29,6 +30,29 @@
         }
         return false;
     }
+
+    function isSupportedImageType(contentType: string): boolean {
+            let supportedTypes = settingsStore.settings.previewFileSupportedTypes;
+            if (!supportedTypes || !contentType) return false;
+
+            let normalizedContentType = contentType.toLowerCase().split(";")[0].trim();
+
+            for (let type of supportedTypes) {
+                if (!type) continue;
+
+                let normalizedType = type.toLowerCase().trim();
+
+                // Allow shorthand entries like "jpg", "jpeg", "png" in settings
+                if (!normalizedType.includes("/")) {
+                    normalizedType = normalizedType === "jpg" ? "image/jpeg" : `image/${normalizedType}`;
+                }
+
+                if (normalizedContentType === normalizedType) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
     async function handleOpenPDF(base64Data: string, filename: string) {
         if (isAttachmentBlocked()) return;
@@ -74,7 +98,7 @@
                         .endsWith(".docx") ||
                     att.filename.toLowerCase().endsWith(".doc")}
 
-                {#if isImage}
+                {#if isImage && isSupportedImageType(att.contentType)}
                     <button
                         class="att-btn image"
                         class:integrity-blocked={$hostIntegrityFailed}
