@@ -14,8 +14,8 @@ import (
 
 	pkglogger "emly/backend/logger"
 	"emly/backend/utils"
-	"emly/backend/utils/mail"
 
+	"github.com/ffois/mailfmt"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -116,7 +116,7 @@ func (a *App) OpenDefaultAppsSettings() error {
 // Returns:
 //   - string: UTF-8 encoded string
 func (a *App) ConvertToUTF8(s string) string {
-	return internal.ConvertToUTF8(s)
+	return mailfmt.ConvertToUTF8(s)
 }
 
 // =============================================================================
