@@ -92,13 +92,7 @@ EMLy/
 │   │   └── logger.go             # Structured JSON logging (log/slog)
 │   └── utils/
 │       ├── mail/
-│       │   ├── eml_reader.go     # EML file parsing
-│       │   ├── msg_reader.go     # MSG (Outlook OLE2/CFB) parsing
-│       │   ├── rtf.go            # Compressed-RTF decompression + HTML de-encapsulation
-│       │   ├── mailparser.go     # MIME email parsing
-│       │   ├── format_detector.go # Email format detection (magic bytes)
-│       │   ├── tnef_reader.go    # TNEF (winmail.dat) attachment extraction
-│       │   └── file_dialog.go    # File dialog utilities
+│       │   └── file_dialog.go    # File/folder dialogs, save-to-disk, Explorer (Wails-dependent)
 │       ├── screenshot_windows.go  # Windows screenshot capture
 │       ├── debug_windows.go       # Debugger detection
 │       ├── ini-reader.go          # Configuration file parsing
@@ -283,7 +277,17 @@ The Go backend is split into logical files:
 | `ConvertToUTF8(string)` | Converts string to valid UTF-8 |
 | `OpenFolderInExplorer(path)` | Opens folder in Windows Explorer |
 
-### Email Parsing (`backend/utils/mail/`)
+### Email Parsing (`github.com/ffois/mailfmt`)
+
+EML/MSG/TNEF/RTF/PEC parsing does not live in EMLy anymore — it was extracted
+into a standalone library, [`github.com/ffois/mailfmt`](https://github.com/ffois/mailfmt)
+(pinned in `go.mod`). `app_mail.go` calls into the library (`mailfmt.ReadEmlFile`,
+`mailfmt.ReadMsgFile`, `mailfmt.ReadPecInnerEml`, `mailfmt.DetectEmailFormat`, …)
+instead of parsing formats itself. `backend/utils/mail/` now contains only the
+Wails-dependent helpers that the library has no reason to know about — see
+[File Dialog Helpers](#file-dialog-helpers-backendutilsmailfile_dialoggo) below.
+
+The library's readers cover the same ground the in-app code used to:
 
 #### EML Reader (`eml_reader.go`)
 Reads standard `.eml` files using the `mailparser.go` MIME parser.
@@ -325,6 +329,11 @@ no plain HTML body stream:
 Unit tests live in `rtf_test.go`; an end-to-end check against a real `.msg`
 runs when the `MSG_DEBUG_PATH` environment variable points to a sample file.
 
+#### TNEF Reader (`tnef_reader.go`)
+Extracts attachments (and, where present, the RTF body) from `winmail.dat`
+TNEF payloads — the format Outlook falls back to for non-MIME transport of
+rich formatting and attachments.
+
 #### Mail Parser (`mailparser.go`)
 A comprehensive MIME email parser that handles:
 - Multipart messages (mixed, alternative, related)
@@ -346,6 +355,20 @@ type EmailData struct {
     IsPec       bool            // Italian certified email
 }
 ```
+
+#### File Dialog Helpers (`backend/utils/mail/file_dialog.go`)
+What's left in `backend/utils/mail/` after the extraction is the code that
+depends on Wails' runtime context and has no place in a format-parsing
+library: native file/folder pickers, saving attachments back to disk, and
+opening Explorer.
+
+| Function | Description |
+|----------|--------------|
+| `ShowFileDialog(ctx)` | Opens the native "open file" dialog |
+| `ShowFolderDialog(ctx)` | Opens the native "choose folder" dialog |
+| `SaveAttachmentToFolder(filename, base64Data, folderPath)` | Decodes and writes an attachment to disk |
+| `CheckFolderWritable(folderPath)` | Verifies a folder exists and is writable |
+| `OpenFileExplorer(filePath)` | Opens Windows Explorer at the given path |
 
 ### Screenshot Utility (`backend/utils/screenshot_windows.go`)
 
@@ -552,9 +575,9 @@ Uses Svelte 5's `$state` rune for reactive email data:
 
 ```typescript
 class MailState {
-    currentEmail = $state<internal.EmailData | null>(null);
+    currentEmail = $state<mailfmt.EmailData | null>(null);
 
-    setParams(email: internal.EmailData | null) {
+    setParams(email: mailfmt.EmailData | null) {
         this.currentEmail = email;
     }
 
@@ -942,13 +965,13 @@ Wails automatically generates TypeScript bindings for Go functions. These are lo
 
 ```typescript
 import { ReadEML, ShowOpenFileDialog } from "$lib/wailsjs/go/main/App";
-import type { internal } from "$lib/wailsjs/go/models";
+import type { mailfmt } from "$lib/wailsjs/go/models";
 
 // Open file dialog
 const filePath = await ShowOpenFileDialog();
 
 // Parse email
-const email: internal.EmailData = await ReadEML(filePath);
+const email: mailfmt.EmailData = await ReadEML(filePath);
 ```
 
 ### Runtime Events
@@ -989,10 +1012,10 @@ pkglogger.Debug("attachment details", "count", len(attachments))
 Every Wails-bound function emits a canonical log line at completion with function name, duration, and status:
 
 ```go
-func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
+func (a *App) ReadEML(filePath string) (data *mailfmt.EmailData, err error) {
     start := time.Now()
     defer func() { canonicalLog("ReadEML", start, err) }()
-    return internal.ReadEmlFile(filePath)
+    return mailfmt.ReadEmlFile(filePath)
 }
 // Output: {"level":"INFO","msg":"canonical_line","function":"ReadEML","duration_ms":42,"status":"success"}
 ```
@@ -1043,11 +1066,11 @@ try {
 
 Errors are returned to frontend and logged:
 ```go
-func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
+func (a *App) ReadEML(filePath string) (data *mailfmt.EmailData, err error) {
     start := time.Now()
     defer func() { canonicalLog("ReadEML", start, err) }()
     logMailFileInfo("ReadEML", filePath)
-    data, err = internal.ReadEmlFile(filePath)
+    data, err = mailfmt.ReadEmlFile(filePath)
     if err == nil && data != nil {
         logParsedMailInfo("ReadEML", data)
     }
