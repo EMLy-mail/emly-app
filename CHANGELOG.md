@@ -1,6 +1,10 @@
 # Changelog EMLy
 
-# 2.0.0 (2026-07-01, 2026-07-02, 2026-07-04, 2026-07-07, 2026-07-08, 2026-07-09)
+# 2.0.1 (2026-07-26)
+1) Fixato un bug dove, se la lingue non era ne italiana ne inglese, EMLy non si avviava.
+2) Fixata una regressione (da versioni sopra alla 1.0.0) dove, la impostazione "previewFileSupportedTypes" non veniva considerata, quindi EMLy apriva tutte le immagini, anche se l'utente aveva disabilitato le estensioni.
+
+# 2.0.0 (2026-07-01, 2026-07-02, 2026-07-04, 2026-07-07, 2026-07-08, 2026-07-09, 2026-07-23, 2026-07-24, 2026-07-25, 2026-07-26)
 1) Fixati vari bug
 2) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
 3) Aggiornate dipendenze lato Frontend.
