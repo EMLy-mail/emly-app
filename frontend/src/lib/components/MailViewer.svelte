@@ -20,7 +20,7 @@
         BrowserOpenURL,
     } from "$lib/wailsjs/runtime/runtime";
     import { mailState } from "$lib/stores/mail-state.svelte";
-    import type { internal } from "$lib/wailsjs/go/models";
+    import type { mailfmt } from "$lib/wailsjs/go/models";
     import * as m from "$lib/paraglide/messages";
     import { cancelCurrentToast } from "$lib/utils/open-default-attachment-toast";
     import { saveAllAttachmentsNatively } from "$lib/utils/attachment-download";
@@ -50,7 +50,7 @@
         tabId = null,
         embedded = false,
     }: {
-        emailData?: internal.EmailData | null;
+        emailData?: mailfmt.EmailData | null;
         tabId?: string | null;
         embedded?: boolean;
     } = $props();
@@ -70,7 +70,7 @@
 
     // In tab mode, read from the specific tab in mailState.tabs.
     // In non-tab mode, read from mailState.currentEmail (which reads the active tab).
-    let activeEmail = $derived<internal.EmailData | null>(
+    let activeEmail = $derived<mailfmt.EmailData | null>(
         tabId !== null
             ? (() => {
                   const tab = mailState.tabs.find((t) => t.id === tabId);

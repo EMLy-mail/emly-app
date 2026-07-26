@@ -102,7 +102,7 @@ export namespace cpu {
 
 }
 
-export namespace internal {
+export namespace mailfmt {
 	
 	export class EmailAttachment {
 	    filename: string;
@@ -590,6 +590,20 @@ export namespace utils {
 		    }
 		    return a;
 		}
+	}
+	export class DomainControllerInfo {
+	    Name: string;
+	    Site: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DomainControllerInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Name = source["Name"];
+	        this.Site = source["Site"];
+	    }
 	}
 	
 	export class ExtendedMachineInfo {

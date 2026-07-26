@@ -49,7 +49,7 @@ func (a *App) FrontendLog(level string, message string, contextJSON string) {
 // canonicalLog emits a canonical log line at the end of a Wails-bound method.
 // Usage inside any App method:
 //
-//	func (a *App) ReadEML(filePath string) (*internal.EmailData, error) {
+//	func (a *App) ReadEML(filePath string) (*mailfmt.EmailData, error) {
 //	    start := time.Now()
 //	    defer func() { canonicalLog("ReadEML", start, err) }()
 //	    ...

@@ -3,7 +3,7 @@
     import { toast } from "svelte-sonner";
     import { hostIntegrityFailed } from "$lib/stores/app";
     import * as m from "$lib/paraglide/messages";
-    import type { internal } from "$lib/wailsjs/go/models";
+    import type { mailfmt } from "$lib/wailsjs/go/models";
     import {
         CONTENT_TYPES,
         arrayBufferToBase64,
@@ -15,7 +15,7 @@
     import { showDefaultAttachmentToast } from "$lib/utils/open-default-attachment-toast";
     import { saveAttachmentNatively } from "$lib/utils/attachment-download";
 
-    let { attachments }: { attachments: internal.EmailAttachment[] | undefined } =
+    let { attachments }: { attachments: mailfmt.EmailAttachment[] | undefined } =
         $props();
 
     // Returns true (and shows a toast) if attachment interactions should be

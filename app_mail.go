@@ -10,6 +10,8 @@ import (
 
 	pkglogger "emly/backend/logger"
 	"emly/backend/utils/mail"
+
+	"github.com/ffois/mailfmt"
 )
 
 // =============================================================================
@@ -17,12 +19,12 @@ import (
 // =============================================================================
 
 // ReadEML reads a standard .eml file and returns the parsed email data.
-func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
+func (a *App) ReadEML(filePath string) (data *mailfmt.EmailData, err error) {
 	start := time.Now()
 	defer func() { canonicalLog("ReadEML", start, err) }()
 
 	logMailFileInfo("ReadEML", filePath)
-	data, err = internal.ReadEmlFile(filePath)
+	data, err = mailfmt.ReadEmlFile(filePath)
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadEML", data)
 	}
@@ -30,12 +32,12 @@ func (a *App) ReadEML(filePath string) (data *internal.EmailData, err error) {
 }
 
 // ReadPEC reads a PEC (Posta Elettronica Certificata) .eml file.
-func (a *App) ReadPEC(filePath string) (data *internal.EmailData, err error) {
+func (a *App) ReadPEC(filePath string) (data *mailfmt.EmailData, err error) {
 	start := time.Now()
 	defer func() { canonicalLog("ReadPEC", start, err) }()
 
 	logMailFileInfo("ReadPEC", filePath)
-	data, err = internal.ReadPecInnerEml(filePath)
+	data, err = mailfmt.ReadPecInnerEml(filePath)
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadPEC", data)
 	}
@@ -43,12 +45,12 @@ func (a *App) ReadPEC(filePath string) (data *internal.EmailData, err error) {
 }
 
 // ReadMSG reads a Microsoft Outlook .msg file and returns the email data.
-func (a *App) ReadMSG(filePath string) (data *internal.EmailData, err error) {
+func (a *App) ReadMSG(filePath string) (data *mailfmt.EmailData, err error) {
 	start := time.Now()
 	defer func() { canonicalLog("ReadMSG", start, err) }()
 
 	logMailFileInfo("ReadMSG", filePath)
-	data, err = internal.ReadMsgFile(filePath)
+	data, err = mailfmt.ReadMsgFile(filePath)
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadMSG", data)
 	}
@@ -58,7 +60,7 @@ func (a *App) ReadMSG(filePath string) (data *internal.EmailData, err error) {
 // DetectEmailFormat inspects the file's binary content to determine its format.
 func (a *App) DetectEmailFormat(filePath string) (string, error) {
 	start := time.Now()
-	format, err := internal.DetectEmailFormat(filePath)
+	format, err := mailfmt.DetectEmailFormat(filePath)
 	canonicalLog("DetectEmailFormat", start, err)
 
 	pkglogger.Debug("email format detected",
@@ -72,13 +74,13 @@ func (a *App) DetectEmailFormat(filePath string) (string, error) {
 
 // ReadAuto automatically detects the email file format and delegates to the
 // appropriate reader.
-func (a *App) ReadAuto(filePath string) (result *internal.EmailData, err error) {
+func (a *App) ReadAuto(filePath string) (result *mailfmt.EmailData, err error) {
 	start := time.Now()
 	defer func() { canonicalLog("ReadAuto", start, err) }()
 
 	logMailFileInfo("ReadAuto", filePath)
 
-	format, err := internal.DetectEmailFormat(filePath)
+	format, err := mailfmt.DetectEmailFormat(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -90,16 +92,16 @@ func (a *App) ReadAuto(filePath string) (result *internal.EmailData, err error) 
 	)
 
 	switch format {
-	case internal.FormatMSG:
-		result, err = internal.ReadMsgFile(filePath)
+	case mailfmt.FormatMSG:
+		result, err = mailfmt.ReadMsgFile(filePath)
 	default: // FormatEML or FormatUnknown – try PEC first, fall back to plain EML
-		result, err = internal.ReadPecInnerEml(filePath)
+		result, err = mailfmt.ReadPecInnerEml(filePath)
 		if err != nil {
 			pkglogger.Debug("PEC parse failed, falling back to plain EML",
 				"function", "ReadAuto",
 				"pec_error", err.Error(),
 			)
-			result, err = internal.ReadEmlFile(filePath)
+			result, err = mailfmt.ReadEmlFile(filePath)
 		}
 	}
 
@@ -180,7 +182,7 @@ func logMailFileInfo(fn, filePath string) {
 }
 
 // logParsedMailInfo logs details extracted after successfully parsing an email.
-func logParsedMailInfo(fn string, data *internal.EmailData) {
+func logParsedMailInfo(fn string, data *mailfmt.EmailData) {
 	bodyType := "none"
 	if strings.Contains(data.Body, "<html") || strings.Contains(data.Body, "<HTML") || strings.Contains(data.Body, "<div") {
 		bodyType = "html"

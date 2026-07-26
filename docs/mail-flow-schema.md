@@ -67,10 +67,10 @@ flowchart TD
     A3 --> P["loadEmailFromPath(filePath)"]
     C5 --> P
     P --> Q["Go ReadAuto(filePath)"]
-    Q --> R["internal.DetectEmailFormat: legge 8 byte, magic OLE2/CFB?"]
-    R -->|si| S["FormatMSG -> internal.ReadMsgFile"]
-    R -->|no| T["Prova internal.ReadPecInnerEml (assume PEC firmata)"]
-    T -->|fallisce| U["Fallback internal.ReadEmlFile"]
+    Q --> R["mailfmt.DetectEmailFormat: legge 8 byte, magic OLE2/CFB?"]
+    R -->|si| S["FormatMSG -> mailfmt.ReadMsgFile"]
+    R -->|no| T["Prova mailfmt.ReadPecInnerEml (assume PEC firmata)"]
+    T -->|fallisce| U["Fallback mailfmt.ReadEmlFile"]
     S --> V["EmailData"]
     T -->|ok| V
     U --> V
@@ -80,7 +80,7 @@ flowchart TD
     B3 -.->|bypassa ReadAuto| V
 ```
 
-## 3. Parsing EML — `backend/utils/mail/mailparser.go` + `eml_reader.go`
+## 3. Parsing EML — `mailfmt/mailparser.go` + `mailfmt/eml_reader.go`
 
 ```mermaid
 flowchart TD
@@ -118,7 +118,7 @@ flowchart TD
     AA --> X
 ```
 
-## 3b. Parsing MSG — `msg_reader.go` + `rtf.go` (OLE2/CFB fatto a mano)
+## 3b. Parsing MSG — `mailfmt/msg_reader.go` + `mailfmt/rtf.go` (OLE2/CFB fatto a mano)
 
 ```mermaid
 flowchart TD
