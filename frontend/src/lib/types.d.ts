@@ -1,6 +1,6 @@
 import type { api } from "$lib/wailsjs/go/models";
 
-type SupportedFileTypePreview = "jpg" | "jpeg" | "png";
+type SupportedFileTypePreview = "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "tiff";
 
 interface EMLy_GUI_Settings {
     selectedLanguage: SupportedLanguages = "en" | "it";

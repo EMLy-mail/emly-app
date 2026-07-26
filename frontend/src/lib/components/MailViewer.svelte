@@ -374,6 +374,35 @@
     function isPecCertificate(filename: string, isPec: boolean): boolean {
         return isPec && filename.toLowerCase() === PEC_FILES.CERTIFICATE;
     }
+
+    function isSupportedImageType(contentType: string): boolean {
+        let supportedTypes = settingsStore.settings.previewFileSupportedTypes;
+        if (!supportedTypes || !contentType) return false;
+
+        let normalizedContentType = contentType
+            .toLowerCase()
+            .split(";")[0]
+            .trim();
+
+        for (let type of supportedTypes) {
+            if (!type) continue;
+
+            let normalizedType = type.toLowerCase().trim();
+
+            // Allow shorthand entries like "jpg", "jpeg", "png" in settings
+            if (!normalizedType.includes("/")) {
+                normalizedType =
+                    normalizedType === "jpg"
+                        ? "image/jpeg"
+                        : `image/${normalizedType}`;
+            }
+
+            if (normalizedContentType === normalizedType) {
+                return true;
+            }
+        }
+        return false;
+    }
 </script>
 
 <AlertDialog.Root bind:open={linkDialogOpen}>
@@ -666,7 +695,7 @@
                                     activeEmail.isPec,
                                 )}
 
-                                {#if isImage}
+                                {#if isImage && isSupportedImageType(att.contentType)}
                                     <button
                                         class="att-btn image"
                                         onclick={() =>
