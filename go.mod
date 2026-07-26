@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/ffois/mailfmt v0.1.0
+	github.com/ffois/mailfmt v0.1.1
 	github.com/hashicorp/go-version v1.9.0
 	github.com/jaypipes/ghw v0.24.0
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
