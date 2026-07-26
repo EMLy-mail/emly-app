@@ -313,7 +313,7 @@ in-line in the message (the images also remain listed as attachments). This
 mirrors the EML reader's behaviour, and combined with the RTF de-encapsulation
 above it makes inline images in Outlook `.msg` files display correctly.
 
-#### RTF Handler (`rtf.go`)
+#### RTF Handler (`mailfmt/rtf.go`)
 Recovers the HTML body that Outlook stores as compressed RTF when a `.msg` has
 no plain HTML body stream:
 - `decompressRTF` — inflates `PidTagRtfCompressed` per **[MS-OXRTFCP]** (the
@@ -330,7 +330,7 @@ Unit tests live in `mailfmt`'s `rtf_test.go`; an end-to-end check against a
 real `.msg` runs when the `MSG_DEBUG_PATH` environment variable points to a
 sample file and `go test .` is run in that library's repo (not in EMLy).
 
-#### TNEF Reader (`tnef_reader.go`)
+#### TNEF Reader (`mailfmt/tnef_reader.go`)
 Extracts attachments (and, where present, the RTF body) from `winmail.dat`
 TNEF payloads — the format Outlook falls back to for non-MIME transport of
 rich formatting and attachments.
