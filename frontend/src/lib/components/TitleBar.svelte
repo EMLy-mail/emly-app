@@ -1,12 +1,13 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import {
         WindowMinimise,
         WindowMaximise,
         WindowUnmaximise,
         WindowIsMaximised,
         Quit,
+        WindowToggleMaximise
     } from "$lib/wailsjs/runtime/runtime";
 
     let {
@@ -26,16 +27,14 @@
     let isMaximized = $state(false);
     let windowFocused = $state(true);
 
+    let interval: NodeJS.Timeout
+
     async function syncMaxState() {
         isMaximized = await WindowIsMaximised();
     }
 
     async function toggleMaximize() {
-        if (isMaximized) {
-            WindowUnmaximise();
-        } else {
-            WindowMaximise();
-        }
+        WindowToggleMaximise();
         isMaximized = !isMaximized;
     }
 
@@ -51,9 +50,15 @@
         toggleMaximize();
     }
 
-    onMount(() => {
+    onMount(async () => {
         window.addEventListener("focus", () => (windowFocused = true));
         window.addEventListener("blur", () => (windowFocused = false));
+
+        interval = setInterval(syncMaxState, 300);
+    });
+
+    onDestroy(() => {
+        clearInterval(interval);
     });
 
     syncMaxState();
@@ -75,7 +80,7 @@
 
     <div class="controls" style:opacity={windowFocused ? 1 : 0.4}>
         <button class="btn" onmousedown={minimize}>─</button>
-        <button class="btn" onmousedown={toggleMaximize}>
+        <button class="btn" onmousedown={toggleMaximize} onclick={toggleMaximize}>
             {#if isMaximized}
                 ❐
             {:else}
