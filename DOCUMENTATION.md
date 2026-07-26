@@ -342,17 +342,25 @@ A comprehensive MIME email parser that handles:
 - Embedded files (inline images)
 - Various content transfer encodings (base64, quoted-printable, 7bit, 8bit)
 
-The `EmailData` structure returned to the frontend:
+The data structures returned to the frontend:
 ```go
+type EmailAttachment struct {
+    Filename    string `json:"filename"`
+    ContentType string `json:"contentType"`
+    Data        []byte `json:"data"`
+}
+
 type EmailData struct {
-    Subject     string
-    From        string
-    To          []string
-    Cc          []string
-    Bcc         []string
-    Body        string          // HTML or text body
-    Attachments []AttachmentData
-    IsPec       bool            // Italian certified email
+    From          string            `json:"from"`
+    To            []string          `json:"to"`
+    Cc            []string          `json:"cc"`
+    Bcc           []string          `json:"bcc"`
+    Subject       string            `json:"subject"`
+    Body          string            `json:"body"`          // HTML or text body
+    Attachments   []EmailAttachment `json:"attachments"`
+    IsPec         bool              `json:"isPec"`         // Italian certified email
+    HasInnerEmail bool              `json:"hasInnerEmail"`
+    Date          string            `json:"date"`
 }
 ```
 
