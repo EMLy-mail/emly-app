@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 1.8.3 (2026-07-26)
+1) Fixato un bug dove, se la lingue non era ne italiana ne inglese, EMLy non si avviava.
+2) Fixata una regressione (da versioni sopra alla 1.0.0) dove, la impostazione "previewFileSupportedTypes" non veniva considerata, quindi EMLy apriva tutte le immagini, anche se l'utente aveva disabilitato le estensioni.
+
 # 1.8.2 (2026-07-23)
 1) Fixato un bug critico dove, in modalità Tab, il Bug Report allegava sempre la prima email aperta invece di quella nella scheda effettivamente selezionata.
 2) Fixato un bug dove, aprendo un nuovo file .EML/.MSG mentre EMLy era già in esecuzione con più schede aperte (email e/o allegati), la finestra veniva portata in primo piano ma non si passava alla scheda della nuova email se in quel momento era attiva una scheda di tipo allegato (PDF/immagine).
