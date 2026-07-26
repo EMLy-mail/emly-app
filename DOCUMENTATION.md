@@ -289,10 +289,10 @@ Wails-dependent helpers that the library has no reason to know about — see
 
 The library's readers cover the same ground the in-app code used to:
 
-#### EML Reader (`eml_reader.go`)
+#### EML Reader (`mailfmt/eml_reader.go`)
 Reads standard `.eml` files using the `mailparser.go` MIME parser.
 
-#### MSG Reader (`msg_reader.go`)
+#### MSG Reader (`mailfmt/msg_reader.go`)
 A native parser for Microsoft Outlook `.msg` files. It reads the OLE2/CFB
 (Compound File Binary) container directly in Go — no external tools or
 conversion required — and extracts the MAPI properties (subject, sender,
@@ -326,15 +326,16 @@ no plain HTML body stream:
 - `htmlFromCompressedRTF` — wrapper used by the MSG reader; returns `""` for
   genuine (non-HTML) RTF so the caller falls back to the plain-text body.
 
-Unit tests live in `rtf_test.go`; an end-to-end check against a real `.msg`
-runs when the `MSG_DEBUG_PATH` environment variable points to a sample file.
+Unit tests live in `mailfmt`'s `rtf_test.go`; an end-to-end check against a
+real `.msg` runs when the `MSG_DEBUG_PATH` environment variable points to a
+sample file and `go test .` is run in that library's repo (not in EMLy).
 
 #### TNEF Reader (`tnef_reader.go`)
 Extracts attachments (and, where present, the RTF body) from `winmail.dat`
 TNEF payloads — the format Outlook falls back to for non-MIME transport of
 rich formatting and attachments.
 
-#### Mail Parser (`mailparser.go`)
+#### Mail Parser (`mailfmt/mailparser.go`)
 A comprehensive MIME email parser that handles:
 - Multipart messages (mixed, alternative, related)
 - Text and HTML bodies
