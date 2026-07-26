@@ -72,7 +72,10 @@ func InitLogger() error {
 	// Parse log level from environment
 	setLevelFromEnv()
 
-	multi := io.MultiWriter(os.Stdout, rotator)
+	// os.Stdout is wrapped: in GUI mode (no console attached) writing to it
+	// fails, and io.MultiWriter aborts on the first error — which would stop
+	// the log file from ever being written.
+	multi := io.MultiWriter(safeWriter{os.Stdout}, rotator)
 	handler := slog.NewJSONHandler(multi, &slog.HandlerOptions{
 		Level:       &levelVar,
 		ReplaceAttr: replaceAttr,
@@ -214,6 +217,19 @@ func LogDepth(skip int, args ...any) {
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+// safeWriter discards write errors coming from the wrapped writer.
+// Needed for os.Stdout: when the app runs without an attached console
+// (Windows GUI subsystem) the handle is invalid and every write fails.
+// io.MultiWriter stops at the first failing writer, so an unwrapped
+// os.Stdout would silently prevent the rotating log file from receiving
+// any output.
+type safeWriter struct{ w io.Writer }
+
+func (s safeWriter) Write(p []byte) (int, error) {
+	_, _ = s.w.Write(p)
+	return len(p), nil
+}
 
 func setLevelFromEnv() {
 	SetLevelFromString(os.Getenv("LOG_LEVEL"))
