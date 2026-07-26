@@ -63,6 +63,7 @@ export default defineConfig({
 			'svelte-sonner',
 			'tailwind-merge',
 			'tailwind-variants',
+			'@lucide/svelte/icons/chevron-right'
 		],
 	},
 	build: {
