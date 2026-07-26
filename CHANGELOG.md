@@ -1,9 +1,5 @@
 # Changelog EMLy
 
-# 2.0.1 (2026-07-13, 2026-07-21)
-1) Fixato un bug nella rilevazione del domain AD.
-2) La cartella di download degli allegati viene ora verificata: se non è scrivibile, al momento della scelta viene rifiutata con un avviso, e all'avvio viene ripristinata quella predefinita segnalandolo con una finestra di riepilogo delle impostazioni ripristinate.
-
 # 2.0.0 (2026-07-01, 2026-07-02, 2026-07-04, 2026-07-07, 2026-07-08, 2026-07-09)
 1) Fixati vari bug
 2) Aggiornate dipendenze lato Backend (Go) e Wails v2.12.0.
@@ -23,6 +19,17 @@
 17) Aggiunto nelle Impostazioni (Zona Pericolosa) un controllo di rilevamento dell'IPC di EMLy Updater: verifica che la named pipe sia attiva inviando una richiesta reale e che la risposta ricevuta sia valida.
 18) Aggiunto nelle Impostazioni (Zona Pericolosa) un pulsante "Esegui controllo di sicurezza" che apre un riepilogo con hostname, dominio AD, stato di installazione/avvio di EMLy Updater, stato della sua IPC e un doppio controllo incrociato (hostname/dominio AD visti dall'app confrontati con quelli visti dal servizio via IPC), con uno stato finale Perfetto/Utilizzabile/Limitato.
 19) Refactor massivo sia lato backend (Go) che lato frontend (Svelte): deduplicazione di codice ripetuto (launcher finestre allegati, conversione encoding, componenti finestra), suddivisione di file monolitici in moduli più coesi (`main.go`, `MailViewer.svelte`, pagina Impostazioni), ed estrazione di componenti condivisi riutilizzati tra più pagine (titlebar, toolbar dei visualizzatori PDF/immagine, card dei contributi nella pagina Credits). Nessun cambiamento di comportamento visibile per l'utente.
+20) Fixato un bug nella rilevazione del domain AD.
+21) La cartella di download degli allegati viene ora verificata: se non è scrivibile, al momento della scelta viene rifiutata con un avviso, e all'avvio viene ripristinata quella predefinita segnalandolo con una finestra di riepilogo delle impostazioni ripristinate.
+22) Distaccato il parsing dei file EML in una libreria separata `mailfmt` (Go), con interfaccia pubblica stabile e testata, per permettere il riuso del parser in altri progetti senza dover includere l'intero codice di EMLy. Il parser è stato estratto da `backend/utils/mail` e ora risiede in un repository separato [github.com/ffois/mailfmt](repo).
+23) Sistema un bug nel maximize della finestra.
+
+# 1.8.2 (2026-07-23)
+1) Fixato un bug critico dove, in modalità Tab, il Bug Report allegava sempre la prima email aperta invece di quella nella scheda effettivamente selezionata.
+2) Fixato un bug dove, aprendo un nuovo file .EML/.MSG mentre EMLy era già in esecuzione con più schede aperte (email e/o allegati), la finestra veniva portata in primo piano ma non si passava alla scheda della nuova email se in quel momento era attiva una scheda di tipo allegato (PDF/immagine).
+
+# 1.8.1 (2026-07-21)
+1) HOTIFX: Cambiato endpoint API per chiusura server on-cloud.
 
 # 1.7.9 (2026-06-23)
 1) Fixato un bug dove la finestra non veniva portata in primo piano quando si apriva una mail con EMLy già in esecuzione.
