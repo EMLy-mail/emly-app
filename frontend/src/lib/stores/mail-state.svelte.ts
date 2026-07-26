@@ -1,8 +1,8 @@
-import type { internal } from "$lib/wailsjs/go/models";
+import type { mailfmt } from "$lib/wailsjs/go/models";
 import { SetCurrentMailFilePath } from "$lib/wailsjs/go/main/App";
 
 export type AppTab =
-    | { id: string; type: "email"; email: internal.EmailData; filePath?: string }
+    | { id: string; type: "email"; email: mailfmt.EmailData; filePath?: string }
     | { id: string; type: "pdf";   filename: string; base64Data: string }
     | { id: string; type: "image"; filename: string; base64Data: string };
 
@@ -13,7 +13,7 @@ class MailState {
     tabs = $state<AppTab[]>([]);
     activeTabId = $state<string | null>(null);
 
-    get currentEmail(): internal.EmailData | null {
+    get currentEmail(): mailfmt.EmailData | null {
         if (this.tabs.length === 0 || !this.activeTabId) return null;
         const tab = this.tabs.find(t => t.id === this.activeTabId);
         return tab?.type === "email" ? tab.email : null;
@@ -27,7 +27,7 @@ class MailState {
         SetCurrentMailFilePath(filePath).catch(() => {});
     }
 
-    setParams(email: internal.EmailData | null, filePath?: string) {
+    setParams(email: mailfmt.EmailData | null, filePath?: string) {
         if (!email) {
             this.clear();
             return;
@@ -38,7 +38,7 @@ class MailState {
         this.syncCurrentMailFilePath();
     }
 
-    addTab(email: internal.EmailData, filePath?: string): string {
+    addTab(email: mailfmt.EmailData, filePath?: string): string {
         const id = crypto.randomUUID();
         this.tabs = [...this.tabs, { id, type: "email", email, filePath }];
         this.activeTabId = id;
@@ -62,7 +62,7 @@ class MailState {
         return id;
     }
 
-    updateTabEmail(tabId: string, email: internal.EmailData) {
+    updateTabEmail(tabId: string, email: mailfmt.EmailData) {
         this.tabs = this.tabs.map(t =>
             t.id === tabId && t.type === "email" ? { ...t, email } : t
         );

@@ -8,14 +8,14 @@ import {
   ShowOpenFileDialog,
   ConvertToUTF8,
 } from '$lib/wailsjs/go/main/App';
-import type { internal } from '$lib/wailsjs/go/models';
+import type { mailfmt } from '$lib/wailsjs/go/models';
 import { isBase64, isHtml } from '$lib/utils';
 import { looksLikeBase64, tryDecodeBase64 } from './data-utils';
 import DOMPurify from 'dompurify';
 
 export interface LoadEmailResult {
   success: boolean;
-  email?: internal.EmailData;
+  email?: mailfmt.EmailData;
   filePath?: string;
   error?: string;
   cancelled?: boolean;

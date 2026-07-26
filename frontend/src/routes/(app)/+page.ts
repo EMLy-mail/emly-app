@@ -7,7 +7,7 @@ import {
   ReadMSG,
 } from "$lib/wailsjs/go/main/App";
 import DOMPurify from "dompurify";
-import type { internal } from "$lib/wailsjs/go/models";
+import type { mailfmt } from "$lib/wailsjs/go/models";
 import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
 
 export const load: PageLoad = async () => {
@@ -25,7 +25,7 @@ export const load: PageLoad = async () => {
     // Check if opened with a file
     const startupFile = await GetStartupFile();
     if (startupFile) {
-      let emlContent: internal.EmailData;
+      let emlContent: mailfmt.EmailData;
 
       if (startupFile.toLowerCase().endsWith(".msg")) {
         emlContent = await ReadMSG(startupFile);
