@@ -42,7 +42,7 @@
     let config = $derived(data.config);
     let previousTheme = $state<string | undefined>(undefined);
     let runningInDevMode: boolean = dev;
-    
+
     // Clone store state for form editing
     // Use normalizeSettings to ensure new fields (like useBuiltinPDFViewer) are populated with defaults
     let form = $state<EMLy_GUI_Settings>(
@@ -110,7 +110,7 @@
         selectedLanguage: "it",
         useBuiltinPreview: true,
         useBuiltinPDFViewer: true,
-        previewFileSupportedTypes: ["jpg", "jpeg", "png"],
+        previewFileSupportedTypes: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff"],
         enableAttachedDebuggerProtection: true,
         useDarkEmailViewer: true,
         reduceMotion: false,
@@ -529,7 +529,7 @@
                             </Label>
                         </div>
                     {/each}
-                        
+
                         <p class="text-xs text-muted-foreground mt-2">
                             {m.settings_preview_images_hint()}
                         </p>
@@ -659,7 +659,7 @@
                             >
                                 {m.settings_danger_reload_button_ui()}
                             </a>
-                            
+
                         </div>
                     </div>
 
