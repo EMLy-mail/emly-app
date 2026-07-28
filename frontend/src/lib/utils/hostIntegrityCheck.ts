@@ -8,7 +8,7 @@ import { settingsStore } from '$lib/stores/settings.svelte.js';
 import { hostIntegrityFailed, hostIntegrityStanding } from '$lib/stores/app';
 import { updaterStatusStore } from '$lib/stores/updater-status.svelte.js';
 import { evaluateHostname, isInsideTREGCCADDomain, deriveHostIntegrityStanding } from './hostIntegrity';
-import { logIPCRequest, logIPCResponse, logIPCError } from './ipcLog';
+import { logIPCRequest, logIPCResponse, logIPCError, logIPCHandshake } from './ipcLog';
 import { LogDebug } from '$lib/wailsjs/runtime/runtime';
 
 let checkPromise: Promise<boolean> | null = null;
@@ -95,6 +95,8 @@ function resolveFullStanding(hostname: string, adDomain: string): Promise<void> 
           ]);
           logIPCResponse('GetUpdaterADStatus', adStatus);
           logIPCResponse('GetUpdaterSystemInfo', sysInfo);
+          logIPCHandshake('GetUpdaterADStatus', adStatus);
+          logIPCHandshake('GetUpdaterSystemInfo', sysInfo);
           crossCheckOk =
             adStatus.ADDomain === adDomain && sysInfo.Hostname === hostname;
         } catch (err) {

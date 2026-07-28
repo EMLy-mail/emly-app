@@ -26,7 +26,12 @@
         deriveHostIntegrityStanding,
         type HostIntegrityStanding,
     } from "$lib/utils/hostIntegrity";
-    import { logIPCRequest, logIPCResponse, logIPCError } from "$lib/utils/ipcLog";
+    import {
+        logIPCRequest,
+        logIPCResponse,
+        logIPCError,
+        logIPCHandshake,
+    } from "$lib/utils/ipcLog";
 
     let { open = $bindable(false) }: { open: boolean } = $props();
 
@@ -80,6 +85,8 @@
                     ]);
                     logIPCResponse("GetUpdaterADStatus", adStatus);
                     logIPCResponse("GetUpdaterSystemInfo", sysInfo);
+                    logIPCHandshake("GetUpdaterADStatus", adStatus);
+                    logIPCHandshake("GetUpdaterSystemInfo", sysInfo);
                     crossCheckOk =
                         adStatus.ADDomain === adDomain &&
                         sysInfo.Hostname === hostname;

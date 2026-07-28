@@ -41,4 +41,9 @@ type IPCMeta struct {
 	ResponseSenderVersion   string
 	ErrorCode               string
 	ErrorMessage            string
+	// Steps is the per-frame trail of the v2 handshake and payload exchange
+	// (see trace.go), in wire order, truncated wherever the exchange failed.
+	// Purely diagnostic — callers decide their outcome from the other fields
+	// and the returned error, never from this.
+	Steps []HandshakeStep
 }

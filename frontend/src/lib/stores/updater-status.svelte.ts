@@ -1,6 +1,11 @@
 import { GetEMLyUpdaterStatus, GetUpdaterIPCStatus } from "$lib/wailsjs/go/main/App";
 import { LogDebug } from "$lib/wailsjs/runtime/runtime";
-import { logIPCRequest, logIPCResponse, logIPCError } from "$lib/utils/ipcLog";
+import {
+    logIPCRequest,
+    logIPCResponse,
+    logIPCError,
+    logIPCHandshake,
+} from "$lib/utils/ipcLog";
 
 // Shared, app-wide state for the EMLy Updater's local (service) status and
 // its IPC pipe status. Both checks are kicked off once from the root
@@ -60,6 +65,7 @@ class UpdaterStatusStore {
             logIPCRequest("GetUpdaterIPCStatus");
             const status = await GetUpdaterIPCStatus();
             logIPCResponse("GetUpdaterIPCStatus", status);
+            logIPCHandshake("GetUpdaterIPCStatus", status);
             LogDebug(`EMLy Updater IPC status: ${JSON.stringify(status)}`);
             this.ipcActive = status.Active;
             this.ipcValid = status.Valid;

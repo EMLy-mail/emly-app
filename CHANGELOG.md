@@ -2,6 +2,7 @@
 
 # 2.1.0 (2026-07-23)
 1) Aggiunto un handshake esplicito, a più fasi, alla comunicazione IPC con EMLy-Updater: verifica reciproca delle versioni (semver) e una challenge di autenticazione (HMAC su segreto condiviso) prima dello scambio dei dati macchina, in aggiunta ai controlli già presenti (ACL della pipe, verifica del proprietario SYSTEM). Richiede EMLy-Updater 1.3.0 o superiore.
+2) Il controllo di sicurezza (Impostazioni > Zona Pericolosa) e ogni altra chiamata IPC verso EMLy-Updater ora tracciano i singoli passi dell'handshake — connessione alla pipe, ClientHello/ServerAnswHello, verifica delle versioni, challenge di autenticazione, richiesta e risposta dei dati — sia nel log dell'app sia nella console DevTools, invece di riportare solo l'esito complessivo. Del materiale di autenticazione (segreto condiviso, nonce, HMAC) viene registrata solo la dimensione, mai il valore.
 
 # 2.0.1 (2026-07-13)
 1) Fixato un bug nella rilevazione del domain AD.
