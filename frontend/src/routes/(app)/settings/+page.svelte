@@ -7,10 +7,15 @@
     import { Separator } from "$lib/components/ui/separator";
     import { Switch } from "$lib/components/ui/switch";
     import { ChevronLeft, Flame, Sun, Moon } from "@lucide/svelte";
-    import type { EMLy_GUI_Settings, PdfRendererEngine } from "$lib/types";
+    import type {
+        EMLy_GUI_Settings,
+        PdfRendererEngine,
+        ReleaseChannel,
+    } from "$lib/types";
     import { toast } from "svelte-sonner";
     import { It, Us } from "svelte-flags";
     import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
+    import * as Select from "$lib/components/ui/select/index.js";
     import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { Checkbox } from "$lib/components/ui/checkbox/index.js";
@@ -24,7 +29,12 @@
         hostIntegrityFailed,
     } from "$lib/stores/app";
     import { LogDebug, LogInfo } from "$lib/wailsjs/runtime/runtime";
-    import { settingsStore, defaultSettings } from "$lib/stores/settings.svelte";
+    import {
+        settingsStore,
+        defaultSettings,
+        releaseChannels,
+        parseReleaseChannel,
+    } from "$lib/stores/settings.svelte";
     import * as m from "$lib/paraglide/messages";
     import { setLocale } from "$lib/paraglide/runtime";
     import { mailState } from "$lib/stores/mail-state.svelte.js";
@@ -35,6 +45,7 @@
         SetExportAttachmentFolder,
         CheckFolderWritable,
         SetTrayIconEnabled,
+        SetGUIReleaseChannel,
         OpenDevTools,
         RestartApp,
     } from "$lib/wailsjs/go/main/App";
@@ -195,6 +206,7 @@
                 true,
             useDarkEmailViewer:
                 s.useDarkEmailViewer ?? defaultSettings.useDarkEmailViewer ?? true,
+            showSidebar: s.showSidebar ?? defaultSettings.showSidebar ?? true,
             reduceMotion: s.reduceMotion ?? defaultSettings.reduceMotion ?? false,
             theme: s.theme || defaultSettings.theme || "light",
             enableLinkClickConfirmation:
@@ -213,6 +225,7 @@
                 s.fixEmailTextContrast ??
                 defaultSettings.fixEmailTextContrast ??
                 false,
+            releaseChannel: parseReleaseChannel(s.releaseChannel),
         };
     }
 
@@ -233,6 +246,22 @@
         const hostIntegrityCheckChanged =
             settings.enableHostIntegrityCheck !==
             lastSaved.enableHostIntegrityCheck;
+
+        // config.ini is written before the store, and a failure aborts the
+        // save entirely: the two must not drift apart, and on the next start
+        // the layout re-reads the channel from the ini and would silently
+        // undo a store-only change anyway.
+        if (settings.releaseChannel !== lastSaved.releaseChannel) {
+            try {
+                await SetGUIReleaseChannel(settings.releaseChannel ?? "stable");
+                config = (await ReloadConfig()).EMLy;
+            } catch (e) {
+                console.error("Failed to save release channel to config.ini", e);
+                toast.error(m.settings_release_channel_save_error());
+                return;
+            }
+        }
+
         try {
             settingsStore.update(settings);
         } catch {
@@ -280,6 +309,9 @@
         } catch (e) {
             console.error("Failed to reset export folder", e);
         }
+        // GUI_RELEASE_CHANNEL is deliberately left alone: it describes which
+        // builds this installation was set up to follow, not a UI preference,
+        // and the reload below pulls it back out of config.ini into the store.
         await setLanguage(form.selectedLanguage);
         mailState.clear();
         toast.info(m.settings_toast_reset_success());
@@ -346,6 +378,41 @@
             form.openAttachmentsAsTab = false;
         }
     });
+
+    let nextChannelWarningOpen = $state(false);
+    /** Channel to fall back to if the "next" warning is dismissed. */
+    let channelBeforeNext = $state<ReleaseChannel>("stable");
+
+    /*
+     * The select is driven through onValueChange rather than bind:value so
+     * picking "next" can be taken back: the warning has to be able to put the
+     * previous channel back, which a two-way binding would have already
+     * overwritten by the time the dialog opens.
+     */
+    function pickReleaseChannel(value: string) {
+        const channel = parseReleaseChannel(value);
+        if (channel === "next" && form.releaseChannel !== "next") {
+            channelBeforeNext = form.releaseChannel ?? "stable";
+            nextChannelWarningOpen = true;
+        }
+        form.releaseChannel = channel;
+    }
+
+    function cancelNextChannel() {
+        form.releaseChannel = channelBeforeNext;
+        nextChannelWarningOpen = false;
+    }
+
+    function releaseChannelLabel(channel: ReleaseChannel) {
+        switch (channel) {
+            case "beta":
+                return m.settings_release_channel_beta();
+            case "next":
+                return m.settings_release_channel_next();
+            default:
+                return m.settings_release_channel_stable();
+        }
+    }
 
     async function reloadConfig() {
         reloadingConfig = true;
@@ -486,6 +553,15 @@
                 <Separator />
 
                 <div class="space-y-3">
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.showSidebar}
+                        labelText={m.settings_show_sidebar_label()}
+                        hintText={m.settings_show_sidebar_hint()}
+                        infoText={m.settings_show_sidebar_info()}
+                    />
+
+                    <Separator />
+
                     <SettingsSwitchLabel
                         bind:featureBool={form.reduceMotion}
                         labelText={m.settings_reduce_motion_label()}
@@ -719,6 +795,7 @@
                         {m.settings_export_folder_info()}
                     </div>
                 </div>
+
             </Card.Content>
         </Card.Root>
 
@@ -969,6 +1046,46 @@
 
                     <Separator />
 
+                    <div class="space-y-3">
+                        <div
+                            class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+                        >
+                            <div>
+                                <Label class="text-sm">{m.settings_release_channel_title()}</Label>
+                                <div class="text-sm text-muted-foreground">
+                                    {m.settings_release_channel_hint()}
+                                </div>
+                            </div>
+                            <Select.Root
+                                type="single"
+                                value={form.releaseChannel}
+                                onValueChange={pickReleaseChannel}
+                            >
+                                <Select.Trigger
+                                    class="w-40 cursor-pointer hover:cursor-pointer"
+                                >
+                                    {releaseChannelLabel(form.releaseChannel ?? "stable")}
+                                </Select.Trigger>
+                                <Select.Content>
+                                    <Select.Group>
+                                        {#each releaseChannels as channel (channel)}
+                                            <Select.Item
+                                                value={channel}
+                                                label={releaseChannelLabel(channel)}
+                                                class="cursor-pointer hover:cursor-pointer"
+                                            />
+                                        {/each}
+                                    </Select.Group>
+                                </Select.Content>
+                            </Select.Root>
+                        </div>
+                        <div class="text-xs text-muted-foreground">
+                            {m.settings_release_channel_info()}
+                        </div>
+                    </div>
+
+                    <Separator />
+
                     <div class="text-xs text-muted-foreground">
                         GUI: {config
                             ? `${config.GUISemver} (${config.GUIReleaseChannel})`
@@ -983,6 +1100,35 @@
         {/if}
 
         <SafetyCheckDialog bind:open={safetyCheckDialogOpen} />
+
+        <AlertDialog.Root bind:open={nextChannelWarningOpen}>
+            <AlertDialog.Content>
+                <AlertDialog.Header>
+                    <AlertDialog.Title
+                        >{m.settings_release_channel_next_warning_title()}</AlertDialog.Title
+                    >
+                    <AlertDialog.Description>
+                        {m.settings_release_channel_next_warning_rewrite()}
+                        <br />
+                        {m.settings_release_channel_next_warning_ui()}
+                        <br />
+                        {m.settings_release_channel_next_warning_parity()}
+                    </AlertDialog.Description>
+                </AlertDialog.Header>
+                <AlertDialog.Footer>
+                    <AlertDialog.Cancel
+                        onclick={cancelNextChannel}
+                        class="cursor-pointer hover:cursor-pointer"
+                        >{m.settings_release_channel_next_warning_cancel()}</AlertDialog.Cancel
+                    >
+                    <AlertDialog.Action
+                        onclick={() => (nextChannelWarningOpen = false)}
+                        class="cursor-pointer hover:cursor-pointer"
+                        >{m.settings_release_channel_next_warning_confirm()}</AlertDialog.Action
+                    >
+                </AlertDialog.Footer>
+            </AlertDialog.Content>
+        </AlertDialog.Root>
 
         {#if !runningInDevMode}
             <AlertDialog.Root bind:open={dangerWarningOpen}>
