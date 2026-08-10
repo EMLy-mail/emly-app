@@ -50,6 +50,17 @@
         toggleMaximize();
     }
 
+    /**
+     * Modal layers (dialog, alert-dialog, sheet, select...) listen for
+     * pointerdown on `document` to detect an "interact outside" and dismiss
+     * themselves. Grabbing the titlebar to move the window isn't a dismissal,
+     * so the event stops here. Descendants still receive it - only the bubble
+     * up to `document` is cut.
+     */
+    function onTitlebarPointerDown(event: PointerEvent) {
+        event.stopPropagation();
+    }
+
     onMount(async () => {
         window.addEventListener("focus", () => (windowFocused = true));
         window.addEventListener("blur", () => (windowFocused = false));
@@ -68,6 +79,7 @@
 <div
     class="titlebar"
     ondblclick={onTitlebarDblClick}
+    onpointerdown={onTitlebarPointerDown}
     style="--wails-draggable:drag"
 >
     <div class="title">
@@ -102,8 +114,15 @@
         -webkit-app-region: drag;
         user-select: none;
         flex: 0 0 32px;
-        z-index: 50;
+        /* Above modal overlays/content (shadcn uses z-50 for those) so the
+           window stays draggable - and the window buttons clickable - while a
+           dialog, alert or sheet is open. */
+        z-index: 100;
         position: relative;
+        /* Bits UI sets `pointer-events: none` on <body> while a modal layer is
+           open; the titlebar opts back in, otherwise the mousedown target is
+           <html> and Wails never sees `--wails-draggable`. */
+        pointer-events: auto;
         border-bottom: 1px solid var(--border);
     }
 
