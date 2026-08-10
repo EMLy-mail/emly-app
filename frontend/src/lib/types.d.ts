@@ -9,6 +9,8 @@ type SupportedFileTypePreview = "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" 
  */
 type PdfRendererEngine = "builtin" | "native";
 
+type ReleaseChannel = "stable" | "beta" | "next";
+
 interface EMLy_GUI_Settings {
     selectedLanguage: SupportedLanguages = "en" | "it";
     useBuiltinPreview: boolean;
@@ -20,12 +22,14 @@ interface EMLy_GUI_Settings {
     enableHostIntegrityCheck?: boolean;
     useDarkEmailViewer?: boolean;
     musicInspirationEnabled?: boolean;
+    showSidebar?: boolean;
     reduceMotion?: boolean;
     theme?: "light" | "dark";
     enableLinkClickConfirmation?: boolean;
     enableTabMode?: boolean;
     openAttachmentsAsTab?: boolean;
     fixEmailTextContrast?: boolean;
+    releaseChannel?: ReleaseChannel;
 }
 
 type SupportedLanguages = "en" | "it";
