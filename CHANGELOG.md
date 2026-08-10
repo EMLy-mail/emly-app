@@ -1,5 +1,11 @@
 # Changelog EMLy
 
+# 2.10 (2026-08-10)
+1) Aggiunta la possibilità di cambiare renderer PDF tra pdf.js e quello nativo di MSEdge.
+2) Aggiunto il selettore del canale di aggiornamento (Stabile / Beta / Next) nella sezione Aggiornamenti delle Impostazioni, che permette di scegliere da quale canale ricevere gli aggiornamenti e salva immediatamente la scelta in config.ini.
+3) Aggiunto un toggle per nascondere la Sidebar.
+4) Fixato il non-drag con un Modal/Alert/Dialog aperto: ora la finestra principale può essere trascinata se un Modal/Alert/Dialog è aperto, come da comportamento standard di Windows.
+
 # 2.0.1 (2026-07-26)
 1) Fixato un bug dove, se la lingue non era ne italiana ne inglese, EMLy non si avviava.
 2) Fixata una regressione (da versioni sopra alla 1.0.0) dove, la impostazione "previewFileSupportedTypes" non veniva considerata, quindi EMLy apriva tutte le immagini, anche se l'utente aveva disabilitato le estensioni.
