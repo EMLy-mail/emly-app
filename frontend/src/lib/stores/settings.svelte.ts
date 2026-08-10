@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { EMLy_GUI_Settings } from "$lib/types";
+import type { EMLy_GUI_Settings, ReleaseChannel } from "$lib/types";
 import { getFromLocalStorage, saveToLocalStorage } from "$lib/utils/localStorageHelper";
 import { applyTheme, getStoredTheme } from "$lib/utils/theme";
 import { setLocale } from "$lib/paraglide/runtime";
@@ -16,13 +16,33 @@ export const defaultSettings: EMLy_GUI_Settings = {
     enableAttachedDebuggerProtection: true,
     enableHostIntegrityCheck: true,
     useDarkEmailViewer: true,
+    showSidebar: true,
     reduceMotion: false,
     theme: "dark",
     enableLinkClickConfirmation: true,
     enableTabMode: true,
     openAttachmentsAsTab: true,
     fixEmailTextContrast: true,
+    releaseChannel: "stable",
 };
+
+/** Accepted release channels, in the order they are offered in Settings. */
+export const releaseChannels: ReleaseChannel[] = ["stable", "beta", "next"];
+
+/**
+ * Narrows a raw GUI_RELEASE_CHANNEL value from config.ini to a ReleaseChannel.
+ *
+ * config.ini is hand-editable and shipped per build, so the value is treated
+ * as untrusted input: case and surrounding whitespace are ignored, and
+ * anything unrecognised falls back to the default rather than reaching the
+ * store, where it would leave the Settings select with nothing selected.
+ */
+export function parseReleaseChannel(value: string | null | undefined): ReleaseChannel {
+    const normalized = (value ?? "").trim().toLowerCase();
+    return releaseChannels.includes(normalized as ReleaseChannel)
+        ? (normalized as ReleaseChannel)
+        : (defaultSettings.releaseChannel ?? "stable");
+}
 
 class SettingsStore {
     settings = $state<EMLy_GUI_Settings>({ ...defaultSettings });
