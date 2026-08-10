@@ -161,6 +161,41 @@ func (a *App) CheckFolderWritable(folderPath string) error {
 	return internal.CheckFolderWritable(folderPath)
 }
 
+// validReleaseChannels are the values GUI_RELEASE_CHANNEL accepts, mirroring
+// the ReleaseChannel union in the frontend's types.d.ts.
+var validReleaseChannels = map[string]bool{
+	"stable": true,
+	"beta":   true,
+	"next":   true,
+}
+
+// SetGUIReleaseChannel updates the GUI_RELEASE_CHANNEL setting in config.ini.
+// The value is validated here rather than trusted from the frontend, since an
+// unknown channel written to config.ini would survive restarts and be read
+// back by everything that consumes the config (updater, tray, about screens).
+//
+// Parameters:
+//   - channel: one of "stable", "beta" or "next"
+//
+// Returns:
+//   - error: Error if the channel is unknown, or if loading or saving config fails
+func (a *App) SetGUIReleaseChannel(channel string) error {
+	normalized := strings.ToLower(strings.TrimSpace(channel))
+	if !validReleaseChannels[normalized] {
+		return fmt.Errorf("invalid release channel: %q", channel)
+	}
+
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.GUIReleaseChannel = normalized
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
+}
+
 // SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
 // The system tray icon is only created at startup (see main.go), so this
 // takes effect after the next restart (see RestartApp).
