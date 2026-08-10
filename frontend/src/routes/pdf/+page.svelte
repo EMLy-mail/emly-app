@@ -5,7 +5,9 @@
   import { toast } from "svelte-sonner";
   import * as m from "$lib/paraglide/messages.js";
   import { logger } from "$lib/utils/logger";
-  import PDFViewer from "$lib/components/PDFViewer.svelte";
+  import NativePDFViewer from "$lib/components/NativePDFViewer.svelte";
+  import PdfjsViewer from "$lib/components/PdfjsViewer.svelte";
+  import { settingsStore } from "$lib/stores/settings.svelte";
 
   let { data }: { data: PageData } = $props();
 
@@ -53,7 +55,11 @@
     <div>{error}</div>
   </div>
 {:else if blobUrl}
-  <PDFViewer src={blobUrl} {filename} {base64Data} />
+  {#if settingsStore.settings.pdfRenderer === "native"}
+    <NativePDFViewer src={blobUrl} {filename} {base64Data} />
+  {:else}
+    <PdfjsViewer src={blobUrl} {filename} {base64Data} />
+  {/if}
 {:else}
   <div class="state-page">
     <div class="spinner"></div>
