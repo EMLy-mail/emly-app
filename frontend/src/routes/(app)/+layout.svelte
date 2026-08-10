@@ -44,7 +44,10 @@
         QuitApp,
         IsAppInDebugMode,
     } from "$lib/wailsjs/go/main/App";
-    import { settingsStore } from "$lib/stores/settings.svelte.js";
+    import {
+        settingsStore,
+        parseReleaseChannel,
+    } from "$lib/stores/settings.svelte.js";
   import { mailState } from "$lib/stores/mail-state.svelte.js";
     import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
     import { ensureExportFolderWritable } from "$lib/utils/export-folder-check";
@@ -58,6 +61,15 @@
     let hostIntegrityDialogOpen = $state(false);
     let hostIntegrityChecked = false;
     let settingsResetDialogOpen = $derived(settingsResetStore.entries.length > 0);
+
+    /**
+     * Opt-out for the whole sidebar: when off it is never rendered and its
+     * status bar toggle is hidden, so the only navigation left is the status
+     * bar icons. Compared against `false` rather than coerced, so a settings
+     * payload written by an older build (no `showSidebar` key at all) keeps the
+     * sidebar instead of losing it.
+     */
+    let showSidebar = $derived(settingsStore.settings.showSidebar !== false);
 
     $effect(() => {
         $inspect("hostIntegrityDialogOpen", hostIntegrityDialogOpen);
@@ -108,6 +120,17 @@
         versionInfo = data.data as utils.Config;
         if (!versionInfo) {
             configMissingDialogOpen = true;
+        } else {
+            // config.ini wins over localStorage for the release channel: it is
+            // what the build was shipped with and what the updater reads, so a
+            // stale value in the store (or an ini edited by hand between runs)
+            // is corrected here, once per start.
+            const channel = parseReleaseChannel(
+                versionInfo.EMLy?.GUIReleaseChannel,
+            );
+            if (channel !== settingsStore.settings.releaseChannel) {
+                settingsStore.update({ releaseChannel: channel });
+            }
         }
         runningInDebugMode.set(await IsAppInDebugMode());
 
@@ -234,10 +257,12 @@
         class:reduce-motion={settingsStore.settings.reduceMotion}
     >
         <Sidebar.Provider
-            open={$sidebarOpen}
+            open={showSidebar && $sidebarOpen}
             onOpenChange={(v) => sidebarOpen.set(v)}
         >
-            <AppSidebar />
+            {#if showSidebar}
+                <AppSidebar />
+            {/if}
             <main>
                 <Toaster />
                 {#await navigating?.complete}
@@ -263,25 +288,27 @@
     </div>
 
     <div class="footerbar">
-        {#if !$sidebarOpen}
-            <PanelRightClose
-                size="17"
-                onclick={() => {
-                    $sidebarOpen = !$sidebarOpen;
-                }}
-                style="cursor: pointer;"
-            />
-        {:else}
-            <PanelRightOpen
-                size="17"
-                onclick={() => {
-                    $sidebarOpen = !$sidebarOpen;
-                }}
-                style="cursor: pointer;"
-            />
-        {/if}
+        {#if showSidebar}
+            {#if !$sidebarOpen}
+                <PanelRightClose
+                    size="17"
+                    onclick={() => {
+                        $sidebarOpen = !$sidebarOpen;
+                    }}
+                    style="cursor: pointer;"
+                />
+            {:else}
+                <PanelRightOpen
+                    size="17"
+                    onclick={() => {
+                        $sidebarOpen = !$sidebarOpen;
+                    }}
+                    style="cursor: pointer;"
+                />
+            {/if}
 
-        <Separator orientation="vertical" />
+            <Separator orientation="vertical" />
+        {/if}
 
         <Mail
             size="16"

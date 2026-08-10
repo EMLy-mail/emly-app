@@ -1,6 +1,7 @@
 /*
  * Shared toolbar styling for the built-in PDF and image viewers
- * (PDFViewerContent.svelte, ImageViewer.svelte). Both toolbars have the
+ * (PdfjsViewer.svelte, NativePDFViewer.svelte, ImageViewer.svelte). The
+ * toolbars have the
  * same title + control-button layout; only the controls themselves
  * differ (PDF adds page navigation, zoom/rotate are wired to different
  * APIs on each side), so this covers only the shared chrome rather than

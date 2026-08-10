@@ -569,6 +569,22 @@ export function SetExportAttachmentFolder(folderPath) {
 }
 
 /**
+ * SetGUIReleaseChannel updates the GUI_RELEASE_CHANNEL setting in config.ini.
+ * The value is validated here rather than trusted from the frontend, since an
+ * unknown channel written to config.ini would survive restarts and be read
+ * back by everything that consumes the config (updater, tray, about screens).
+ * 
+ * Parameters:
+ *   - channel: one of "stable", "beta" or "next"
+ * 
+ * Returns:
+ *   - error: Error if the channel is unknown, or if loading or saving config fails
+ */
+export function SetGUIReleaseChannel(channel) {
+  return window['go']['main']['App']['SetGUIReleaseChannel'](channel);
+}
+
+/**
  * SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
  * The system tray icon is only created at startup (see main.go), so this
  * takes effect after the next restart (see RestartApp).

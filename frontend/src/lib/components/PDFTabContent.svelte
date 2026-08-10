@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import PDFViewer from "./PDFViewer.svelte";
+  import NativePDFViewer from "./NativePDFViewer.svelte";
+  import PdfjsViewer from "./PdfjsViewer.svelte";
+  import { settingsStore } from "$lib/stores/settings.svelte";
   import * as m from "$lib/paraglide/messages.js";
 
   interface Props {
@@ -38,7 +40,11 @@
     <span class="error">{error}</span>
   </div>
 {:else if blobUrl}
-  <PDFViewer src={blobUrl} {filename} {base64Data} height="100%" />
+  {#if settingsStore.settings.pdfRenderer === "native"}
+    <NativePDFViewer src={blobUrl} {filename} {base64Data} height="100%" />
+  {:else}
+    <PdfjsViewer src={blobUrl} {filename} {base64Data} height="100%" />
+  {/if}
 {:else}
   <div class="state">
     <div class="spinner"></div>

@@ -125,9 +125,9 @@
             url: "https://svelte-sonner.vercel.app",
         },
         {
-            name: "EmbedPDF",
+            name: "PDF.js",
             description: m.credits_lib_pdfjs(),
-            url: "https://github.com/embedpdf/embed-pdf-viewer",
+            url: "https://github.com/mozilla/pdf.js",
         },
         {
             name: "DOMPurify",

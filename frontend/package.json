@@ -37,11 +37,12 @@
     "vite-plugin-devtools-json": "^1.1.0"
   },
   "dependencies": {
-    "@embedpdf/svelte-pdf-viewer": "^2.14.4",
     "@risadams/pride-flags": "^1.1.0",
     "@types/html2canvas": "^0.5.35",
     "dompurify": "^3.4.12",
     "html2canvas": "^1.4.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "4.10.38",
     "svelte-flags": "^3.0.1",
     "svelte-sonner": "^1.1.1"
   },
