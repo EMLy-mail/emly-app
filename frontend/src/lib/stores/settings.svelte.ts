@@ -10,6 +10,8 @@ export const defaultSettings: EMLy_GUI_Settings = {
     selectedLanguage: "it",
     useBuiltinPreview: true,
     useBuiltinPDFViewer: true,
+    pdfRenderer: "builtin",
+    useNativePdfToolbar: false,
     previewFileSupportedTypes: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff"],
     enableAttachedDebuggerProtection: true,
     enableHostIntegrityCheck: true,

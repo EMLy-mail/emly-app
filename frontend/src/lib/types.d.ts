@@ -2,10 +2,19 @@ import type { api } from "$lib/wailsjs/go/models";
 
 type SupportedFileTypePreview = "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "tiff";
 
+/**
+ * Which engine draws PDFs in the built-in viewer.
+ *  - "builtin" pdf.js drawing onto our own canvases (PdfjsViewer.svelte)
+ *  - "native"  the WebView2/Edge PDF plugin (NativePDFViewer.svelte)
+ */
+type PdfRendererEngine = "builtin" | "native";
+
 interface EMLy_GUI_Settings {
     selectedLanguage: SupportedLanguages = "en" | "it";
     useBuiltinPreview: boolean;
     useBuiltinPDFViewer?: boolean;
+    pdfRenderer?: PdfRendererEngine;
+    useNativePdfToolbar?: boolean;
     previewFileSupportedTypes?: SupportedFileTypePreview[];
     enableAttachedDebuggerProtection?: boolean;
     enableHostIntegrityCheck?: boolean;
