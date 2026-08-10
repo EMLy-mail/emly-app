@@ -61,6 +61,15 @@
 				0% { transform: rotate(0deg); }
 				100% { transform: rotate(360deg); }
 			}
+	
+			main {
+				-moz-user-select: -moz-none;
+   				-khtml-user-select: none;
+   				-webkit-user-select: none;
+   				-ms-user-select: none;
+   				user-select: none;
+			}
+
 		</style>
 		%sveltekit.head%
 	</head>
@@ -105,6 +114,6 @@
 				}
 			}, { passive: false });
 		</script>
-		<div style="display: contents;">%sveltekit.body%</div>
+		<div style="display: contents;" id="main">%sveltekit.body%</div>
 	</body>
 </html>
