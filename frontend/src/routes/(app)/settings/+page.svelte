@@ -7,7 +7,7 @@
     import { Separator } from "$lib/components/ui/separator";
     import { Switch } from "$lib/components/ui/switch";
     import { ChevronLeft, Flame, Sun, Moon } from "@lucide/svelte";
-    import type { EMLy_GUI_Settings } from "$lib/types";
+    import type { EMLy_GUI_Settings, PdfRendererEngine } from "$lib/types";
     import { toast } from "svelte-sonner";
     import { It, Us } from "svelte-flags";
     import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
@@ -163,12 +163,24 @@
     }
 
     function normalizeSettings(s: EMLy_GUI_Settings): EMLy_GUI_Settings {
+        // Declared in here on purpose: normalizeSettings runs during component
+        // init, before any module-level const further down has been evaluated.
+        const pdfRenderers: PdfRendererEngine[] = ["builtin", "native"];
+
         return {
             selectedLanguage:
                 s.selectedLanguage || defaultSettings.selectedLanguage || "en",
             useBuiltinPreview: !!s.useBuiltinPreview,
             useBuiltinPDFViewer:
                 s.useBuiltinPDFViewer ?? defaultSettings.useBuiltinPDFViewer ?? true,
+            // Validated rather than defaulted: a value left over from an older
+            // build would otherwise stick around and leave the radio group with
+            // nothing selected.
+            pdfRenderer: pdfRenderers.includes(s.pdfRenderer as PdfRendererEngine)
+                ? (s.pdfRenderer as PdfRendererEngine)
+                : (defaultSettings.pdfRenderer ?? "builtin"),
+            useNativePdfToolbar:
+                s.useNativePdfToolbar ?? defaultSettings.useNativePdfToolbar ?? false,
             previewFileSupportedTypes:
                 s.previewFileSupportedTypes ||
                 defaultSettings.previewFileSupportedTypes ||
@@ -593,6 +605,69 @@
                         labelText={m.settings_preview_pdf_builtin_label()}
                         hintText={m.settings_preview_pdf_builtin_hint()}
                         infoText={m.settings_preview_pdf_builtin_info()}
+                    />
+                </div>
+
+                <Separator />
+
+                <div class="space-y-3" class:opacity-50={!form.useBuiltinPDFViewer}>
+                    <div class="rounded-lg border bg-card p-4 space-y-3">
+                        <div>
+                            <div class="font-medium">
+                                {m.settings_preview_pdf_engine_label()}
+                            </div>
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_preview_pdf_engine_hint()}
+                            </div>
+                        </div>
+                        <RadioGroup.Root
+                            bind:value={form.pdfRenderer}
+                            disabled={!form.useBuiltinPDFViewer}
+                            class="flex flex-col gap-3"
+                        >
+                            <div class="flex items-center space-x-2">
+                                <RadioGroup.Item
+                                    value="builtin"
+                                    id="pdf-engine-builtin"
+                                    class="cursor-pointer hover:cursor-pointer"
+                                />
+                                <Label
+                                    for="pdf-engine-builtin"
+                                    class="cursor-pointer hover:cursor-pointer"
+                                >
+                                    {m.settings_preview_pdf_engine_builtin()}
+                                </Label>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <RadioGroup.Item
+                                    value="native"
+                                    id="pdf-engine-native"
+                                    class="cursor-pointer hover:cursor-pointer"
+                                />
+                                <Label
+                                    for="pdf-engine-native"
+                                    class="cursor-pointer hover:cursor-pointer"
+                                >
+                                    {m.settings_preview_pdf_engine_native()}
+                                </Label>
+                            </div>
+                        </RadioGroup.Root>
+                    </div>
+                    <p class="text-xs text-muted-foreground mt-2">
+                        {m.settings_preview_pdf_engine_info()}
+                    </p>
+                </div>
+
+                <Separator />
+
+                <div class="space-y-3">
+                    <SettingsSwitchLabel
+                        bind:featureBool={form.useNativePdfToolbar}
+                        labelText={m.settings_preview_pdf_native_toolbar_label()}
+                        hintText={m.settings_preview_pdf_native_toolbar_hint()}
+                        infoText={m.settings_preview_pdf_native_toolbar_info()}
+                        disabled={!form.useBuiltinPDFViewer ||
+                            form.pdfRenderer !== "native"}
                     />
                 </div>
 
