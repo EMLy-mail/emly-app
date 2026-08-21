@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import { setupConsoleLogger } from '$lib/utils/logger-hook';
 	import { ensureHostIntegrityChecked } from '$lib/utils/hostIntegrityCheck';
+	import { trace } from '$lib/utils/startupTrace';
 	import "./layout.css";
 	
 	let { children } = $props();
@@ -17,6 +18,7 @@
 	}
 
 	onMount(async () => {
+		trace('fe_layout_mount_start');
 		document.addEventListener('click', suppressShiftClickNewWindow, true);
 
 		setupConsoleLogger();
@@ -40,16 +42,20 @@
 
 		// Fase 1 – Recupero dati macchina + verifica integrità host
 		if (stepEl) stepEl.textContent = t('Recupero dati...', 'Fetching data...');
+		trace('fe_layout_host_integrity_start');
 		await ensureHostIntegrityChecked();
+		trace('fe_layout_host_integrity_done');
 
 		// Fase 2 – Caricamento layout
 		if (stepEl) stepEl.textContent = t('Caricamento layout...', 'Loading layout...');
 		await tick();
+		trace('fe_layout_tick_done');
 
 		if (loader) {
 			loader.style.opacity = '0';
 			setTimeout(() => loader.remove(), 300);
 		}
+		trace('fe_loader_removed');
 	});
 </script>
 

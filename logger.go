@@ -43,6 +43,31 @@ func (a *App) FrontendLog(level string, message string, contextJSON string) {
 }
 
 // ---------------------------------------------------------------------------
+// Startup trace bridge
+// ---------------------------------------------------------------------------
+
+// TraceStartupStep records a checkpoint in the startup trace file (see
+// backend/logger/trace.go, startup-trace.log next to app.log) - a plain-text
+// timeline separate from the regular log, built to show exactly how long
+// each step of app launch and mail loading took. The frontend calls this
+// from the SvelteKit load path so its steps (GetStartupFile, ReadEML/MSG,
+// DOMPurify sanitize, host integrity check, mount) land in the same
+// chronological file as the Go-side steps.
+//
+//	await TraceStartupStep("fe_read_mail_done", "attachments=3")
+//
+// step should be a short machine-friendly name; detail is optional free text
+// (sizes, counts, format) - pass "" when there's nothing to add. No-op if
+// tracing wasn't initialised for this process (e.g. viewer windows).
+func (a *App) TraceStartupStep(step string, detail string) {
+	if detail != "" {
+		pkglogger.TraceStep(step, detail)
+	} else {
+		pkglogger.TraceStep(step)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Canonical Log Line decorator
 // ---------------------------------------------------------------------------
 
