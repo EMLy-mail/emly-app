@@ -61,7 +61,28 @@
         e.stopPropagation();
         mailState.removeTab(id);
     }
+
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        if (e.ctrlKey && e.key === "w") {
+            e.preventDefault();
+            const activeTab = mailState.tabs.find(
+                (tab) => tab.id === mailState.activeTabId
+            );
+            if (activeTab) mailState.removeTab(activeTab.id);
+        } else if (e.ctrlKey && e.key === "Tab") {
+            e.preventDefault();
+            const currentIndex = mailState.tabs.findIndex(
+                (tab) => tab.id === mailState.activeTabId
+            );
+            if (currentIndex !== -1) {
+                const nextIndex = (currentIndex + 1) % mailState.tabs.length;
+                mailState.setActiveTab(mailState.tabs[nextIndex].id);
+            }
+        }
+    }
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="tab-strip-wrapper">
     <!-- Left scroll arrow -->
@@ -81,6 +102,7 @@
     <div
         class="tab-strip"
         role="tablist"
+        tabindex="0"
         bind:this={tabStripEl}
         onscroll={updateScrollState}
         onwheel={handleTabStripWheel}
