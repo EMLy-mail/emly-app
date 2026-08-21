@@ -30,6 +30,8 @@ interface EMLy_GUI_Settings {
     openAttachmentsAsTab?: boolean;
     fixEmailTextContrast?: boolean;
     releaseChannel?: ReleaseChannel;
+    /** Gates the "next" choice in the release channel selector behind an explicit opt-in + confirmation. */
+    enableNextReleaseChannel?: boolean;
 }
 
 type SupportedLanguages = "en" | "it";

@@ -1,6 +1,11 @@
 # Changelog EMLy
 
-# 2.10 (2026-08-10)
+# 2.1.1 (2026-08-21)
+1) Fixato un bug dove la lingua di default era l'inglese.
+2) Aggiunto un toggle per attivare/disattivare la selezione del canale di aggiornamento "Next".
+3) Sistemato un problema di avvio di EMLy dove, più la mail era pesante, e più EMLy impiegava tempo a caricarsi, fino a bloccarsi completamente. Ora EMLy si avvia immediatamente e carica la mail in background, mostrando un indicatore di caricamento.
+
+# 2.1.0 (2026-08-10)
 1) Aggiunta la possibilità di cambiare renderer PDF tra pdf.js e quello nativo di MSEdge.
 2) Aggiunto il selettore del canale di aggiornamento (Stabile / Beta / Next) nella sezione Aggiornamenti delle Impostazioni, che permette di scegliere da quale canale ricevere gli aggiornamenti e salva immediatamente la scelta in config.ini.
 3) Aggiunto un toggle per nascondere la Sidebar.

@@ -3,10 +3,14 @@
 package main
 
 import (
+	"encoding/base64"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"emly/backend/utils"
 
 	pkglogger "emly/backend/logger"
 	"emly/backend/utils/mail"
@@ -24,9 +28,14 @@ func (a *App) ReadEML(filePath string) (data *mailfmt.EmailData, err error) {
 	defer func() { canonicalLog("ReadEML", start, err) }()
 
 	logMailFileInfo("ReadEML", filePath)
+	pkglogger.TraceStep("go_read_eml_start", filepath.Base(filePath), fileSizeDetail(filePath))
 	data, err = mailfmt.ReadEmlFile(filePath)
+	pkglogger.TraceStep("go_read_eml_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(data))
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadEML", data)
+		if !oldAttachmentPreloadEnabled() {
+			stripAttachmentData(data)
+		}
 	}
 	return data, err
 }
@@ -37,9 +46,14 @@ func (a *App) ReadPEC(filePath string) (data *mailfmt.EmailData, err error) {
 	defer func() { canonicalLog("ReadPEC", start, err) }()
 
 	logMailFileInfo("ReadPEC", filePath)
+	pkglogger.TraceStep("go_read_pec_start", filepath.Base(filePath), fileSizeDetail(filePath))
 	data, err = mailfmt.ReadPecInnerEml(filePath)
+	pkglogger.TraceStep("go_read_pec_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(data))
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadPEC", data)
+		if !oldAttachmentPreloadEnabled() {
+			stripAttachmentData(data)
+		}
 	}
 	return data, err
 }
@@ -50,9 +64,14 @@ func (a *App) ReadMSG(filePath string) (data *mailfmt.EmailData, err error) {
 	defer func() { canonicalLog("ReadMSG", start, err) }()
 
 	logMailFileInfo("ReadMSG", filePath)
+	pkglogger.TraceStep("go_read_msg_start", filepath.Base(filePath), fileSizeDetail(filePath))
 	data, err = mailfmt.ReadMsgFile(filePath)
+	pkglogger.TraceStep("go_read_msg_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(data))
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadMSG", data)
+		if !oldAttachmentPreloadEnabled() {
+			stripAttachmentData(data)
+		}
 	}
 	return data, err
 }
@@ -79,11 +98,14 @@ func (a *App) ReadAuto(filePath string) (result *mailfmt.EmailData, err error) {
 	defer func() { canonicalLog("ReadAuto", start, err) }()
 
 	logMailFileInfo("ReadAuto", filePath)
+	pkglogger.TraceStep("go_read_auto_start", filepath.Base(filePath), fileSizeDetail(filePath))
 
 	format, err := mailfmt.DetectEmailFormat(filePath)
 	if err != nil {
+		pkglogger.TraceStep("go_read_auto_detect_failed", err.Error())
 		return nil, err
 	}
+	pkglogger.TraceStep("go_read_auto_detected", string(format), fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()))
 
 	pkglogger.Debug("auto-detect chose format",
 		"function", "ReadAuto",
@@ -101,14 +123,70 @@ func (a *App) ReadAuto(filePath string) (result *mailfmt.EmailData, err error) {
 				"function", "ReadAuto",
 				"pec_error", err.Error(),
 			)
+			pkglogger.TraceStep("go_read_auto_pec_fallback", err.Error())
 			result, err = mailfmt.ReadEmlFile(filePath)
 		}
 	}
+	pkglogger.TraceStep("go_read_auto_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(result))
 
 	if err == nil && result != nil {
 		logParsedMailInfo("ReadAuto", result)
+		if !oldAttachmentPreloadEnabled() {
+			stripAttachmentData(result)
+		}
 	}
 	return result, err
+}
+
+// GetAttachmentData re-parses filePath and returns the base64-encoded bytes
+// of the attachment at the given index - its position in the Attachments
+// slice that ReadEML/ReadMSG/ReadPEC/ReadAuto returned, which no longer
+// carry attachment bytes (see stripAttachmentData). Called on demand, only
+// when the user actually opens or saves an attachment, instead of shipping
+// every attachment's bytes across the Wails IPC bridge on every mail load -
+// see startup-trace.log: for a 41MB .msg with 5 attachments, parsing took
+// 196ms but transferring the old, byte-carrying response took over 3s.
+//
+// Re-parsing (instead of caching the first parse) keeps this stateless and
+// always correct, and is cheap for the same reason: parsing was never the
+// slow part. The detect-then-dispatch logic mirrors ReadAuto exactly, so
+// attachment order/indices stay consistent with whatever the frontend
+// originally listed (ReadAuto is used everywhere an email is loaded - see
+// +page.ts).
+func (a *App) GetAttachmentData(filePath string, index int) (b64 string, err error) {
+	start := time.Now()
+	defer func() { canonicalLog("GetAttachmentData", start, err) }()
+
+	pkglogger.TraceStep("go_get_attachment_start", filepath.Base(filePath), fmt.Sprintf("index=%d", index))
+
+	format, err := mailfmt.DetectEmailFormat(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	var data *mailfmt.EmailData
+	switch format {
+	case mailfmt.FormatMSG:
+		data, err = mailfmt.ReadMsgFile(filePath)
+	default: // FormatEML or FormatUnknown – try PEC first, fall back to plain EML
+		data, err = mailfmt.ReadPecInnerEml(filePath)
+		if err != nil {
+			data, err = mailfmt.ReadEmlFile(filePath)
+		}
+	}
+	if err != nil {
+		return "", err
+	}
+
+	if index < 0 || index >= len(data.Attachments) {
+		err = fmt.Errorf("attachment index %d out of range (have %d)", index, len(data.Attachments))
+		return "", err
+	}
+
+	b64 = base64.StdEncoding.EncodeToString(data.Attachments[index].Data)
+	pkglogger.TraceStep("go_get_attachment_done",
+		fmt.Sprintf("took=%dms attachment_bytes=%d", time.Since(start).Milliseconds(), len(data.Attachments[index].Data)))
+	return b64, nil
 }
 
 // ShowOpenFileDialog displays the system file picker dialog filtered for email files.
@@ -161,6 +239,62 @@ func (a *App) SaveAttachment(filename string, base64Data string) (savedPath stri
 //   - error: Any execution errors
 func (a *App) OpenExplorerForPath(path string) error {
 	return internal.OpenFileExplorer(path)
+}
+
+// =============================================================================
+// Startup Trace Helpers
+// =============================================================================
+
+// fileSizeDetail returns a "size_bytes=N" trace detail for filePath, or ""
+// if the file can't be stat'd. Kept separate from logMailFileInfo (which
+// logs the same thing to app.log) because the trace file needs it inline on
+// the *_start line, before parsing begins - the whole point is comparing
+// on-disk size against how long the parse that follows takes.
+func fileSizeDetail(filePath string) string {
+	if info, err := os.Stat(filePath); err == nil {
+		return fmt.Sprintf("size_bytes=%d", info.Size())
+	}
+	return ""
+}
+
+// attachmentsDetail returns an "attachments=N" trace detail, or "" if data
+// is nil (parse failed).
+func attachmentsDetail(data *mailfmt.EmailData) string {
+	if data == nil {
+		return ""
+	}
+	return fmt.Sprintf("attachments=%d", len(data.Attachments))
+}
+
+// oldAttachmentPreloadEnabled reports whether OLD_ATTACHMENT_PRELOAD is set
+// in config.ini (Settings → Danger Zone → "Old Pre-loading of
+// attachments") - an opt-in escape hatch back to the pre-fix behaviour of
+// shipping every attachment's full bytes in the initial parse response,
+// kept only for experiments/regression testing. Off by default. Read fresh
+// on every call (like a.GetConfig() elsewhere) rather than cached, so the
+// toggle takes effect immediately, no restart needed.
+func oldAttachmentPreloadEnabled() bool {
+	cfg, err := utils.LoadConfig(utils.DefaultConfigPath())
+	if err != nil || cfg == nil {
+		return false
+	}
+	return cfg.EMLy.OldAttachmentPreload
+}
+
+// stripAttachmentData clears every attachment's binary payload in place,
+// keeping only metadata (filename, content type). ReadEML/ReadMSG/ReadPEC/
+// ReadAuto used to return full attachment bytes, so opening a heavy mail
+// meant marshaling and shipping its entire attachment payload across the
+// Wails IPC bridge before the user had looked at anything - see
+// GetAttachmentData, which fetches one attachment's bytes on demand
+// instead, only when the frontend actually needs them (open/save click).
+func stripAttachmentData(data *mailfmt.EmailData) {
+	if data == nil {
+		return
+	}
+	for i := range data.Attachments {
+		data.Attachments[i].Data = nil
+	}
 }
 
 // =============================================================================

@@ -45,6 +45,8 @@
         SetExportAttachmentFolder,
         CheckFolderWritable,
         SetTrayIconEnabled,
+        SetLogStartupTrace,
+        SetOldAttachmentPreload,
         SetGUIReleaseChannel,
         OpenDevTools,
         RestartApp,
@@ -73,6 +75,10 @@
     let savingExportFolder = $state(false);
     let trayIconEnabled = $state(true);
     let savingTrayIcon = $state(false);
+    let logStartupTraceEnabled = $state(false);
+    let savingLogStartupTrace = $state(false);
+    let oldAttachmentPreloadEnabled = $state(false);
+    let savingOldAttachmentPreload = $state(false);
 
     $effect(() => {
         exportFolder = config?.ExportAttachmentFolder ?? "";
@@ -80,6 +86,14 @@
 
     $effect(() => {
         trayIconEnabled = !(config?.DisableTrayIcon ?? false);
+    });
+
+    $effect(() => {
+        logStartupTraceEnabled = config?.LogStartupTrace ?? false;
+    });
+
+    $effect(() => {
+        oldAttachmentPreloadEnabled = config?.OldAttachmentPreload ?? false;
     });
 
     $effect(() => {
@@ -97,6 +111,34 @@
             toast.error(m.settings_danger_tray_icon_save_error());
         } finally {
             savingTrayIcon = false;
+        }
+    }
+
+    async function toggleLogStartupTrace(checked: boolean) {
+        savingLogStartupTrace = true;
+        try {
+            await SetLogStartupTrace(checked);
+            logStartupTraceEnabled = checked;
+            toast.success(m.settings_danger_startup_trace_saved());
+        } catch (e) {
+            console.error("Failed to set startup trace logging", e);
+            toast.error(m.settings_danger_startup_trace_save_error());
+        } finally {
+            savingLogStartupTrace = false;
+        }
+    }
+
+    async function toggleOldAttachmentPreload(checked: boolean) {
+        savingOldAttachmentPreload = true;
+        try {
+            await SetOldAttachmentPreload(checked);
+            oldAttachmentPreloadEnabled = checked;
+            toast.success(m.settings_danger_attachment_preload_saved());
+        } catch (e) {
+            console.error("Failed to set old attachment preload", e);
+            toast.error(m.settings_danger_attachment_preload_save_error());
+        } finally {
+            savingOldAttachmentPreload = false;
         }
     }
 
@@ -226,6 +268,14 @@
                 defaultSettings.fixEmailTextContrast ??
                 false,
             releaseChannel: parseReleaseChannel(s.releaseChannel),
+            // Defaults to true when the stored/config.ini channel is already
+            // "next" (e.g. hand-edited config.ini, or a build shipped on
+            // that channel), so an already-next install doesn't get locked
+            // out of its own selected channel.
+            enableNextReleaseChannel:
+                s.enableNextReleaseChannel ??
+                defaultSettings.enableNextReleaseChannel ??
+                parseReleaseChannel(s.releaseChannel) === "next",
         };
     }
 
@@ -380,26 +430,55 @@
     });
 
     let nextChannelWarningOpen = $state(false);
-    /** Channel to fall back to if the "next" warning is dismissed. */
-    let channelBeforeNext = $state<ReleaseChannel>("stable");
 
     /*
-     * The select is driven through onValueChange rather than bind:value so
-     * picking "next" can be taken back: the warning has to be able to put the
-     * previous channel back, which a two-way binding would have already
-     * overwritten by the time the dialog opens.
+     * "next" can only be picked from the select once enableNextReleaseChannel
+     * is on (its Select.Item is disabled otherwise), so by the time this runs
+     * the warning has already been shown and confirmed via the switch below.
      */
     function pickReleaseChannel(value: string) {
-        const channel = parseReleaseChannel(value);
-        if (channel === "next" && form.releaseChannel !== "next") {
-            channelBeforeNext = form.releaseChannel ?? "stable";
-            nextChannelWarningOpen = true;
-        }
-        form.releaseChannel = channel;
+        form.releaseChannel = parseReleaseChannel(value);
     }
 
+    /*
+     * The switch is bound to this local draft rather than directly to
+     * form.enableNextReleaseChannel so the confirmation warning can still
+     * intercept it: a two-way binding onto the form field would have already
+     * written the "on" value before the dialog ever opened.
+     */
+    let nextChannelSwitchDraft = $state(false);
+    let previousNextChannelSwitchDraft = false;
+
+    $effect(() => {
+        // Keep the draft in sync whenever the underlying form value changes
+        // from outside a switch click (initial load, reset, revert).
+        nextChannelSwitchDraft = form.enableNextReleaseChannel ?? false;
+    });
+
+    $effect(() => {
+        if (nextChannelSwitchDraft && !previousNextChannelSwitchDraft) {
+            // Turning on: only actually enabled once the warning is confirmed.
+            if (!form.enableNextReleaseChannel) {
+                nextChannelWarningOpen = true;
+            }
+        } else if (!nextChannelSwitchDraft && previousNextChannelSwitchDraft) {
+            // Turning off is a safe operation, applied immediately without
+            // a confirmation dialog.
+            form.enableNextReleaseChannel = false;
+            if (form.releaseChannel === "next") {
+                form.releaseChannel = "stable";
+            }
+        }
+        previousNextChannelSwitchDraft = nextChannelSwitchDraft;
+    });
+
     function cancelNextChannel() {
-        form.releaseChannel = channelBeforeNext;
+        nextChannelSwitchDraft = false;
+        nextChannelWarningOpen = false;
+    }
+
+    function confirmNextChannel() {
+        form.enableNextReleaseChannel = true;
         nextChannelWarningOpen = false;
     }
 
@@ -860,7 +939,55 @@
                         </div>
                     </div>
                     <Separator />
-    
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+                    >
+                        <div class="space-y-1">
+                            <Label class="text-sm"
+                                >{m.settings_danger_startup_trace_label()}</Label
+                            >
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_danger_startup_trace_hint()}
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                <strong>{m.settings_danger_startup_trace_info()}</strong>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Switch
+                                checked={logStartupTraceEnabled}
+                                class="cursor-pointer hover:cursor-pointer"
+                                disabled={savingLogStartupTrace}
+                                onCheckedChange={toggleLogStartupTrace}
+                            />
+                        </div>
+                    </div>
+                    <Separator />
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
+                    >
+                        <div class="space-y-1">
+                            <Label class="text-sm"
+                                >{m.settings_danger_attachment_preload_label()}</Label
+                            >
+                            <div class="text-sm text-muted-foreground">
+                                {m.settings_danger_attachment_preload_hint()}
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                <strong>{m.settings_danger_attachment_preload_info()}</strong>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Switch
+                                checked={oldAttachmentPreloadEnabled}
+                                class="cursor-pointer hover:cursor-pointer"
+                                disabled={savingOldAttachmentPreload}
+                                onCheckedChange={toggleOldAttachmentPreload}
+                            />
+                        </div>
+                    </div>
+                    <Separator />
+
                     <div
                         class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
                     >
@@ -1072,6 +1199,8 @@
                                             <Select.Item
                                                 value={channel}
                                                 label={releaseChannelLabel(channel)}
+                                                disabled={channel === "next" &&
+                                                    !form.enableNextReleaseChannel}
                                                 class="cursor-pointer hover:cursor-pointer"
                                             />
                                         {/each}
@@ -1083,6 +1212,17 @@
                             {m.settings_release_channel_info()}
                         </div>
                     </div>
+
+                    <Separator />
+
+                    <SettingsSwitchLabel
+                        bind:featureBool={nextChannelSwitchDraft}
+                        labelText={m.settings_release_channel_enable_next_label()}
+                        hintText={m.settings_release_channel_enable_next_hint()}
+                        infoText={m.settings_release_channel_enable_next_info()}
+                        type="danger"
+                        runningInDevMode={!runningInDevMode}
+                    />
 
                     <Separator />
 
@@ -1122,7 +1262,7 @@
                         >{m.settings_release_channel_next_warning_cancel()}</AlertDialog.Cancel
                     >
                     <AlertDialog.Action
-                        onclick={() => (nextChannelWarningOpen = false)}
+                        onclick={confirmNextChannel}
                         class="cursor-pointer hover:cursor-pointer"
                         >{m.settings_release_channel_next_warning_confirm()}</AlertDialog.Action
                     >

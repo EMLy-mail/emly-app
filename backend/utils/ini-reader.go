@@ -29,6 +29,25 @@ type EMLyConfig struct {
 	LogLevel                 string `ini:"LOG_LEVEL"`
 	ExportAttachmentFolder   string `ini:"EXPORT_ATTACHMENT_FOLDER"`
 	DisableTrayIcon          bool   `ini:"DISABLE_TRAY_ICON"`
+
+	// LogStartupTrace enables the plain-text startup-trace.log (see
+	// backend/logger/trace.go) - off by default, since it's a diagnostic
+	// tool for slow-mail-open investigations, not something every user
+	// needs writing to disk on every launch. Settings → Danger Zone → "Log
+	// startup trace". Takes effect on the next restart (read once in
+	// main(), see InitStartupTrace).
+	LogStartupTrace bool `ini:"LOG_STARTUP_TRACE"`
+
+	// OldAttachmentPreload reverts ReadEML/ReadMSG/ReadPEC/ReadAuto to the
+	// pre-fix behaviour of sending every attachment's full bytes in the
+	// initial parse response, instead of the lazy default (see
+	// stripAttachmentData/GetAttachmentData in app_mail.go). Off by
+	// default - kept only as an escape hatch for experiments/regression
+	// testing, since it reintroduces the slow-open problem the fix
+	// solved. Settings → Danger Zone → "Old Pre-loading of attachments".
+	// Takes effect immediately (read fresh on every call), no restart
+	// needed.
+	OldAttachmentPreload bool `ini:"OLD_ATTACHMENT_PRELOAD"`
 }
 
 // checkSemver reports whether version — the raw GUI_SEMVER value

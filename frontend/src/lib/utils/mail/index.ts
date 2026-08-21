@@ -21,6 +21,7 @@ export {
   createDataUrl,
   looksLikeBase64,
   tryDecodeBase64,
+  hasPreloadedAttachmentData,
 } from './data-utils';
 
 // Attachment handlers

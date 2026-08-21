@@ -24,6 +24,7 @@ export const defaultSettings: EMLy_GUI_Settings = {
     openAttachmentsAsTab: true,
     fixEmailTextContrast: true,
     releaseChannel: "stable",
+    enableNextReleaseChannel: false,
 };
 
 /** Accepted release channels, in the order they are offered in Settings. */

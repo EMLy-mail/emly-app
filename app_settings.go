@@ -216,3 +216,50 @@ func (a *App) SetTrayIconEnabled(enabled bool) error {
 	}
 	return nil
 }
+
+// SetLogStartupTrace updates the LOG_STARTUP_TRACE setting in config.ini.
+// The trace file is only opened at process startup (see main.go), so this
+// takes effect after the next restart (see RestartApp) - same as the tray
+// icon toggle above.
+//
+// Parameters:
+//   - enabled: whether startup-trace.log should be written on next startup
+//
+// Returns:
+//   - error: Error if loading or saving config fails
+func (a *App) SetLogStartupTrace(enabled bool) error {
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.LogStartupTrace = enabled
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
+}
+
+// SetOldAttachmentPreload updates the OLD_ATTACHMENT_PRELOAD setting in
+// config.ini - an escape hatch back to the pre-fix behaviour of sending
+// every attachment's full bytes in the initial mail parse response (see
+// oldAttachmentPreloadEnabled in app_mail.go), kept only for experiments
+// and regression testing. Unlike the tray icon and startup trace toggles,
+// this is read fresh on every ReadEML/ReadMSG/ReadPEC/ReadAuto call, so it
+// takes effect immediately - no restart needed.
+//
+// Parameters:
+//   - enabled: whether to revert to eager, full-byte attachment preloading
+//
+// Returns:
+//   - error: Error if loading or saving config fails
+func (a *App) SetOldAttachmentPreload(enabled bool) error {
+	config := a.GetConfig()
+	if config == nil {
+		return fmt.Errorf("failed to load config")
+	}
+	config.EMLy.OldAttachmentPreload = enabled
+	if err := a.SaveConfig(config); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+	return nil
+}

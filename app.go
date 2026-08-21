@@ -115,6 +115,7 @@ func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error
 //   - Logs the startup mode (main app vs viewer window)
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	pkglogger.TraceStep("go_onstartup")
 
 	// Sync CurrentMailFilePath with StartupFilePath if a file was opened via command line
 	if a.StartupFilePath != "" {

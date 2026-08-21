@@ -542,6 +542,8 @@ export namespace utils {
 	    LogLevel: string;
 	    ExportAttachmentFolder: string;
 	    DisableTrayIcon: boolean;
+	    LogStartupTrace: boolean;
+	    OldAttachmentPreload: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new EMLyConfig(source);
@@ -559,6 +561,8 @@ export namespace utils {
 	        this.LogLevel = source["LogLevel"];
 	        this.ExportAttachmentFolder = source["ExportAttachmentFolder"];
 	        this.DisableTrayIcon = source["DisableTrayIcon"];
+	        this.LogStartupTrace = source["LogStartupTrace"];
+	        this.OldAttachmentPreload = source["OldAttachmentPreload"];
 	    }
 	}
 	export class Config {

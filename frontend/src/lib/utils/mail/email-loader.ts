@@ -11,6 +11,7 @@ import {
 import type { mailfmt } from '$lib/wailsjs/go/models';
 import { isBase64, isHtml } from '$lib/utils';
 import { looksLikeBase64, tryDecodeBase64 } from './data-utils';
+import { trace } from '$lib/utils/startupTrace';
 import DOMPurify from 'dompurify';
 
 export interface LoadEmailResult {
@@ -64,6 +65,7 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
 
     // Process body if needed (decode base64)
     if (email?.body) {
+      trace('fe_sanitize_start', `body_len=${email.body.length}`);
       const trimmed = email.body.trim();
       if (looksLikeBase64(trimmed)) {
         const decoded = tryDecodeBase64(trimmed);
@@ -72,6 +74,7 @@ export async function loadEmailFromPath(filePath: string): Promise<LoadEmailResu
         }
       }
       email.body = DOMPurify.sanitize(email.body);
+      trace('fe_sanitize_done');
     }
     const finishTime = new Date();
     const loadTime = finishTime.getTime() - startTime.getTime();

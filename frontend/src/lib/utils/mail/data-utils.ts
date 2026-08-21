@@ -39,6 +39,21 @@ export function arrayBufferToBase64(buffer: unknown): string {
 }
 
 /**
+ * Whether an attachment's `data` field already carries real bytes, rather
+ * than the empty value ReadEML/ReadMSG/ReadPEC/ReadAuto send by default
+ * (see stripAttachmentData in app_mail.go). True only when "Old
+ * Pre-loading of attachments" (Settings → Danger Zone, off by default) is
+ * enabled and the backend sent every attachment's bytes up front instead
+ * of the lazy default - callers use this to skip the extra GetAttachmentData
+ * round trip when the bytes are already in hand.
+ */
+export function hasPreloadedAttachmentData(data: unknown): boolean {
+  if (typeof data === 'string') return data.length > 0;
+  if (Array.isArray(data)) return data.length > 0;
+  return false;
+}
+
+/**
  * Creates a data URL for downloading attachments
  * @param contentType - MIME type of the attachment
  * @param base64Data - Base64 encoded data

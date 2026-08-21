@@ -22,6 +22,7 @@
     WindowShow,
     WindowUnminimise,
   } from "$lib/wailsjs/runtime/runtime";
+  import { trace } from "$lib/utils/startupTrace";
 
   let { data } = $props();
 
@@ -30,6 +31,7 @@
   let unregisterLaunchArgs = () => {};
 
   onMount(() => {
+    trace("fe_page_mount_start");
     if (data.email) {
       if (isPecOpenBlocked(data.email)) return;
       if (settingsStore.settings.enableTabMode) {
@@ -38,6 +40,7 @@
       } else {
         mailState.setParams(data.email, data.filePath);
       }
+      trace("fe_page_mount_done");
     } else if (data.loadError) {
       toast.error(m.mail_error_opening());
     }
@@ -51,8 +54,13 @@
       for (const arg of args) {
         if (isEmailFile(arg)) {
           isAddingTab = true;
+          trace("fe_launch_args_read_start");
 
           const result = await loadEmailFromPath(arg);
+          trace(
+            "fe_launch_args_read_done",
+            `attachments=${result.email?.attachments?.length ?? 0} body_len=${result.email?.body?.length ?? 0}`,
+          );
 
           if (result.success && result.email) {
             if (isPecOpenBlocked(result.email)) {

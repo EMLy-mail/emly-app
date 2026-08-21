@@ -3,14 +3,14 @@ import type { PageLoad } from "./$types";
 import {
   GetViewerData,
   GetStartupFile,
-  ReadEML,
-  ReadMSG,
+  ReadAuto,
 } from "$lib/wailsjs/go/main/App";
 import DOMPurify from "dompurify";
-import type { mailfmt } from "$lib/wailsjs/go/models";
 import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
+import { trace } from "$lib/utils/startupTrace";
 
 export const load: PageLoad = async () => {
+  trace("fe_load_start");
   try {
     const viewerData = await GetViewerData();
     if (viewerData) {
@@ -24,23 +24,44 @@ export const load: PageLoad = async () => {
 
     // Check if opened with a file
     const startupFile = await GetStartupFile();
+    trace("fe_get_startup_file_done", startupFile ? "has_file" : "no_file");
     if (startupFile) {
-      let emlContent: mailfmt.EmailData;
+      trace("fe_read_mail_start");
 
-      if (startupFile.toLowerCase().endsWith(".msg")) {
-        emlContent = await ReadMSG(startupFile);
-      } else {
-        emlContent = await ReadEML(startupFile);
-      }
+      // ReadAuto detects the format (EML/PEC/MSG) from the file's binary
+      // content rather than its extension - used everywhere else an email
+      // is loaded (see email-loader.ts), and now here too, so a PEC opened
+      // by double-click gets its envelope unwrapped just like one opened
+      // any other way, and attachment indices (see GetAttachmentData) stay
+      // consistent regardless of how the file was opened.
+      //
+      // The host integrity check doesn't depend on the mail file, so it's
+      // kicked off in parallel with ReadAuto instead of awaited afterwards -
+      // that used to serialize two independent round trips (~200-400ms
+      // wasted on every single startup, mail size aside). It still fully
+      // resolves before we return: the component reads `hostIntegrityFailed`
+      // synchronously on mount to decide whether to block a PEC opened at
+      // startup, and Promise.all below waits for it exactly like the old
+      // sequential await did.
+      trace("fe_host_integrity_start");
+      const integrityPromise = ensureHostIntegrityChecked().then(() => {
+        trace("fe_host_integrity_done");
+      });
+
+      const [emlContent] = await Promise.all([
+        ReadAuto(startupFile),
+        integrityPromise,
+      ]);
+      trace(
+        "fe_read_mail_done",
+        `attachments=${emlContent?.attachments?.length ?? 0} body_len=${emlContent?.body?.length ?? 0}`,
+      );
 
       if (emlContent) {
-        // Must resolve before the page mounts: the host integrity check is
-        // async, and the component reads `hostIntegrityFailed` synchronously
-        // on mount to decide whether to block a PEC opened at startup (e.g.
-        // via double-click). Without this await, that block would race the
-        // check and lose.
-        await ensureHostIntegrityChecked();
+        trace("fe_sanitize_start");
         emlContent.body = DOMPurify.sanitize(emlContent.body || "");
+        trace("fe_sanitize_done");
+
         return { email: emlContent, filePath: startupFile };
       }
     }
