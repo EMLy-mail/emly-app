@@ -103,8 +103,8 @@
 
     void (async () => {
       try {
-        const loaded = await pdfjs.getDocument(url).promise;
-        if (cancelled) return void loaded.destroy();
+        const loaded = await pdfjs.getDocument({ url }).promise;
+        if (cancelled) return void loaded.loadingTask.destroy();
 
         // Metadata only, but it has to happen up front: without every page's
         // size the placeholders are wrong and the scrollbar lies.
@@ -114,7 +114,7 @@
           const view = page.getViewport({ scale: 1 });
           sizes.push({ width: view.width, height: view.height });
         }
-        if (cancelled) return void loaded.destroy();
+        if (cancelled) return void loaded.loadingTask.destroy();
 
         doc = loaded;
         naturalSizes = sizes;
@@ -265,7 +265,7 @@
     for (const task of tasks.values()) task.cancel();
     tasks.clear();
     observer?.disconnect();
-    void doc?.destroy();
+    void doc?.loadingTask.destroy();
     doc = null;
   });
 </script>

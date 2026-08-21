@@ -43,7 +43,7 @@
     "dompurify": "^3.4.13",
     "html2canvas": "^1.4.1",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "4.10.38",
+    "pdfjs-dist": "6.2.108",
     "svelte-flags": "^3.0.1",
     "svelte-sonner": "^1.2.1"
   },
