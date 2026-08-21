@@ -19,6 +19,7 @@
     import {
         BrowserOpenURL,
     } from "$lib/wailsjs/runtime/runtime";
+    import { GetAttachmentData } from "$lib/wailsjs/go/main/App";
     import { mailState } from "$lib/stores/mail-state.svelte";
     import type { mailfmt } from "$lib/wailsjs/go/models";
     import * as m from "$lib/paraglide/messages";
@@ -35,6 +36,7 @@
         IFRAME_UTIL_HTML_LIGHT_NO_LINKS,
         IFRAME_CONTRAST_FIX_JS,
         arrayBufferToBase64,
+        hasPreloadedAttachmentData,
         openAndLoadEmail,
         processEmailBody,
         isPecOpenBlocked,
@@ -141,14 +143,34 @@
 
     async function onDownloadAttachments() {
         if (isAttachmentBlocked()) return;
-        if (!activeEmail || !activeEmail.attachments) return;
+        if (!activeEmail || !activeEmail.attachments || !activeFilePath) return;
 
-        await saveAllAttachmentsNatively(
-            activeEmail.attachments.map((att) => ({
-                filename: att.filename,
-                base64: arrayBufferToBase64(att.data),
-            })),
-        );
+        // ReadEML/ReadMSG/ReadAuto no longer send attachment bytes up front
+        // (see backend/app_mail.go: stripAttachmentData) - fetch each one's
+        // bytes on demand, only now that the user actually asked to
+        // download them.
+        isLoading = true;
+        loadingText = m.mail_downloading_attachments_text();
+        try {
+            const attachments = await Promise.all(
+                activeEmail.attachments.map(async (att, index) => ({
+                    filename: att.filename,
+                    // "Old Pre-loading of attachments" (Settings → Danger
+                    // Zone, off by default) sends full bytes up front - use
+                    // them directly instead of an extra round trip.
+                    base64: hasPreloadedAttachmentData(att.data)
+                        ? arrayBufferToBase64(att.data)
+                        : await GetAttachmentData(activeFilePath!, index),
+                })),
+            );
+            await saveAllAttachmentsNatively(attachments);
+        } catch (error) {
+            console.error("Failed to fetch attachments for download:", error);
+            toast.error(m.attachment_fetch_error());
+        } finally {
+            isLoading = false;
+            loadingText = "";
+        }
     }
 
     async function onOpenMail() {
@@ -454,7 +476,10 @@
                 </div>
 
                 <!-- Attachments -->
-                <EmailAttachmentsList attachments={activeEmail.attachments} />
+                <EmailAttachmentsList
+                    attachments={activeEmail.attachments}
+                    filePath={activeFilePath}
+                />
 
                 <!-- Email Body -->
                 <div

@@ -1,12 +1,14 @@
 <script lang="ts">
-    import { Image, FileText, MailOpen, File } from "@lucide/svelte";
+    import { Image, FileText, MailOpen, File, Loader2 } from "@lucide/svelte";
     import { toast } from "svelte-sonner";
     import { hostIntegrityFailed } from "$lib/stores/app";
     import * as m from "$lib/paraglide/messages";
     import type { mailfmt } from "$lib/wailsjs/go/models";
+    import { GetAttachmentData } from "$lib/wailsjs/go/main/App";
     import {
         CONTENT_TYPES,
         arrayBufferToBase64,
+        hasPreloadedAttachmentData,
         openPDFAttachment,
         openImageAttachment,
         openEMLAttachment,
@@ -16,8 +18,42 @@
     import { saveAttachmentNatively } from "$lib/utils/attachment-download";
     import { settingsStore } from "$lib/stores/settings.svelte";
 
-    let { attachments }: { attachments: mailfmt.EmailAttachment[] | undefined } =
-        $props();
+    let {
+        attachments,
+        filePath,
+    }: {
+        attachments: mailfmt.EmailAttachment[] | undefined;
+        filePath: string | undefined;
+    } = $props();
+
+    // ReadEML/ReadMSG/ReadAuto no longer send attachment bytes up front (see
+    // backend/app_mail.go: stripAttachmentData) - a heavy mail used to ship
+    // every attachment's bytes across the Wails IPC bridge before the user
+    // had looked at anything. Instead, fetch one attachment's bytes only
+    // when its button is actually clicked (open or save).
+    let pendingIndex = $state<number | null>(null);
+
+    async function fetchAttachmentBase64(index: number): Promise<string | null> {
+        // "Old Pre-loading of attachments" (Settings → Danger Zone, off by
+        // default) makes the backend send full bytes up front - use them
+        // directly and skip the extra round trip entirely.
+        const att = attachments?.[index];
+        if (att && hasPreloadedAttachmentData(att.data)) {
+            return arrayBufferToBase64(att.data);
+        }
+
+        if (!filePath) return null;
+        pendingIndex = index;
+        try {
+            return await GetAttachmentData(filePath, index);
+        } catch (error) {
+            console.error("Failed to fetch attachment data:", error);
+            toast.error(m.attachment_fetch_error());
+            return null;
+        } finally {
+            pendingIndex = null;
+        }
+    }
 
     // Returns true (and shows a toast) if attachment interactions should be
     // blocked because the host integrity check failed. Buttons stay natively
@@ -54,24 +90,44 @@
             return false;
         }
 
-    async function handleOpenPDF(base64Data: string, filename: string) {
+    async function handleOpenPDF(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
+        const base64Data = await fetchAttachmentBase64(index);
+        if (base64Data === null) return;
         await openPDFAttachment(base64Data, filename);
     }
 
-    async function handleOpenImage(base64Data: string, filename: string) {
+    async function handleOpenImage(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
+        const base64Data = await fetchAttachmentBase64(index);
+        if (base64Data === null) return;
         await openImageAttachment(base64Data, filename);
     }
 
-    async function handleOpenEML(base64Data: string, filename: string) {
+    async function handleOpenEML(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
+        const base64Data = await fetchAttachmentBase64(index);
+        if (base64Data === null) return;
         await openEMLAttachment(base64Data, filename);
     }
 
-    async function handleOpenDoc(base64Data: string, filename: string) {
+    async function handleOpenDoc(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
+        const base64Data = await fetchAttachmentBase64(index);
+        if (base64Data === null) return;
         await openDocAttachment(base64Data, filename);
+    }
+
+    async function handleSaveDefault(index: number, filename: string) {
+        if (isAttachmentBlocked()) return;
+        showDefaultAttachmentToast({
+            onSave: async () => {
+                const base64Data = await fetchAttachmentBase64(index);
+                if (base64Data === null) return;
+                void saveAttachmentNatively(base64Data, filename);
+            },
+            onReset: () => {},
+        });
     }
 </script>
 
@@ -79,8 +135,7 @@
     <span class="att-section-label">{m.mail_attachments()}</span>
     <div class="att-list">
         {#if attachments && attachments.length > 0}
-            {#each attachments as att}
-                {@const base64 = arrayBufferToBase64(att.data)}
+            {#each attachments as att, index}
                 {@const isImage = att.contentType.startsWith(
                     CONTENT_TYPES.IMAGE,
                 )}
@@ -97,21 +152,23 @@
                         .toLowerCase()
                         .endsWith(".docx") ||
                     att.filename.toLowerCase().endsWith(".doc")}
+                {@const isPending = pendingIndex === index}
 
                 {#if isImage && isSupportedImageType(att.contentType)}
                     <button
                         class="att-btn image"
                         class:integrity-blocked={$hostIntegrityFailed}
-                        onclick={() =>
-                            handleOpenImage(
-                                base64,
-                                att.filename,
-                            )}
+                        disabled={isPending}
+                        onclick={() => handleOpenImage(index, att.filename)}
                         title={$hostIntegrityFailed
                             ? m.mail_attachments_disabled_hint()
                             : undefined}
                     >
-                        <Image size="16" />
+                        {#if isPending}
+                            <Loader2 size="16" class="att-spinner" />
+                        {:else}
+                            <Image size="16" />
+                        {/if}
                         <span class="att-name"
                             >{att.filename}</span
                         >
@@ -120,13 +177,17 @@
                     <button
                         class="att-btn pdf"
                         class:integrity-blocked={$hostIntegrityFailed}
-                        onclick={() =>
-                            handleOpenPDF(base64, att.filename)}
+                        disabled={isPending}
+                        onclick={() => handleOpenPDF(index, att.filename)}
                         title={$hostIntegrityFailed
                             ? m.mail_attachments_disabled_hint()
                             : undefined}
                     >
-                        <FileText size="16" />
+                        {#if isPending}
+                            <Loader2 size="16" class="att-spinner" />
+                        {:else}
+                            <FileText size="16" />
+                        {/if}
                         <span class="att-name"
                             >{att.filename}</span
                         >
@@ -135,13 +196,17 @@
                     <button
                         class="att-btn eml"
                         class:integrity-blocked={$hostIntegrityFailed}
-                        onclick={() =>
-                            handleOpenEML(base64, att.filename)}
+                        disabled={isPending}
+                        onclick={() => handleOpenEML(index, att.filename)}
                         title={$hostIntegrityFailed
                             ? m.mail_attachments_disabled_hint()
                             : undefined}
                     >
-                        <MailOpen size="16" />
+                        {#if isPending}
+                            <Loader2 size="16" class="att-spinner" />
+                        {:else}
+                            <MailOpen size="16" />
+                        {/if}
                         <span class="att-name"
                             >{att.filename}</span
                         >
@@ -150,13 +215,17 @@
                     <button
                         class="att-btn doc"
                         class:integrity-blocked={$hostIntegrityFailed}
-                        onclick={() =>
-                            handleOpenDoc(base64, att.filename)}
+                        disabled={isPending}
+                        onclick={() => handleOpenDoc(index, att.filename)}
                         title={$hostIntegrityFailed
                             ? m.mail_attachments_disabled_hint()
                             : undefined}
                     >
-                        <FileText size="16" />
+                        {#if isPending}
+                            <Loader2 size="16" class="att-spinner" />
+                        {:else}
+                            <FileText size="16" />
+                        {/if}
                         <span class="att-name"
                             >{att.filename}</span
                         >
@@ -165,22 +234,17 @@
                     <button
                         class="att-btn file"
                         class:integrity-blocked={$hostIntegrityFailed}
-                        onclick={() => {
-                            if (isAttachmentBlocked()) return;
-                            showDefaultAttachmentToast({
-                                onSave: () =>
-                                    void saveAttachmentNatively(
-                                        base64,
-                                        att.filename,
-                                    ),
-                                onReset: () => {},
-                            });
-                        }}
+                        disabled={isPending}
+                        onclick={() => handleSaveDefault(index, att.filename)}
                         title={$hostIntegrityFailed
                             ? m.mail_attachments_disabled_hint()
                             : undefined}
                     >
-                        <File size="16" />
+                        {#if isPending}
+                            <Loader2 size="16" class="att-spinner" />
+                        {:else}
+                            <File size="16" />
+                        {/if}
                         <span class="att-name"
                             >{att.filename}</span
                         >
@@ -295,6 +359,20 @@
 
     .att-btn :global(svg) {
         flex-shrink: 0;
+    }
+
+    .att-btn:disabled {
+        cursor: default;
+        opacity: 0.7;
+    }
+
+    :global(.att-spinner) {
+        animation: att-spin 0.8s linear infinite;
+    }
+
+    @keyframes att-spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
     }
 
     .att-empty {

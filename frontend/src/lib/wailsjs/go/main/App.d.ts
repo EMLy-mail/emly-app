@@ -90,6 +90,25 @@ export function ExportSettings(settingsJSON:string):Promise<string>;
 export function FrontendLog(level:string,message:string,contextJSON:string):Promise<void>;
 
 /**
+ * GetAttachmentData re-parses filePath and returns the base64-encoded bytes
+ * of the attachment at the given index - its position in the Attachments
+ * slice that ReadEML/ReadMSG/ReadPEC/ReadAuto returned, which no longer
+ * carry attachment bytes (see stripAttachmentData). Called on demand, only
+ * when the user actually opens or saves an attachment, instead of shipping
+ * every attachment's bytes across the Wails IPC bridge on every mail load -
+ * see startup-trace.log: for a 41MB .msg with 5 attachments, parsing took
+ * 196ms but transferring the old, byte-carrying response took over 3s.
+ * 
+ * Re-parsing (instead of caching the first parse) keeps this stateless and
+ * always correct, and is cheap for the same reason: parsing was never the
+ * slow part. The detect-then-dispatch logic mirrors ReadAuto exactly, so
+ * attachment order/indices stay consistent with whatever the frontend
+ * originally listed (ReadAuto is used everywhere an email is loaded - see
+ * +page.ts).
+ */
+export function GetAttachmentData(filePath:string,index:number):Promise<string>;
+
+/**
  * GetConfig loads and returns the application configuration from config.ini.
  * Returns nil if the configuration cannot be loaded.
  */
@@ -486,6 +505,37 @@ export function SetExportAttachmentFolder(folderPath:string):Promise<void>;
 export function SetGUIReleaseChannel(channel:string):Promise<void>;
 
 /**
+ * SetLogStartupTrace updates the LOG_STARTUP_TRACE setting in config.ini.
+ * The trace file is only opened at process startup (see main.go), so this
+ * takes effect after the next restart (see RestartApp) - same as the tray
+ * icon toggle above.
+ * 
+ * Parameters:
+ *   - enabled: whether startup-trace.log should be written on next startup
+ * 
+ * Returns:
+ *   - error: Error if loading or saving config fails
+ */
+export function SetLogStartupTrace(enabled:boolean):Promise<void>;
+
+/**
+ * SetOldAttachmentPreload updates the OLD_ATTACHMENT_PRELOAD setting in
+ * config.ini - an escape hatch back to the pre-fix behaviour of sending
+ * every attachment's full bytes in the initial mail parse response (see
+ * oldAttachmentPreloadEnabled in app_mail.go), kept only for experiments
+ * and regression testing. Unlike the tray icon and startup trace toggles,
+ * this is read fresh on every ReadEML/ReadMSG/ReadPEC/ReadAuto call, so it
+ * takes effect immediately - no restart needed.
+ * 
+ * Parameters:
+ *   - enabled: whether to revert to eager, full-byte attachment preloading
+ * 
+ * Returns:
+ *   - error: Error if loading or saving config fails
+ */
+export function SetOldAttachmentPreload(enabled:boolean):Promise<void>;
+
+/**
  * SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
  * The system tray icon is only created at startup (see main.go), so this
  * takes effect after the next restart (see RestartApp).
@@ -543,3 +593,20 @@ export function SubmitBugReport(input:main.BugReportInput,currEnv:string):Promis
  *   - error: Error if window capture or encoding fails
  */
 export function TakeScreenshot():Promise<main.ScreenshotResult>;
+
+/**
+ * TraceStartupStep records a checkpoint in the startup trace file (see
+ * backend/logger/trace.go, startup-trace.log next to app.log) - a plain-text
+ * timeline separate from the regular log, built to show exactly how long
+ * each step of app launch and mail loading took. The frontend calls this
+ * from the SvelteKit load path so its steps (GetStartupFile, ReadEML/MSG,
+ * DOMPurify sanitize, host integrity check, mount) land in the same
+ * chronological file as the Go-side steps.
+ * 
+ * 	await TraceStartupStep("fe_read_mail_done", "attachments=3")
+ * 
+ * step should be a short machine-friendly name; detail is optional free text
+ * (sizes, counts, format) - pass "" when there's nothing to add. No-op if
+ * tracing wasn't initialised for this process (e.g. viewer windows).
+ */
+export function TraceStartupStep(step:string,detail:string):Promise<void>;

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	pkglogger "emly/backend/logger"
 	"emly/backend/utils"
@@ -22,6 +24,11 @@ var assets embed.FS
 var trayIconICO []byte
 
 func main() {
+	// Taken before anything else so the startup trace (see below) covers
+	// the true process start, not just the point config/logger setup happens
+	// to finish.
+	processStart := time.Now()
+
 	if err := InitLogger(); err != nil {
 		log.Println("Error initializing logger:", err)
 	}
@@ -65,6 +72,35 @@ func main() {
 
 	userAgent := fmt.Sprintf("EMLy/%s", guiVersion)
 
+	// Startup tracing: a separate, plain-text timeline of launch + mail-load
+	// timings (backend/logger/trace.go), truncated fresh on every run, so a
+	// slow "Inizializzazione..." screen can be diagnosed step-by-step instead
+	// of guessed at. Only for the main window - viewer windows (image/PDF)
+	// are separate processes that would otherwise race to truncate the same
+	// file, and their load path isn't what's being diagnosed here.
+	//
+	// Off by default (LOG_STARTUP_TRACE in config.ini / Settings → Danger
+	// Zone → "Log startup trace") - it's a diagnostic tool for slow-open
+	// investigations, not something every install needs writing to disk on
+	// every launch. Takes effect on next restart, like the tray icon toggle
+	// below.
+	logStartupTrace := false
+	if cfg, err := utils.LoadConfig(utils.DefaultConfigPath()); err == nil && cfg != nil {
+		logStartupTrace = cfg.EMLy.LogStartupTrace
+	}
+	if isMainWindow && logStartupTrace {
+		if configDir, err := os.UserConfigDir(); err == nil {
+			tracePath := filepath.Join(configDir, "EMLy", "logs", "startup-trace.log")
+			if err := pkglogger.InitStartupTrace(tracePath, processStart); err != nil {
+				pkglogger.Error("failed to init startup trace", "error", err.Error())
+			} else {
+				defer pkglogger.CloseStartupTrace()
+				pkglogger.TraceStep("process_start")
+			}
+		}
+	}
+	pkglogger.TraceStep("config_loaded", "gui_version="+guiVersion)
+
 	// Create an instance of the app structure
 	app := NewApp(userAgent)
 
@@ -76,6 +112,11 @@ func main() {
 		if strings.HasSuffix(strings.ToLower(arg), ".msg") {
 			app.StartupFilePath = arg
 		}
+	}
+	if app.StartupFilePath != "" {
+		pkglogger.TraceStep("args_parsed", "startup_file="+filepath.Base(app.StartupFilePath))
+	} else {
+		pkglogger.TraceStep("args_parsed", "no_startup_file")
 	}
 
 	// Create application with options
@@ -124,7 +165,9 @@ func main() {
 		}
 	}
 
+	pkglogger.TraceStep("wails_run_starting")
 	err := wails.Run(appOptions)
+	pkglogger.TraceStep("wails_run_returned")
 
 	if err != nil {
 		pkglogger.Error("application error", "error", err.Error())
