@@ -221,6 +221,7 @@
       if (!context) return;
 
       const task = page.render({
+        canvas,
         canvasContext: context,
         viewport: view,
         transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0],
