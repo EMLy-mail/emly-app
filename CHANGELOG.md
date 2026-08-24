@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 2.1.2 (2026-08-24)
+1) Aggiunte delle shortcut da tastiera per navigare tra le schede (tab) aperte: CTRL + TAB per passare alla scheda successiva, e chiudere la scheda corrente con CTRL + W.
+2) Fixato un bug dove le forniture non erano presenti quando si entrava nelle backrooms (:
+
 # 2.1.1 (2026-08-21)
 1) Fixato un bug dove la lingua di default era l'inglese.
 2) Aggiunto un toggle per attivare/disattivare la selezione del canale di aggiornamento "Next".

@@ -36,7 +36,9 @@ export default defineConfig({
 			'tailwind-merge',
 			'tailwind-variants',
 			'@lucide/svelte/icons/chevron-right',
-			'pdf-lib'
+			'pdf-lib',
+			'@lucide/svelte/icons/chevron-down', 
+			'@lucide/svelte/icons/chevron-up',
 		],
 	},
 	build: {
