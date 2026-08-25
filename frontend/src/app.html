@@ -46,7 +46,7 @@
 				background-color: #09090b;
 				color: #ffffff;
 			}
-			
+
 			.loader-spinner {
 				width: 32px;
 				height: 32px;
@@ -61,7 +61,7 @@
 				0% { transform: rotate(0deg); }
 				100% { transform: rotate(360deg); }
 			}
-	
+
 			main {
 				-moz-user-select: -moz-none;
    				-khtml-user-select: none;
@@ -73,7 +73,7 @@
 		</style>
 		%sveltekit.head%
 	</head>
-	
+
 	<body data-sveltekit-preload-data="hover">
 		<div id="app-loading">
 			<div class="loader-spinner"></div>
@@ -85,8 +85,8 @@
 			(() => {
 				try {
 					const settings = JSON.parse(localStorage.getItem("emly_gui_settings") || "{}");
-					let lang = settings.selectedLanguage || "en";
-					if (lang !== "en" && lang !== "it") lang = "en";
+					let lang = settings.selectedLanguage || "it";
+					if (lang !== "en" && lang !== "it") lang = "it";
 					settings.selectedLanguage = lang;
 					localStorage.setItem("emly_gui_settings", JSON.stringify(settings));
 					const text = lang === "it" ? "Inizializzazione..." : "Initialization...";
@@ -104,7 +104,7 @@
 				} catch (e) {
 					console.error("Failed to localize loading text", e);
 				}
-				
+
 			})();
 		</script>
 		<script>

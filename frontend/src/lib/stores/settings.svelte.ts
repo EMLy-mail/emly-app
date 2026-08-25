@@ -57,10 +57,17 @@ class SettingsStore {
     }
 
     load() {
-        const stored = getFromLocalStorage(STORAGE_KEY);
-        if (stored) {
+      let emlySettingsKV = getFromLocalStorage(STORAGE_KEY);
+      if (emlySettingsKV) {
+        let storedThemeKV = JSON.parse(emlySettingsKV).theme;
+        if(storedThemeKV !== "dark" && storedThemeKV !== "light") {
+            // If the stored theme is invalid, reset to default and save
+            this.settings = { ...defaultSettings };
+            this.wasReset = true;
+            this.save();
+        }
             try {
-                this.settings = { ...this.settings, ...JSON.parse(stored) };
+                this.settings = { ...this.settings, ...JSON.parse(emlySettingsKV) };
             } catch (e) {
                 console.error("Failed to load settings", e);
                 this.wasReset = true;
@@ -90,7 +97,7 @@ class SettingsStore {
         }
 
         // Save defaults to storage if they didn't exist or failed to parse
-        if (!stored) {
+        if (!emlySettingsKV) {
             this.save();
         }
 
@@ -104,15 +111,15 @@ class SettingsStore {
 
     update(newSettings: Partial<EMLy_GUI_Settings>) {
         this.settings = { ...this.settings, ...newSettings };
-        
+
         // Apply theme if it changed
         if (newSettings.theme && this.settings.theme) {
             applyTheme(this.settings.theme);
         }
-        
+
         this.save();
     }
-    
+
     reset() {
         this.settings = { ...defaultSettings };
         if (this.settings.theme) {

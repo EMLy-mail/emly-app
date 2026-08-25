@@ -29,6 +29,6 @@
 		<InfoIcon class="size-4" />
 	{/snippet}
 	{#snippet warningIcon()}
-		<TriangleAlertIcon class="size-4" />
+		<TriangleAlertIcon class="size-4 text-yellow-500 dark:text-yellow-400" />
 	{/snippet}
 </Sonner>

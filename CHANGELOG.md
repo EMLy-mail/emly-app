@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 2.1.3 (2026-08-25)
+1) Fixato un bug dove, al primo avvio, EMLy si avviava in lingua inglese anche se la lingua di default era impostata su Italiano.
+2) Fixato un bug dove, se il KV delle impostazioni era vuoto o parzialmente presente, EMLy non resettava correttamente le impostazioni mancanti a default, causando crash o comportamenti anomali.
+
 # 2.1.2 (2026-08-24)
 1) Aggiunte delle shortcut da tastiera per navigare tra le schede (tab) aperte: CTRL + TAB per passare alla scheda successiva, e chiudere la scheda corrente con CTRL + W.
 2) Fixato un bug dove le forniture non erano presenti quando si entrava nelle backrooms (:
