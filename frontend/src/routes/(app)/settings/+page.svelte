@@ -201,6 +201,8 @@
         "gif",
         "webp",
         "tiff",
+        "heic",
+        "heif",
     ];
 
     async function setLanguage(

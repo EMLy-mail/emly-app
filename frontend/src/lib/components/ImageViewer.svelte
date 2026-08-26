@@ -7,9 +7,11 @@
     ZoomOut,
     AlignHorizontalSpaceAround,
     Download,
+    Loader2,
   } from "@lucide/svelte";
   import * as m from "$lib/paraglide/messages.js";
   import { saveAttachmentNatively } from "$lib/utils/attachment-download";
+  import { toDisplayableImageSrc, mimeTypeForFilename } from "$lib/utils/image-decode";
   import "$lib/styles/viewer-toolbar.css";
 
   interface Props {
@@ -26,12 +28,34 @@
   let imgElement = $state<HTMLImageElement>();
   let containerElement = $state<HTMLDivElement>();
 
+  let displaySrc = $state("");
+  let decoding = $state(true);
+  let decodeError = $state("");
+  /** Set only for HEIC/HEIF: the converted JPEG to offer on download,
+   *  since most systems can't open the original format directly. */
+  let downloadOverride: { base64: string; filename: string } | undefined;
+
   let isDragging = false;
   let startX = 0;
   let startY = 0;
 
-  onMount(() => {
-    // detect MIME type from filename extension for download
+  onMount(async () => {
+    // Convert to a displayable <img> src: a fast-path data: URI for
+    // regular formats, or a decoded JPEG for HEIC/HEIF (which the browser
+    // can't render natively).
+    try {
+      const result = await toDisplayableImageSrc(
+        base64Data,
+        filename,
+        mimeTypeForFilename(filename),
+      );
+      displaySrc = result.src;
+      downloadOverride = result.download;
+    } catch (e) {
+      decodeError = m.image_error_loading() + String(e);
+    } finally {
+      decoding = false;
+    }
   });
 
   function fitToScreen() {
@@ -76,6 +100,10 @@
   }
 
   function downloadImage() {
+    if (downloadOverride) {
+      void saveAttachmentNatively(downloadOverride.base64, downloadOverride.filename);
+      return;
+    }
     if (!base64Data || !filename) return;
     void saveAttachmentNatively(base64Data, filename);
   }
@@ -162,7 +190,16 @@
     role="region"
     aria-label={m.image_viewer_area_label()}
   >
-    {#if base64Data}
+    {#if decoding}
+      <div class="loading">
+        <Loader2 size="20" class="spin" />
+        <span>{m.layout_loading_text()}</span>
+      </div>
+    {:else if decodeError}
+      <div class="error-message">
+        {decodeError}
+      </div>
+    {:else if displaySrc}
       <div
         class="transform-layer"
         style="transform: translate({translateX}px, {translateY}px) scale({scale}) rotate({rotation}deg);"
@@ -171,7 +208,7 @@
         <img
           bind:this={imgElement}
           onload={fitToScreen}
-          src={`data:image/png;base64,${base64Data}`}
+          src={displaySrc}
           alt={filename}
           class="viewer-img"
           draggable="false"
@@ -211,6 +248,34 @@
     transform-origin: center center;
     will-change: transform;
     display: flex;
+  }
+
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted-foreground);
+    font-size: 14px;
+  }
+
+  .loading :global(.spin) {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .error-message {
+    color: var(--destructive);
+    background: var(--destructive-foreground);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--destructive);
+    font-size: 14px;
   }
 
   .viewer-img {

@@ -1,5 +1,11 @@
 # Changelog EMLy
 
+# 2.2.0 (2026-08-26)
+1) Aggiunto il supporto alla visualizzazione delle immagini .HEIC e .HEIF (High Efficiency Image Format) come allegati, tramite il visualizzatore di immagini integrato. Ora EMLy può aprire direttamente questi formati senza bisogno di software esterni.
+
+# 2.1.4 (2026-08-26)
+1) Fixato un bug dove, i PC di Campobasso con il nome PC CBXXXX, non erano configurati per superare il controllo di idoneità del dispositivo, causando il blocco dell'apertura delle email. Ora i PC con hostname che inizia con "CBXXXX" sono considerati idonei.
+
 # 2.1.3 (2026-08-25)
 1) Fixato un bug dove, al primo avvio, EMLy si avviava in lingua inglese anche se la lingua di default era impostata su Italiano.
 2) Fixato un bug dove, se il KV delle impostazioni era vuoto o parzialmente presente, EMLy non resettava correttamente le impostazioni mancanti a default, causando crash o comportamenti anomali.
