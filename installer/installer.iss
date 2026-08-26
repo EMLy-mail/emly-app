@@ -1,6 +1,6 @@
 #define ApplicationName 'EMLy'
 #define ApplicationVersion GetVersionNumbersString('EMLy.exe')
-#define ApplicationVersion '2.1.2'
+#define ApplicationVersion '2.1.4'
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

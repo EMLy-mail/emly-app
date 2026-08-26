@@ -1,4 +1,4 @@
-export const hostnameRegex = /^(PCRM|RM)\d+$/;
+export const hostnameRegex = /^(PCRM|RM|CB)\d+$/i;
 
 export const hostnameWhitelist = [
     "STRAN1-PC",
