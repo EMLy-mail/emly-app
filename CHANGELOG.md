@@ -1,5 +1,10 @@
 # Changelog EMLy
 
+# 2.2.1 (2026-08-28)
+1) Cambiato l'URL del server di Bug Report dalla versione cloud alla versione locale.
+2) Velocizzati i tempi di avvio di EMLy.
+3) Piccoli bug report.
+
 # 2.2.0 (2026-08-26)
 1) Aggiunto il supporto alla visualizzazione delle immagini .HEIC e .HEIF (High Efficiency Image Format) come allegati, tramite il visualizzatore di immagini integrato. Ora EMLy può aprire direttamente questi formati senza bisogno di software esterni.
 
