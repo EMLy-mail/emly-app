@@ -7,18 +7,21 @@
     ZoomIn,
     ZoomOut,
     AlignHorizontalSpaceAround,
-    Download
+    Download,
+    Loader2
   } from "@lucide/svelte";
   import { sidebarOpen } from "$lib/stores/app";
   import { toast } from "svelte-sonner";
   import * as m from "$lib/paraglide/messages.js";
   import { logger } from "$lib/utils/logger";
   import { saveAttachmentNatively } from "$lib/utils/attachment-download";
+  import { toDisplayableImageSrc, mimeTypeForFilename } from "$lib/utils/image-decode";
 
   let { data }: { data: PageData } = $props();
 
   let imageData = $state("");
   let filename = $state("");
+  let displaySrc = $state("");
   let rotation = $state(0);
   let scale = $state(1);
   let error = $state("");
@@ -27,19 +30,9 @@
   let translateY = $state(0);
   let imgElement = $state<HTMLImageElement>();
   let containerElement = $state<HTMLDivElement>();
-
-  const MIME_BY_EXT: Record<string, string> = {
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    gif: "image/gif",
-    bmp: "image/bmp",
-    webp: "image/webp",
-  };
-
-  let imageMimeType = $derived(
-    MIME_BY_EXT[filename.split(".").pop()?.toLowerCase() ?? ""] ?? "image/png"
-  );
+  /** Set only for HEIC/HEIF: the converted JPEG to offer on download,
+   *  since most systems can't open the original format directly. */
+  let downloadOverride: { base64: string; filename: string } | undefined;
 
   // Non-reactive state for drag calculations
   let isDragging = false;
@@ -57,6 +50,14 @@
         // Adjust title
         document.title = filename + " - EMLy " + m.image_viewer_title();
         sidebarOpen.set(false);
+
+        const decoded = await toDisplayableImageSrc(
+          imageData,
+          filename,
+          mimeTypeForFilename(filename),
+        );
+        displaySrc = decoded.src;
+        downloadOverride = decoded.download;
       } else {
         logger.warn("image_viewer: no data received");
         toast.error(m.image_error_no_data());
@@ -112,6 +113,11 @@
   }
 
   function downloadImage() {
+    if (downloadOverride) {
+      logger.info("image_viewer: download initiated (converted jpg)", { filename: downloadOverride.filename });
+      void saveAttachmentNatively(downloadOverride.base64, downloadOverride.filename);
+      return;
+    }
     if (!imageData || !filename) return;
     logger.info("image_viewer: download initiated", { filename });
     void saveAttachmentNatively(imageData, filename);
@@ -187,12 +193,15 @@
     aria-label={m.image_viewer_area_label()}
   >
     {#if loading}
-      <div class="loading">{m.layout_loading_text()}</div>
+      <div class="loading">
+        <Loader2 size="20" class="spin" />
+        <span>{m.layout_loading_text()}</span>
+      </div>
     {:else if error}
       <div class="error-message">
         {error}
       </div>
-    {:else if imageData}
+    {:else if displaySrc}
       <div
         class="transform-layer"
         style="transform: translate({translateX}px, {translateY}px) scale({scale}) rotate({rotation}deg);"
@@ -201,7 +210,7 @@
         <img
           bind:this={imgElement}
           onload={fitToScreen}
-          src={`data:${imageMimeType};base64,${imageData}`}
+          src={displaySrc}
           alt={filename}
           class="viewer-img"
           draggable="false"
@@ -312,8 +321,22 @@
   }
 
   .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     color: var(--muted-foreground);
     font-size: 14px;
+  }
+
+  .loading :global(.spin) {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .error-message {

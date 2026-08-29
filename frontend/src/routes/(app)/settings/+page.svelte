@@ -201,6 +201,8 @@
         "gif",
         "webp",
         "tiff",
+        "heic",
+        "heif",
     ];
 
     async function setLanguage(
@@ -1215,6 +1217,8 @@
 
                     <Separator />
 
+                    <!-- Not needed right now, will enable as soon as we have a working build of EMLy Next.-->
+                    {#if false}
                     <SettingsSwitchLabel
                         bind:featureBool={nextChannelSwitchDraft}
                         labelText={m.settings_release_channel_enable_next_label()}
@@ -1225,6 +1229,7 @@
                     />
 
                     <Separator />
+                    {/if}
 
                     <div class="text-xs text-muted-foreground">
                         GUI: {config

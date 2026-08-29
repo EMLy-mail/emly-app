@@ -1,6 +1,6 @@
 #define ApplicationName 'EMLy'
 #define ApplicationVersion GetVersionNumbersString('EMLy.exe')
-#define ApplicationVersion '2.1.4'
+#define ApplicationVersion '2.2.1'
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -93,6 +93,8 @@ Root: HKLM; Subkey: "Software\Classes\.png"; ValueType: string; ValueName: ""; V
 Root: HKLM; Subkey: "Software\Classes\.gif"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
 Root: HKLM; Subkey: "Software\Classes\.bmp"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
 Root: HKLM; Subkey: "Software\Classes\.webp"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.heic"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
+Root: HKLM; Subkey: "Software\Classes\.heif"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName}.IMAGE"; Flags: uninsdeletevalue; Check: IsAdmin()
 
 Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.IMAGE"; ValueType: string; ValueName: ""; ValueData: "{#ApplicationName} Image"; Flags: uninsdeletekey; Check: IsAdmin()
 Root: HKLM; Subkey: "Software\Classes\{#ApplicationName}.IMAGE\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#ApplicationName}.exe,0"; Check: IsAdmin()

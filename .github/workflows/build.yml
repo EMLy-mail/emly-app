@@ -52,7 +52,7 @@ jobs:
           [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\codesign.pfx", $bytes)
 
       - name: Build EMLy
-        run: wails build --devtools --upx
+        run: wails build
 
       - name: Sign EMLy.exe
         shell: pwsh
@@ -73,13 +73,6 @@ jobs:
         if: always()
         shell: pwsh
         run: Remove-Item "$env:RUNNER_TEMP\codesign.pfx" -ErrorAction SilentlyContinue
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: EMLy-windows-amd64
-          path: build/bin/EMLy.exe
-          if-no-files-found: error
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v6
