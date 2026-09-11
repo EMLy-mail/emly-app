@@ -264,7 +264,7 @@ func (a *App) OpenDocument(base64Data string, filename string) error {
 // imageFileExtensions lists the raster image extensions EMLy registers itself
 // as a handler for, so double-clicking one of these in Explorer opens EMLy's
 // built-in image viewer instead of (or alongside) the system default.
-var imageFileExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+var imageFileExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".heic", ".heif"}
 
 // isImageFilePath reports whether path has one of imageFileExtensions.
 func isImageFilePath(path string) bool {

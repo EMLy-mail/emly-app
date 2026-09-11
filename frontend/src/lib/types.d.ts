@@ -1,6 +1,6 @@
 import type { api } from "$lib/wailsjs/go/models";
 
-type SupportedFileTypePreview = "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "tiff";
+type SupportedFileTypePreview = "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "tiff" | "heic" | "heif";
 
 /**
  * Which engine draws PDFs in the built-in viewer.

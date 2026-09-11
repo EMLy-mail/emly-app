@@ -26,6 +26,8 @@
         filePath: string | undefined;
     } = $props();
 
+    $inspect(attachments, "attachments");
+
     // ReadEML/ReadMSG/ReadAuto no longer send attachment bytes up front (see
     // backend/app_mail.go: stripAttachmentData) - a heavy mail used to ship
     // every attachment's bytes across the Wails IPC bridge before the user
@@ -67,27 +69,36 @@
         return false;
     }
 
-    function isSupportedImageType(contentType: string): boolean {
+    function isSupportedImageType(contentType: string, filename: string): boolean {
             let supportedTypes = settingsStore.settings.previewFileSupportedTypes;
-            if (!supportedTypes || !contentType) return false;
+            if (!supportedTypes) return false;
 
-            let normalizedContentType = contentType.toLowerCase().split(";")[0].trim();
+            if (contentType && contentType.startsWith(CONTENT_TYPES.IMAGE)) {
+                let normalizedContentType = contentType.toLowerCase().split(";")[0].trim();
 
-            for (let type of supportedTypes) {
-                if (!type) continue;
+                for (let type of supportedTypes) {
+                    if (!type) continue;
 
-                let normalizedType = type.toLowerCase().trim();
+                    let normalizedType = type.toLowerCase().trim();
 
-                // Allow shorthand entries like "jpg", "jpeg", "png" in settings
-                if (!normalizedType.includes("/")) {
-                    normalizedType = normalizedType === "jpg" ? "image/jpeg" : `image/${normalizedType}`;
-                }
+                    // Allow shorthand entries like "jpg", "jpeg", "png" in settings
+                    if (!normalizedType.includes("/")) {
+                        normalizedType = normalizedType === "jpg" ? "image/jpeg" : `image/${normalizedType}`;
+                    }
 
-                if (normalizedContentType === normalizedType) {
-                    return true;
+                    if (normalizedContentType === normalizedType) {
+                        return true;
+                    }
                 }
             }
-            return false;
+
+            // Fallback to the filename extension: some senders/clients label
+            // image attachments (HEIC in particular) with a generic
+            // content-type such as application/octet-stream instead of the
+            // real image/* type - mirrors the filename-based fallback
+            // already used for PDF/DOC attachments below.
+            const ext = filename.toLowerCase().split(".").pop();
+            return !!ext && supportedTypes.some((type) => type?.toLowerCase().trim() === ext);
         }
 
     async function handleOpenPDF(index: number, filename: string) {
@@ -136,9 +147,6 @@
     <div class="att-list">
         {#if attachments && attachments.length > 0}
             {#each attachments as att, index}
-                {@const isImage = att.contentType.startsWith(
-                    CONTENT_TYPES.IMAGE,
-                )}
                 {@const isPdf =
                     att.contentType === CONTENT_TYPES.PDF ||
                     att.filename.toLowerCase().endsWith(".pdf")}
@@ -154,7 +162,7 @@
                     att.filename.toLowerCase().endsWith(".doc")}
                 {@const isPending = pendingIndex === index}
 
-                {#if isImage && isSupportedImageType(att.contentType)}
+                {#if isSupportedImageType(att.contentType, att.filename)}
                     <button
                         class="att-btn image"
                         class:integrity-blocked={$hostIntegrityFailed}

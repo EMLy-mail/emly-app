@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { EMLy_GUI_Settings, ReleaseChannel } from "$lib/types";
+import type { EMLy_GUI_Settings, ReleaseChannel, SupportedFileTypePreview } from "$lib/types";
 import { getFromLocalStorage, saveToLocalStorage } from "$lib/utils/localStorageHelper";
 import { applyTheme, getStoredTheme } from "$lib/utils/theme";
 import { setLocale } from "$lib/paraglide/runtime";
@@ -12,7 +12,7 @@ export const defaultSettings: EMLy_GUI_Settings = {
     useBuiltinPDFViewer: true,
     pdfRenderer: "builtin",
     useNativePdfToolbar: false,
-    previewFileSupportedTypes: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff"],
+    previewFileSupportedTypes: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "heif"],
     enableAttachedDebuggerProtection: true,
     enableHostIntegrityCheck: true,
     useDarkEmailViewer: true,
@@ -74,6 +74,26 @@ class SettingsStore {
             }
         } else {
             this.wasReset = true;
+        }
+
+        // Migration: ensure heic/heif are present in previewFileSupportedTypes
+        // for existing users whose stored array predates HEIC support (the
+        // shallow merge above means an old stored array fully overrides the
+        // new default, so it would never pick up heic/heif on its own).
+        // Idempotent: after the first run post-upgrade this is a no-op.
+        if (this.settings.previewFileSupportedTypes) {
+            const types = new Set(this.settings.previewFileSupportedTypes);
+            let migrated = false;
+            for (const t of ["heic", "heif"] as const) {
+                if (!types.has(t)) {
+                    types.add(t);
+                    migrated = true;
+                }
+            }
+            if (migrated) {
+                this.settings.previewFileSupportedTypes = Array.from(types).sort() as SupportedFileTypePreview[];
+                this.save();
+            }
         }
 
         // Sync theme from localStorage key used in app.html
