@@ -25,6 +25,21 @@
    * failure only shows up at runtime as "Setting up fake worker failed".
    */
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+  /*
+   * pdf.js loads its decoders and font data over the network rather than
+   * through imports, so it needs a base URL for each group or it guesses and
+   * fails: a scanned fax PDF dies on "JBig2 failed to initialize" and renders
+   * blank. The emly-pdfjs-assets plugin in vite.config.ts is what puts the
+   * files at these paths, in dev and in the build alike.
+   */
+  const PDFJS_ASSET_BASE = "/pdfjs/";
+  const assetUrls = {
+    wasmUrl: `${PDFJS_ASSET_BASE}wasm/`,
+    cMapUrl: `${PDFJS_ASSET_BASE}cmaps/`,
+    standardFontDataUrl: `${PDFJS_ASSET_BASE}standard_fonts/`,
+    iccUrl: `${PDFJS_ASSET_BASE}iccs/`,
+  };
 </script>
 
 <script lang="ts">
@@ -103,7 +118,7 @@
 
     void (async () => {
       try {
-        const loaded = await pdfjs.getDocument({ url }).promise;
+        const loaded = await pdfjs.getDocument({ url, ...assetUrls }).promise;
         if (cancelled) return void loaded.loadingTask.destroy();
 
         // Metadata only, but it has to happen up front: without every page's
