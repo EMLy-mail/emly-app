@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 2.2.2 (2026-09-11)
+1) Fixato un bug del lettore PDF (pdf.js) dove non supportava correttamente alcuni file PDF.
+2) Aggiunto un sistema di attenzione per la gestione degli allegati predefiniti.
+
 # 2.2.1 (2026-08-28)
 1) Cambiato l'URL del server di Bug Report dalla versione cloud alla versione locale.
 2) Velocizzati i tempi di avvio di EMLy.
