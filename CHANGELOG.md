@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+# 2.2.3 (2026-09-17)
+1) Aggiunto supporto ai file TIFF compressi.
+
 # 2.2.2 (2026-09-11)
 1) Fixato un bug del lettore PDF (pdf.js) dove non supportava correttamente alcuni file PDF.
 2) Aggiunto un sistema di attenzione per la gestione degli allegati predefiniti.

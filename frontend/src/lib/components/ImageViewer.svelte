@@ -31,7 +31,7 @@
   let displaySrc = $state("");
   let decoding = $state(true);
   let decodeError = $state("");
-  /** Set only for HEIC/HEIF: the converted JPEG to offer on download,
+  /** Set only for HEIC/HEIF or mislabeled TIFF: the converted JPEG to offer on download,
    *  since most systems can't open the original format directly. */
   let downloadOverride: { base64: string; filename: string } | undefined;
 
@@ -41,7 +41,7 @@
 
   onMount(async () => {
     // Convert to a displayable <img> src: a fast-path data: URI for
-    // regular formats, or a decoded JPEG for HEIC/HEIF (which the browser
+    // regular formats, or a decoded JPEG for HEIC/HEIF/TIFF (which the browser
     // can't render natively).
     try {
       const result = await toDisplayableImageSrc(

@@ -30,7 +30,7 @@
   let translateY = $state(0);
   let imgElement = $state<HTMLImageElement>();
   let containerElement = $state<HTMLDivElement>();
-  /** Set only for HEIC/HEIF: the converted JPEG to offer on download,
+  /** Set only for HEIC/HEIF or mislabeled TIFF: the converted JPEG to offer on download,
    *  since most systems can't open the original format directly. */
   let downloadOverride: { base64: string; filename: string } | undefined;
 
