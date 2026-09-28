@@ -1,5 +1,8 @@
 # Changelog EMLy
 
+# 2.2.4 (2026-09-28)
+1) Aggiunti i PC di Sulmona e le VM di Campobasso alla configurazione dei dispositivi.
+
 # 2.2.3 (2026-09-17)
 1) Aggiunto supporto ai file TIFF compressi.
 
