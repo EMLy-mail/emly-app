@@ -7,6 +7,8 @@
         Loader2,
         Download,
         Info,
+        Copy,
+        Check,
     } from "@lucide/svelte";
     import { dev } from "$app/environment";
     import {
@@ -18,6 +20,7 @@
     import { toast } from "svelte-sonner";
     import {
         BrowserOpenURL,
+        ClipboardSetText,
     } from "$lib/wailsjs/runtime/runtime";
     import { GetAttachmentData } from "$lib/wailsjs/go/main/App";
     import { mailState } from "$lib/stores/mail-state.svelte";
@@ -67,6 +70,8 @@
     let pendingLinkUrl = $state("");
     let disabledLinkClickCount = $state(0);
     let debugModalOpen = $state(false);
+    let copiedField = $state<string | null>(null);
+    let copiedResetTimer: ReturnType<typeof setTimeout> | null = null;
 
     const LINK_HINT_TOAST_ID = "emly-link-hint";
 
@@ -114,6 +119,37 @@
     );
 
     let iframeEl = $state<HTMLIFrameElement | null>(null);
+
+    let formattedDate = $derived(
+        activeEmail?.date
+            ? new Intl.DateTimeFormat(
+                  settingsStore.settings.selectedLanguage === "it"
+                      ? "it-IT"
+                      : "en-GB",
+                  { dateStyle: "full", timeStyle: "long" },
+              ).format(new Date(activeEmail.date))
+            : "",
+    );
+
+    async function copyField(field: string, text: string) {
+        if (!text) return;
+        try {
+            const ok = await ClipboardSetText(text);
+            if (ok === false) throw new Error("ClipboardSetText returned false");
+        } catch {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                console.error("Failed to copy to clipboard:", err);
+                toast.error(m.mail_copy_failed_toast());
+                return;
+            }
+        }
+        copiedField = field;
+        if (copiedResetTimer) clearTimeout(copiedResetTimer);
+        copiedResetTimer = setTimeout(() => (copiedField = null), 1500);
+        toast.success(m.mail_copied_toast());
+    }
 
     // ============================================================================
     // Event Handlers
@@ -367,6 +403,12 @@
                                 {activeEmail.subject ||
                                     m.mail_subject_no_subject()}
                             </div>
+                            {#if activeEmail.subject}
+                                {@render copyButton(
+                                    "subject",
+                                    activeEmail.subject,
+                                )}
+                            {/if}
                             {#if dev || $runningInDebugMode}
                                 <button
                                     class="debug-info-btn"
@@ -418,26 +460,44 @@
                     <!-- Meta Grid -->
                     <div class="email-meta-grid">
                         <span class="label">{m.mail_from()}</span>
-                        <span class="value">{activeEmail.from}</span>
+                        <span class="value"
+                            ><span class="value-text">{activeEmail.from}</span
+                            >{@render copyButton("from", activeEmail.from)}</span
+                        >
 
                         {#if activeEmail.to && activeEmail.to.length > 0}
                             <span class="label">{m.mail_to()}</span>
                             <span class="value"
-                                >{activeEmail.to.join(", ")}</span
+                                ><span class="value-text"
+                                    >{activeEmail.to.join(", ")}</span
+                                >{@render copyButton(
+                                    "to",
+                                    activeEmail.to.join(", "),
+                                )}</span
                             >
                         {/if}
 
                         {#if activeEmail.cc && activeEmail.cc.length > 0}
                             <span class="label">{m.mail_cc()}</span>
                             <span class="value"
-                                >{activeEmail.cc.join(", ")}</span
+                                ><span class="value-text"
+                                    >{activeEmail.cc.join(", ")}</span
+                                >{@render copyButton(
+                                    "cc",
+                                    activeEmail.cc.join(", "),
+                                )}</span
                             >
                         {/if}
 
                         {#if activeEmail.bcc && activeEmail.bcc.length > 0}
                             <span class="label">{m.mail_bcc()}</span>
                             <span class="value"
-                                >{activeEmail.bcc.join(", ")}</span
+                                ><span class="value-text"
+                                    >{activeEmail.bcc.join(", ")}</span
+                                >{@render copyButton(
+                                    "bcc",
+                                    activeEmail.bcc.join(", "),
+                                )}</span
                             >
                         {/if}
 
@@ -456,21 +516,13 @@
 
                         {#if activeEmail.date}
                             <span class="label">{m.mail_date()}</span>
-                            {#if settingsStore.settings.selectedLanguage === "it"}
-                                <span class="value"
-                                    >{new Intl.DateTimeFormat("it-IT", {
-                                        dateStyle: "full",
-                                        timeStyle: "long",
-                                    }).format(new Date(activeEmail.date))}</span
-                                >
-                            {:else}
-                                <span class="value"
-                                    >{new Intl.DateTimeFormat("en-GB", {
-                                        dateStyle: "full",
-                                        timeStyle: "long",
-                                    }).format(new Date(activeEmail.date))}</span
-                                >
-                            {/if}
+                            <span class="value"
+                                ><span class="value-text">{formattedDate}</span
+                                >{@render copyButton(
+                                    "date",
+                                    formattedDate,
+                                )}</span
+                            >
                         {/if}
                     </div>
                 </div>
@@ -509,6 +561,22 @@
         {/if}
     </div>
 </div>
+
+{#snippet copyButton(field: string, text: string)}
+    <button
+        class="copy-btn"
+        class:copied={copiedField === field}
+        onclick={() => copyField(field, text)}
+        title={m.mail_copy_btn_title()}
+        aria-label={m.mail_copy_btn_title()}
+    >
+        {#if copiedField === field}
+            <Check size="12" />
+        {:else}
+            <Copy size="12" />
+        {/if}
+    </button>
+{/snippet}
 
 <style>
     .loading-overlay {
@@ -656,6 +724,39 @@
         color: var(--foreground);
         word-break: break-all;
         font-weight: 500;
+    }
+
+    .copy-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        margin-left: 6px;
+        padding: 0;
+        vertical-align: middle;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        flex-shrink: 0;
+        opacity: 0.6;
+        transition:
+            opacity 0.15s,
+            background 0.15s,
+            color 0.15s;
+    }
+
+    .copy-btn:hover {
+        opacity: 1;
+        background: var(--muted);
+        color: var(--foreground);
+    }
+
+    .copy-btn.copied {
+        opacity: 1;
+        color: #22c55e;
     }
 
     .email-body-wrapper {

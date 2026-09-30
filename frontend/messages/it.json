@@ -423,5 +423,8 @@
   "mail_file_external_app_opening_toast": "Apertura file...",
   "settings_reset_dialog_title": "Impostazioni ripristinate",
   "settings_reset_dialog_description": "Alcune impostazioni sono state riportate al valore predefinito perché non erano più utilizzabili:",
-  "settings_reset_dialog_confirm": "Ho capito"
+  "settings_reset_dialog_confirm": "Ho capito",
+  "mail_copy_btn_title": "Copia negli appunti",
+  "mail_copied_toast": "Copiato negli appunti",
+  "mail_copy_failed_toast": "Errore durante la copia negli appunti"
 }

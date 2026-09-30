@@ -1,5 +1,9 @@
 # Changelog EMLy
 
+# 2.2.5 (2026-09-30)
+1) Aggiunti i PC di Chieti alla configurazione dei dispositivi.
+2) Aggiunti i pulsanti per copiare indirizzi A, CC, CCN, Oggetto e Data mail.
+
 # 2.2.4 (2026-09-28)
 1) Aggiunti i PC di Sulmona e le VM di Campobasso alla configurazione dei dispositivi.
 

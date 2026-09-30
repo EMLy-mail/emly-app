@@ -423,5 +423,8 @@
   "mail_file_external_app_opening_toast": "Opening file...",
   "settings_reset_dialog_title": "Settings restored",
   "settings_reset_dialog_description": "Some settings were restored to their default value because they could no longer be used:",
-  "settings_reset_dialog_confirm": "Understood"
+  "settings_reset_dialog_confirm": "Understood",
+  "mail_copy_btn_title": "Copy to clipboard",
+  "mail_copied_toast": "Copied to clipboard",
+  "mail_copy_failed_toast": "Error while copying to clipboard"
 }
