@@ -7,7 +7,7 @@ import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
 import { settingsStore } from '$lib/stores/settings.svelte.js';
 import { hostIntegrityFailed, hostIntegrityStanding } from '$lib/stores/app';
 import { updaterStatusStore } from '$lib/stores/updater-status.svelte.js';
-import { evaluateHostname, loadIntegrityOverride, isInsideTREGCCADDomain, deriveHostIntegrityStanding } from './hostIntegrity';
+import { evaluateHostname, isInsideTREGCCADDomain, deriveHostIntegrityStanding } from './hostIntegrity';
 import { logIPCRequest, logIPCResponse, logIPCError } from './ipcLog';
 import { LogDebug } from '$lib/wailsjs/runtime/runtime';
 
@@ -45,7 +45,6 @@ export function ensureHostIntegrityChecked(): Promise<boolean> {
       const machineInfo = systemInfoStore.data;
       if (!machineInfo) return false;
 
-      await loadIntegrityOverride();
       const hostnameOk = evaluateHostname(machineInfo.Hostname);
       const domainOk = isInsideTREGCCADDomain(machineInfo.ADDomain);
       const failed = !hostnameOk || !domainOk;

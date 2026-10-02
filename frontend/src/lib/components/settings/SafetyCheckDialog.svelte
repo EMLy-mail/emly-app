@@ -22,7 +22,6 @@
     import { updaterStatusStore } from "$lib/stores/updater-status.svelte.js";
     import {
         evaluateHostname,
-        loadIntegrityOverride,
         isInsideTREGCCADDomain,
         deriveHostIntegrityStanding,
         type HostIntegrityStanding,
@@ -62,7 +61,6 @@
             const hostname = machineData?.Hostname ?? "";
             const adDomain = machineData?.ADDomain ?? "";
 
-            await loadIntegrityOverride();
             const hostnameOk = evaluateHostname(hostname);
             const adDomainOk = isInsideTREGCCADDomain(adDomain);
 

@@ -284,10 +284,6 @@ export function IsAppInDebugMode() {
   return window['go']['main']['App']['IsAppInDebugMode']();
 }
 
-export function IsHostIntegrityIgnored() {
-  return window['go']['main']['App']['IsHostIntegrityIgnored']();
-}
-
 /**
  * IsDebuggerRunning checks if a debugger is attached to the application.
  * Used for anti-debugging protection in production builds.

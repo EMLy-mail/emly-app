@@ -278,13 +278,6 @@ func (a *App) GetExtendedMachineData() (*utils.ExtendedMachineInfo, error) {
 	return data, nil
 }
 
-// IsHostIntegrityIgnored reports whether the EMLY_TEMP_IGNORE_INTEGRITY
-// environment variable is set to "1", in which case the hostname integrity
-// check must always pass.
-func (a *App) IsHostIntegrityIgnored() bool {
-	return strings.TrimSpace(os.Getenv("EMLY_TEMP_IGNORE_INTEGRITY")) == "1"
-}
-
 // IsDebuggerRunning checks if a debugger is attached to the application.
 // Used for anti-debugging protection in production builds.
 func (a *App) IsDebuggerRunning() bool {
