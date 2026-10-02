@@ -247,7 +247,7 @@
             enableHostIntegrityCheck:
                 s.enableHostIntegrityCheck ??
                 defaultSettings.enableHostIntegrityCheck ??
-                true,
+                false,
             useDarkEmailViewer:
                 s.useDarkEmailViewer ?? defaultSettings.useDarkEmailViewer ?? true,
             showSidebar: s.showSidebar ?? defaultSettings.showSidebar ?? true,

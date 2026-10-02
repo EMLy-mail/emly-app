@@ -14,7 +14,7 @@ export const defaultSettings: EMLy_GUI_Settings = {
     useNativePdfToolbar: false,
     previewFileSupportedTypes: ["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "heic", "heif"],
     enableAttachedDebuggerProtection: true,
-    enableHostIntegrityCheck: true,
+    enableHostIntegrityCheck: false,
     useDarkEmailViewer: true,
     showSidebar: true,
     reduceMotion: false,
