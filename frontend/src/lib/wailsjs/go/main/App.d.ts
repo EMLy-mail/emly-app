@@ -237,6 +237,8 @@ export function ImportSettings():Promise<string>;
 
 export function IsAppInDebugMode():Promise<boolean>;
 
+export function IsHostIntegrityIgnored():Promise<boolean>;
+
 /**
  * IsDebuggerRunning checks if a debugger is attached to the application.
  * Used for anti-debugging protection in production builds.

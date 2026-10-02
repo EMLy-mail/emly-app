@@ -1,3 +1,5 @@
+import { IsHostIntegrityIgnored } from '$lib/wailsjs/go/main/App';
+
 export const hostnameRegex = /^(PCRM|RM|CB|VMCB|SU|CH)\d+$/i;
 
 export const hostnameWhitelist = [
@@ -28,7 +30,23 @@ export const isDevMachine = (hostname: string, adDomain: string): boolean => {
     }
 }
 
+// Set from the EMLY_TEMP_IGNORE_INTEGRITY env var (=1) on the backend.
+// When true, the hostname check always passes.
+let ignoreHostnameIntegrity = false;
+
+export const loadIntegrityOverride = async (): Promise<void> => {
+    try {
+        ignoreHostnameIntegrity = await IsHostIntegrityIgnored();
+    } catch {
+        ignoreHostnameIntegrity = false;
+    }
+}
+
 export const evaluateHostname = (hostname: string): boolean => {
+    if (ignoreHostnameIntegrity) {
+        return true;
+    }
+
     if (hostnameWhitelist.includes(hostname)) {
         return true;
     }
