@@ -1,5 +1,11 @@
 # Changelog EMLy
 
+# 2.2.7 (2026-10-01)
+1) Disattivato il controllo di integrità di default.
+
+# 2.2.6 (2026-10-01)
+1) Messa una env varibile per disattivare temporaneamente il controllo di integrità dell'hostname.
+
 # 2.2.5 (2026-09-30)
 1) Aggiunti i PC di Chieti alla configurazione dei dispositivi.
 2) Aggiunti i pulsanti per copiare indirizzi A, CC, CCN, Oggetto e Data mail.
