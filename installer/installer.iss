@@ -34,6 +34,16 @@ DisableProgramGroupPage=yes
 ; No elevation is requested — non-admin users can update once the directory
 ; and its ACLs have been created by the initial admin install.
 PrivilegesRequired=lowest
+; Aryx Agent, which updates EMLy as SYSTEM, passes /ALLUSERS: the install is
+; then registered machine-wide (HKLM uninstall key, Programs and Features for
+; every user) instead of in SYSTEM's own HKCU, where nobody saw it and where it
+; competed with each user's own registration of the same folder - several
+; Inno registrations, one unins000.exe. Without /ALLUSERS (a user running the
+; setup by hand) nothing changes: per-user mode, no UAC.
+PrivilegesRequiredOverridesAllowed=commandline
+; Otherwise a previous /ALLUSERS install would switch a user's manual update to
+; administrative mode, i.e. a UAC prompt a standard user cannot answer.
+UsePreviousPrivileges=no
 SetupIconFile=..\build\windows\icon.ico
 UninstallDisplayIcon={app}\{#ApplicationName}.exe
 AppVerName={#ApplicationName} {#ApplicationVersion}
@@ -54,6 +64,13 @@ Source: "..\build\bin\{#ApplicationName}.exe"; DestDir: "{app}"; Flags: ignoreve
 Source: "..\config.ini"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
+; Before /ALLUSERS, Aryx Agent's installs (as SYSTEM, per-user mode) left their
+; uninstall entry in SYSTEM's own HKCU, which no user sees and which kept the
+; last version the agent installed before this change. An administrative
+; install registers in HKLM instead, so it removes that stale entry; only an
+; administrative install has the rights to.
+Root: HKU; Subkey: "S-1-5-18\Software\Microsoft\Windows\CurrentVersion\Uninstall\{#ApplicationName}_is1"; ValueType: none; Flags: deletekey; Check: IsAdminInstallMode
+
 ; File associations are written to HKLM (machine-wide) only when the installer
 ; runs as administrator. On subsequent non-admin updates, IsAdmin() returns False
 ; and these entries are skipped — the HKLM keys from the first install remain.
