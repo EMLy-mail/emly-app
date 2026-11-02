@@ -10,7 +10,7 @@
         Copy,
         Check,
     } from "@lucide/svelte";
-    import { dev } from "$app/environment";
+    import { dev } from "$app/env";
     import {
         sidebarOpen,
         runningInDebugMode,

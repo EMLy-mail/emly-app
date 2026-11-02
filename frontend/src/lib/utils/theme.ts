@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 
 const THEME_KEY = "emly_theme";
 

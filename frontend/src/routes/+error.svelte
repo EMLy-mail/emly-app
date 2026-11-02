@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from "$app/state";
     import * as m from "#lib/paraglide/messages.js";
-    import { dev } from "$app/environment";
+    import { dev } from "$app/env";
     import { Quit } from "#lib/wailsjs/runtime/runtime.js";
     import { GetLogsDir, OpenFolderInExplorer } from "#lib/wailsjs/go/main/App.js";
     import TitleBar from "#lib/components/TitleBar.svelte";

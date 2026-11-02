@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { browser } from "$app/environment";
+    import { browser } from "$app/env";
     import { page, navigating } from "$app/state";
     import { beforeNavigate, goto } from "$app/navigation";
     import { locales, localizeHref } from "#lib/paraglide/runtime.js";
@@ -19,7 +19,7 @@
     import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
     import AppSidebar from "#lib/components/SidebarApp.svelte";
     import * as Sidebar from "#lib/components/ui/sidebar/index.js";
-    import { dev } from "$app/environment";
+    import { dev } from "$app/env";
     import {
         PanelRightClose,
         PanelRightOpen,

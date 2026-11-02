@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { browser } from "$app/environment";
+    import { browser } from "$app/env";
     import { goto } from "$app/navigation";
     import { Button } from "#lib/components/ui/button/index.js";
     import * as Card from "#lib/components/ui/card/index.js";
@@ -38,7 +38,7 @@
     import * as m from "#lib/paraglide/messages.js";
     import { setLocale } from "#lib/paraglide/runtime.js";
     import { mailState } from "#lib/stores/mail-state.svelte.js";
-    import { dev } from "$app/environment";
+    import { dev } from "$app/env";
     import {
         ReloadConfig,
         ShowOpenFolderDialog,

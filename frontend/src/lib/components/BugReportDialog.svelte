@@ -22,8 +22,8 @@
         OpenFolderInExplorer,
         GetConfig,
     } from "#lib/wailsjs/go/main/App.js";
-    import { browser } from "$app/environment";
-    import { dev } from "$app/environment";
+    import { browser } from "$app/env";
+    import { dev } from "$app/env";
     import { systemInfoStore } from "#lib/stores/system-info.svelte.js";
 
     // Bug report form state

@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import { GetConfig } from "#lib/wailsjs/go/main/App.js";
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import type { utils } from '#lib/wailsjs/go/models.js';
 import {
     CONTRIBUTOR_ASSIGNMENTS,

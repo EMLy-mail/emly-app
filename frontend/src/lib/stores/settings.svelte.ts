@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import type { EMLy_GUI_Settings, ReleaseChannel, SupportedFileTypePreview } from "#lib/types.js";
 import { getFromLocalStorage, saveToLocalStorage } from "#lib/utils/localStorageHelper.js";
 import { applyTheme, getStoredTheme } from "#lib/utils/theme.js";
