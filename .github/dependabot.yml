@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # The frontend is managed by bun (see wails.json), so Dependabot must use the
+  # "bun" ecosystem: "npm_and_yarn" cannot update bun.lock.
+  - package-ecosystem: "bun"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    # Only security updates: scheduled version updates are disabled.
+    # Remove this line to also get regular version-update PRs.
+    open-pull-requests-limit: 0
