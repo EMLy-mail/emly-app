@@ -18,7 +18,7 @@ EMLy is a lightweight, cross-platform desktop email viewer built with [Wails v2]
 | Layer | Technology |
 |-------|-----------|
 | Backend | Go 1.27, Wails v2.17 |
-| Frontend | SvelteKit, Svelte 5 (Runes), TypeScript |
+| Frontend | SvelteKit 3, Svelte 5 (Runes), TypeScript 6 |
 | UI | shadcn-svelte, Tailwind CSS, Lucide Icons |
 | i18n | ParaglideJS |
 | Package manager | Bun |
