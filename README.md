@@ -84,6 +84,7 @@ EMLy no longer ships a built-in update checker/installer. Version rollout is han
 
 This project backports features onto the pinned Wails v2.17.1 that aren't in that release yet:
 
+- `patches/wails-v2-jsdoc-bindings.patch` - makes the generated `wailsjs` bindings use the real Go parameter names (instead of `arg1`, `arg2`, ...) and carry each bound method's Go doc comment as JSDoc, so `App.d.ts`/`App.js` are self-documenting.
 - `patches/wails-v2-opendevtools.patch` - a `WindowOpenDevTools` runtime call (exposed on `App` as `OpenDevTools()`) that programmatically opens the WebView2 DevTools window, since v2 only exposes this via the F12 shortcut. Backported from Wails v3.
 
 Each change lives as a patch, not a fork, so it never needs to be manually re-applied against a re-pulled copy of Wails:
