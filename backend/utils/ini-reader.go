@@ -28,7 +28,6 @@ type EMLyConfig struct {
 	BugReportAPIKey          string `ini:"BUGREPORT_API_KEY"`
 	LogLevel                 string `ini:"LOG_LEVEL"`
 	ExportAttachmentFolder   string `ini:"EXPORT_ATTACHMENT_FOLDER"`
-	DisableTrayIcon          bool   `ini:"DISABLE_TRAY_ICON"`
 
 	// LogStartupTrace enables the plain-text startup-trace.log (see
 	// backend/logger/trace.go) - off by default, since it's a diagnostic
@@ -95,7 +94,7 @@ func LoadConfig(path string) (*Config, error) {
 // fatalInvalidGUIVersion shows a native Win32 error messagebox and
 // terminates the process. LoadConfig is called both before Wails starts
 // (main.go, before wails.Run) and from every runtime reload/binding call
-// (Settings, tray, heartbeat), so a Wails context.Context isn't always
+// (Settings, heartbeat), so a Wails context.Context isn't always
 // available — hence a native dialog instead of runtime.MessageDialog.
 // Reuses the user32.dll handle already opened in screenshot_windows.go.
 func fatalInvalidGUIVersion(version string) {

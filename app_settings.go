@@ -172,7 +172,7 @@ var validReleaseChannels = map[string]bool{
 // SetGUIReleaseChannel updates the GUI_RELEASE_CHANNEL setting in config.ini.
 // The value is validated here rather than trusted from the frontend, since an
 // unknown channel written to config.ini would survive restarts and be read
-// back by everything that consumes the config (updater, tray, about screens).
+// back by everything that consumes the config (updater, about screens).
 //
 // Parameters:
 //   - channel: one of "stable", "beta" or "next"
@@ -196,31 +196,9 @@ func (a *App) SetGUIReleaseChannel(channel string) error {
 	return nil
 }
 
-// SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
-// The system tray icon is only created at startup (see main.go), so this
-// takes effect after the next restart (see RestartApp).
-//
-// Parameters:
-//   - enabled: whether the system tray icon should be shown on next startup
-//
-// Returns:
-//   - error: Error if loading or saving config fails
-func (a *App) SetTrayIconEnabled(enabled bool) error {
-	config := a.GetConfig()
-	if config == nil {
-		return fmt.Errorf("failed to load config")
-	}
-	config.EMLy.DisableTrayIcon = !enabled
-	if err := a.SaveConfig(config); err != nil {
-		return fmt.Errorf("failed to save config: %w", err)
-	}
-	return nil
-}
-
 // SetLogStartupTrace updates the LOG_STARTUP_TRACE setting in config.ini.
 // The trace file is only opened at process startup (see main.go), so this
-// takes effect after the next restart (see RestartApp) - same as the tray
-// icon toggle above.
+// takes effect after the next restart (see RestartApp).
 //
 // Parameters:
 //   - enabled: whether startup-trace.log should be written on next startup
@@ -243,7 +221,7 @@ func (a *App) SetLogStartupTrace(enabled bool) error {
 // config.ini - an escape hatch back to the pre-fix behaviour of sending
 // every attachment's full bytes in the initial mail parse response (see
 // oldAttachmentPreloadEnabled in app_mail.go), kept only for experiments
-// and regression testing. Unlike the tray icon and startup trace toggles,
+// and regression testing. Unlike the startup trace toggle,
 // this is read fresh on every ReadEML/ReadMSG/ReadPEC/ReadAuto call, so it
 // takes effect immediately - no restart needed.
 //

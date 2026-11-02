@@ -20,9 +20,6 @@ import (
 //go:embed all:frontend/build
 var assets embed.FS
 
-//go:embed build/windows/icon.ico
-var trayIconICO []byte
-
 func main() {
 	// Taken before anything else so the startup trace (see below) covers
 	// the true process start, not just the point config/logger setup happens
@@ -82,8 +79,7 @@ func main() {
 	// Off by default (LOG_STARTUP_TRACE in config.ini / Settings → Danger
 	// Zone → "Log startup trace") - it's a diagnostic tool for slow-open
 	// investigations, not something every install needs writing to disk on
-	// every launch. Takes effect on next restart, like the tray icon toggle
-	// below.
+	// every launch. Takes effect on next restart.
 	logStartupTrace := false
 	if cfg, err := utils.LoadConfig(utils.DefaultConfigPath()); err == nil && cfg != nil {
 		logStartupTrace = cfg.EMLy.LogStartupTrace
@@ -143,26 +139,6 @@ func main() {
 		MinHeight:                690,
 		Frameless:                frameless,
 		OnBeforeClose:            app.beforeClose,
-	}
-
-	// The tray icon only makes sense on the main window; standalone image/PDF
-	// viewer windows close normally when the user closes them. It can also be
-	// turned off entirely from the settings danger zone (DISABLE_TRAY_ICON in
-	// config.ini), which takes effect on the next restart.
-	trayIconEnabled := true
-	if cfg, err := utils.LoadConfig(utils.DefaultConfigPath()); err == nil && cfg != nil {
-		trayIconEnabled = !cfg.EMLy.DisableTrayIcon
-	}
-
-	if isMainWindow && trayIconEnabled {
-		if iconBase64, err := trayIconBase64(trayIconICO, 32); err != nil {
-			pkglogger.Error("failed to prepare tray icon", "error", err.Error())
-		} else {
-			app.trayIconBase64 = iconBase64
-			app.trayVisible = true // the main window starts shown
-			appOptions.Tray = app.buildTrayMenu()
-			appOptions.HideWindowOnClose = true
-		}
 	}
 
 	pkglogger.TraceStep("wails_run_starting")

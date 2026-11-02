@@ -541,7 +541,6 @@ export namespace utils {
 	    BugReportAPIKey: string;
 	    LogLevel: string;
 	    ExportAttachmentFolder: string;
-	    DisableTrayIcon: boolean;
 	    LogStartupTrace: boolean;
 	    OldAttachmentPreload: boolean;
 	
@@ -560,7 +559,6 @@ export namespace utils {
 	        this.BugReportAPIKey = source["BugReportAPIKey"];
 	        this.LogLevel = source["LogLevel"];
 	        this.ExportAttachmentFolder = source["ExportAttachmentFolder"];
-	        this.DisableTrayIcon = source["DisableTrayIcon"];
 	        this.LogStartupTrace = source["LogStartupTrace"];
 	        this.OldAttachmentPreload = source["OldAttachmentPreload"];
 	    }

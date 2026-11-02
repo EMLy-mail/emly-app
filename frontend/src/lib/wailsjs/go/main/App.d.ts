@@ -494,7 +494,7 @@ export function SetExportAttachmentFolder(folderPath:string):Promise<void>;
  * SetGUIReleaseChannel updates the GUI_RELEASE_CHANNEL setting in config.ini.
  * The value is validated here rather than trusted from the frontend, since an
  * unknown channel written to config.ini would survive restarts and be read
- * back by everything that consumes the config (updater, tray, about screens).
+ * back by everything that consumes the config (updater, about screens).
  * 
  * Parameters:
  *   - channel: one of "stable", "beta" or "next"
@@ -507,8 +507,7 @@ export function SetGUIReleaseChannel(channel:string):Promise<void>;
 /**
  * SetLogStartupTrace updates the LOG_STARTUP_TRACE setting in config.ini.
  * The trace file is only opened at process startup (see main.go), so this
- * takes effect after the next restart (see RestartApp) - same as the tray
- * icon toggle above.
+ * takes effect after the next restart (see RestartApp).
  * 
  * Parameters:
  *   - enabled: whether startup-trace.log should be written on next startup
@@ -523,7 +522,7 @@ export function SetLogStartupTrace(enabled:boolean):Promise<void>;
  * config.ini - an escape hatch back to the pre-fix behaviour of sending
  * every attachment's full bytes in the initial mail parse response (see
  * oldAttachmentPreloadEnabled in app_mail.go), kept only for experiments
- * and regression testing. Unlike the tray icon and startup trace toggles,
+ * and regression testing. Unlike the startup trace toggle,
  * this is read fresh on every ReadEML/ReadMSG/ReadPEC/ReadAuto call, so it
  * takes effect immediately - no restart needed.
  * 
@@ -534,19 +533,6 @@ export function SetLogStartupTrace(enabled:boolean):Promise<void>;
  *   - error: Error if loading or saving config fails
  */
 export function SetOldAttachmentPreload(enabled:boolean):Promise<void>;
-
-/**
- * SetTrayIconEnabled updates the DISABLE_TRAY_ICON setting in config.ini.
- * The system tray icon is only created at startup (see main.go), so this
- * takes effect after the next restart (see RestartApp).
- * 
- * Parameters:
- *   - enabled: whether the system tray icon should be shown on next startup
- * 
- * Returns:
- *   - error: Error if loading or saving config fails
- */
-export function SetTrayIconEnabled(enabled:boolean):Promise<void>;
 
 /**
  * ShowOpenFileDialog displays the system file picker dialog filtered for email files.

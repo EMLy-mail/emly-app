@@ -44,7 +44,6 @@
         ShowOpenFolderDialog,
         SetExportAttachmentFolder,
         CheckFolderWritable,
-        SetTrayIconEnabled,
         SetLogStartupTrace,
         SetOldAttachmentPreload,
         SetGUIReleaseChannel,
@@ -73,8 +72,6 @@
     let reloadingConfig = $state(false);
     let exportFolder = $state("");
     let savingExportFolder = $state(false);
-    let trayIconEnabled = $state(true);
-    let savingTrayIcon = $state(false);
     let logStartupTraceEnabled = $state(false);
     let savingLogStartupTrace = $state(false);
     let oldAttachmentPreloadEnabled = $state(false);
@@ -82,10 +79,6 @@
 
     $effect(() => {
         exportFolder = config?.ExportAttachmentFolder ?? "";
-    });
-
-    $effect(() => {
-        trayIconEnabled = !(config?.DisableTrayIcon ?? false);
     });
 
     $effect(() => {
@@ -99,20 +92,6 @@
     $effect(() => {
         $inspect("data", data)
     })
-
-    async function toggleTrayIcon(checked: boolean) {
-        savingTrayIcon = true;
-        try {
-            await SetTrayIconEnabled(checked);
-            trayIconEnabled = checked;
-            toast.success(m.settings_danger_tray_icon_saved());
-        } catch (e) {
-            console.error("Failed to set tray icon enabled", e);
-            toast.error(m.settings_danger_tray_icon_save_error());
-        } finally {
-            savingTrayIcon = false;
-        }
-    }
 
     async function toggleLogStartupTrace(checked: boolean) {
         savingLogStartupTrace = true;
@@ -915,30 +894,6 @@
                             >
                                 {m.settings_danger_devtools_btn_label()}
                             </Button>
-                    </div>
-                    <Separator />
-                    <div
-                        class="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-card p-4"
-                    >
-                        <div class="space-y-1">
-                            <Label class="text-sm"
-                                >{m.settings_danger_tray_icon_label()}</Label
-                            >
-                            <div class="text-sm text-muted-foreground">
-                                {m.settings_danger_tray_icon_hint()}
-                            </div>
-                            <div class="text-xs text-muted-foreground">
-                                <strong>{m.settings_danger_tray_icon_info()}</strong>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <Switch
-                                checked={trayIconEnabled}
-                                class="cursor-pointer hover:cursor-pointer"
-                                disabled={savingTrayIcon}
-                                onCheckedChange={toggleTrayIcon}
-                            />
-                        </div>
                     </div>
                     <Separator />
                     <div

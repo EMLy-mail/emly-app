@@ -8,7 +8,7 @@
 flowchart TD
     A["main.go: main()"] --> B["InitLogger + LoadConfig (solo per GUISemver/User-Agent)"]
     B --> C["Scan os.Args #1: --view-image / --view-pdf?"]
-    C -->|si| D["Modalita viewer: uniqueId per-file, no tray, isMainWindow=false"]
+    C -->|si| D["Modalita viewer: uniqueId per-file, isMainWindow=false"]
     C -->|no| E["Modalita main window"]
     D --> F["NewApp(userAgent)"]
     E --> F
@@ -17,11 +17,7 @@ flowchart TD
     G -->|no| I["StartupFilePath vuoto"]
     H --> J["options.App: AssetServer, Bind App, SingleInstanceLock, OnBeforeClose"]
     I --> J
-    J --> K{"Main window?"}
-    K -->|si| L["Setup tray (se non disabilitato via config)"]
-    K -->|no| M["Skip tray"]
-    L --> N["wails.Run(appOptions)"]
-    M --> N
+    J --> N["wails.Run(appOptions)"]
     N --> O{"Altra istanza gia attiva con stesso uniqueId?"}
     O -->|si| P["Handoff args a istanza esistente via OnSecondInstanceLaunch, processo corrente esce"]
     O -->|no| Q["App.startup(ctx)"]
@@ -53,7 +49,7 @@ flowchart TD
     end
 
     subgraph C["C. Second-instance (EMLy gia aperto)"]
-        C1["Nuova istanza rileva SingleInstanceLock attivo"] --> C2["onSecondInstanceLaunch (tray.go, processo ORIGINALE)"]
+        C1["Nuova istanza rileva SingleInstanceLock attivo"] --> C2["onSecondInstanceLaunch (app_instance.go, processo ORIGINALE)"]
         C2 --> C3["bringToForeground() + EventsEmit 'launchArgs'"]
         C3 --> C4["Listener a livello pagina in (app)/+page.svelte riceve args"]
         C4 --> C5["loadEmailFromPath(primo path valido)"]
@@ -198,7 +194,7 @@ sequenceDiagram
 
     OS->>MainProc: doppio click file2.eml (istanza gia attiva)
     MainProc->>MainProc: SingleInstanceLock rileva conflitto uniqueId
-    MainProc->>MainProc: onSecondInstanceLaunch(args) [tray.go]
+    MainProc->>MainProc: onSecondInstanceLaunch(args) [app_instance.go]
     MainProc->>MainProc: bringToForeground() (unminimize, AlwaysOnTop toggle)
     MainProc->>Page: EventsEmit("launchArgs", args)
     Note over Page: Listener registrato UNA VOLTA a livello pagina,<br/>non per singolo tab - funziona anche se<br/>un tab PDF/immagine ha il focus
