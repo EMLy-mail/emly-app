@@ -17,7 +17,7 @@ EMLy is a lightweight, cross-platform desktop email viewer built with [Wails v2]
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Go 1.26, Wails v2.12 |
+| Backend | Go 1.27, Wails v2.17 |
 | Frontend | SvelteKit, Svelte 5 (Runes), TypeScript |
 | UI | shadcn-svelte, Tailwind CSS, Lucide Icons |
 | i18n | ParaglideJS |
@@ -82,7 +82,7 @@ EMLy no longer ships a built-in update checker/installer. Version rollout is han
 
 ## Wails v2 Patches
 
-This project backports features onto the pinned Wails v2.12.0 that aren't in that release yet:
+This project backports features onto the pinned Wails v2.17.1 that aren't in that release yet:
 
 - `patches/wails-v2-opendevtools.patch` - a `WindowOpenDevTools` runtime call (exposed on `App` as `OpenDevTools()`) that programmatically opens the WebView2 DevTools window, since v2 only exposes this via the F12 shortcut. Backported from Wails v3.
 

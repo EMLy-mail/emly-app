@@ -55,7 +55,7 @@ EMLy is built using the **Wails v2** framework, which combines a Go backend with
 ## Technology Stack
 
 ### Backend
-- **Go 1.21+**: Primary backend language
+- **Go 1.27+**: Primary backend language
 - **Wails v2**: Desktop application framework
 - **Windows Registry API**: For checking default file handlers
 - **GDI/User32 APIs**: For screenshot functionality
@@ -912,7 +912,7 @@ UPDATE_AUTO_CHECK="true"         # Check on startup
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.27+
 - Node.js 18+ or Bun
 - Wails CLI v2
 

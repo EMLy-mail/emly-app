@@ -1,16 +1,42 @@
---- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
-@@ -167,6 +167,7 @@
- 	WindowIsFullscreen() bool
- 	WindowClose()
- 	WindowPrint()
-+	WindowOpenDevTools()
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
+index a92a00e..6e1ed4e 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
+@@ -215,6 +215,12 @@ func (f *Frontend) WindowReloadApp() {
+ 	f.ExecJS(fmt.Sprintf("window.location.href = '%s';", f.startURL))
+ }
  
- 	// Screen
- 	ScreenGetAll() ([]Screen, error)
++// WindowOpenDevTools is a no-op on macOS: WKWebView's inspector is toggled
++// natively (Option-click / Safari's Develop menu), there is no programmatic
++// open API exposed here. Kept for Frontend interface parity with Windows.
++func (f *Frontend) WindowOpenDevTools() {
++}
++
+ func (f *Frontend) WindowSetSystemDefaultTheme() {
+ }
+ 
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
+index dca5606..238e02a 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
+@@ -278,6 +278,12 @@ func (f *Frontend) WindowReload() {
+ 	f.ExecJS("runtime.WindowReload();")
+ }
+ 
++// WindowOpenDevTools is a no-op on Linux: webkit2gtk's WebKitWebInspector
++// isn't wired up here, so there is no programmatic open API exposed. Kept
++// for Frontend interface parity with Windows.
++func (f *Frontend) WindowOpenDevTools() {
++}
++
+ func (f *Frontend) WindowSetSystemDefaultTheme() {
+ 	return
+ }
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/frontend.go
+index de75fa4..6f776a6 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/frontend.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/windows/frontend.go
-@@ -463,6 +463,20 @@
+@@ -469,6 +469,20 @@ func (f *Frontend) WindowPrint() {
  	f.ExecJS("window.print();")
  }
  
@@ -31,39 +57,11 @@
  func (f *Frontend) setupChromium() {
  	chromium := f.chromium
  
---- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/darwin/frontend.go
-@@ -215,6 +215,12 @@
- 	f.ExecJS(fmt.Sprintf("window.location.href = '%s';", f.startURL))
- }
- 
-+// WindowOpenDevTools is a no-op on macOS: WKWebView's inspector is toggled
-+// natively (Option-click / Safari's Develop menu), there is no programmatic
-+// open API exposed here. Kept for Frontend interface parity with Windows.
-+func (f *Frontend) WindowOpenDevTools() {
-+}
-+
- func (f *Frontend) WindowSetSystemDefaultTheme() {
- }
- 
---- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
-+++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/desktop/linux/frontend.go
-@@ -255,6 +255,12 @@
- 	f.ExecJS("runtime.WindowReload();")
- }
- 
-+// WindowOpenDevTools is a no-op on Linux: webkit2gtk's WebKitWebInspector
-+// isn't wired up here, so there is no programmatic open API exposed. Kept
-+// for Frontend interface parity with Windows.
-+func (f *Frontend) WindowOpenDevTools() {
-+}
-+
- func (f *Frontend) WindowSetSystemDefaultTheme() {
- 	return
- }
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/devserver/devserver.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/devserver/devserver.go
+index b866da3..39b1ea7 100644
 --- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/devserver/devserver.go
 +++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/devserver/devserver.go
-@@ -146,6 +146,10 @@
+@@ -232,6 +232,10 @@ func (d *DevWebServer) WindowReloadApp() {
  	d.Frontend.WindowReloadApp()
  }
  
@@ -74,9 +72,23 @@
  func (d *DevWebServer) Notify(name string, data ...interface{}) {
  	d.notify(name, data...)
  }
+diff --git a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
+index 873b61d..879a92a 100644
+--- a/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
++++ b/vendor/github.com/wailsapp/wails/v2/internal/frontend/frontend.go
+@@ -167,6 +167,7 @@ type Frontend interface {
+ 	WindowIsFullscreen() bool
+ 	WindowClose()
+ 	WindowPrint()
++	WindowOpenDevTools()
+ 
+ 	// Screen
+ 	ScreenGetAll() ([]Screen, error)
+diff --git a/vendor/github.com/wailsapp/wails/v2/pkg/runtime/window.go b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/window.go
+index 62345e2..cd8405d 100644
 --- a/vendor/github.com/wailsapp/wails/v2/pkg/runtime/window.go
 +++ b/vendor/github.com/wailsapp/wails/v2/pkg/runtime/window.go
-@@ -36,6 +36,14 @@
+@@ -36,6 +36,14 @@ func WindowReload(ctx context.Context) {
  	appFrontend.WindowReload()
  }
  
