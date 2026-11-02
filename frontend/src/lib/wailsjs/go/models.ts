@@ -102,15 +102,15 @@ export namespace cpu {
 
 }
 
-export namespace mailfmt {
+export namespace email {
 	
-	export class EmailAttachment {
+	export class Attachment {
 	    filename: string;
 	    contentType: string;
 	    data: number[];
 	
 	    static createFrom(source: any = {}) {
-	        return new EmailAttachment(source);
+	        return new Attachment(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -120,20 +120,20 @@ export namespace mailfmt {
 	        this.data = source["data"];
 	    }
 	}
-	export class EmailData {
+	export class Data {
 	    from: string;
 	    to: string[];
 	    cc: string[];
 	    bcc: string[];
 	    subject: string;
 	    body: string;
-	    attachments: EmailAttachment[];
+	    attachments: Attachment[];
 	    isPec: boolean;
 	    hasInnerEmail: boolean;
 	    date: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new EmailData(source);
+	        return new Data(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -144,7 +144,7 @@ export namespace mailfmt {
 	        this.bcc = source["bcc"];
 	        this.subject = source["subject"];
 	        this.body = source["body"];
-	        this.attachments = this.convertValues(source["attachments"], EmailAttachment);
+	        this.attachments = this.convertValues(source["attachments"], Attachment);
 	        this.isPec = source["isPec"];
 	        this.hasInnerEmail = source["hasInnerEmail"];
 	        this.date = source["date"];

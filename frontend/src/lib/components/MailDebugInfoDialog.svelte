@@ -7,7 +7,7 @@
         DetectEmailFormat,
         OpenFolderInExplorer,
     } from "$lib/wailsjs/go/main/App";
-    import type { mailfmt } from "$lib/wailsjs/go/models";
+    import type { email as mailfmt } from "$lib/wailsjs/go/models";
 
     let {
         open = $bindable(false),
@@ -15,7 +15,7 @@
         activeFilePath,
     }: {
         open: boolean;
-        activeEmail: mailfmt.EmailData | null;
+        activeEmail: mailfmt.Data | null;
         activeFilePath?: string;
     } = $props();
 

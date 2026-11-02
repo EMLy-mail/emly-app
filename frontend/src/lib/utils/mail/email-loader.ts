@@ -8,7 +8,7 @@ import {
   ShowOpenFileDialog,
   ConvertToUTF8,
 } from '$lib/wailsjs/go/main/App';
-import type { mailfmt } from '$lib/wailsjs/go/models';
+import type { email as mailfmt } from '$lib/wailsjs/go/models';
 import { isBase64, isHtml } from '$lib/utils';
 import { looksLikeBase64, tryDecodeBase64 } from './data-utils';
 import { trace } from '$lib/utils/startupTrace';
@@ -16,7 +16,7 @@ import DOMPurify from 'dompurify';
 
 export interface LoadEmailResult {
   success: boolean;
-  email?: mailfmt.EmailData;
+  email?: mailfmt.Data;
   filePath?: string;
   error?: string;
   cancelled?: boolean;

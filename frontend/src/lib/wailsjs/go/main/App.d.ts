@@ -3,7 +3,7 @@
 import {utils} from '../models';
 import {main} from '../models';
 import {updateripc} from '../models';
-import {mailfmt} from '../models';
+import {email} from '../models';
 
 /**
  * CheckBugReportAPI sends a GET request to the bug report API's /health
@@ -394,22 +394,22 @@ export function QuitApp():Promise<void>;
  * ReadAuto automatically detects the email file format and delegates to the
  * appropriate reader.
  */
-export function ReadAuto(filePath:string):Promise<mailfmt.EmailData>;
+export function ReadAuto(filePath:string):Promise<email.Data>;
 
 /**
  * ReadEML reads a standard .eml file and returns the parsed email data.
  */
-export function ReadEML(filePath:string):Promise<mailfmt.EmailData>;
+export function ReadEML(filePath:string):Promise<email.Data>;
 
 /**
  * ReadMSG reads a Microsoft Outlook .msg file and returns the email data.
  */
-export function ReadMSG(filePath:string):Promise<mailfmt.EmailData>;
+export function ReadMSG(filePath:string):Promise<email.Data>;
 
 /**
  * ReadPEC reads a PEC (Posta Elettronica Certificata) .eml file.
  */
-export function ReadPEC(filePath:string):Promise<mailfmt.EmailData>;
+export function ReadPEC(filePath:string):Promise<email.Data>;
 
 /**
  * ReloadConfig re-reads config.ini from disk and returns the current configuration.

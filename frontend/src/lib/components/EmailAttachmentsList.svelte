@@ -3,7 +3,7 @@
     import { toast } from "svelte-sonner";
     import { hostIntegrityFailed } from "$lib/stores/app";
     import * as m from "$lib/paraglide/messages";
-    import type { mailfmt } from "$lib/wailsjs/go/models";
+    import type { email as mailfmt } from "$lib/wailsjs/go/models";
     import { GetAttachmentData } from "$lib/wailsjs/go/main/App";
     import {
         CONTENT_TYPES,
@@ -22,7 +22,7 @@
         attachments,
         filePath,
     }: {
-        attachments: mailfmt.EmailAttachment[] | undefined;
+        attachments: mailfmt.Attachment[] | undefined;
         filePath: string | undefined;
     } = $props();
 
