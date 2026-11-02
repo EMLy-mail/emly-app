@@ -1121,7 +1121,12 @@
                             <Button
                                 variant="destructive"
                                 class="cursor-pointer hover:cursor-pointer"
-                                onclick={() => goto("/emly-test-404-nonexistent")}
+                                onclick={() => {
+                                    // goto() rejects paths that match no route
+                                    // (SvelteKit 3); a full navigation lets the
+                                    // SPA fallback render the 404 error page.
+                                    window.location.href = "/emly-test-404-nonexistent";
+                                }}
                             >
                                 404
                             </Button>

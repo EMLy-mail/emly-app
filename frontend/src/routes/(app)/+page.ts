@@ -1,4 +1,4 @@
-import { redirect } from "@sveltejs/kit";
+import { isRedirect, redirect } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 import {
   GetViewerData,
@@ -67,12 +67,7 @@ export const load: PageLoad = async () => {
     }
   } catch (e) {
     // If it's a redirect, re-throw it so SvelteKit handles it
-    if (
-      (e as any)?.status === 302 ||
-      (e as any)?.status === 307 ||
-      (e as any)?.status === 303 ||
-      (e as any)?.location
-    ) {
+    if (isRedirect(e)) {
       throw e;
     }
     console.error("Error in load function:", e);

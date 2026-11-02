@@ -7,8 +7,13 @@
 		"strictNullChecks": true,
 		"noImplicitAny": true
 	},
+	// Wildcards rather than a bare "src": TypeScript then skips a .js file that
+	// sits next to a .d.ts of the same name, like the Wails-generated bindings
+	// in src/lib/wailsjs, whose types come from the .d.ts files.
 	"include": [
-		"src",
+		"src/**/*.js",
+		"src/**/*.ts",
+		"src/**/*.svelte",
 		"vite.config.ts"
 	]
 }
