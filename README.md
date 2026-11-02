@@ -38,7 +38,7 @@ EMLy is a lightweight, cross-platform desktop email viewer built with [Wails v2]
 git clone https://github.com/EMLy-mail/emly-app.git
 cd emly-app
 
-# 2. Install frontend dependencies (also applies the Bun patches, see below)
+# 2. Install frontend dependencies
 cd frontend && bun install && cd ..
 
 # 3. Vendor + patch the Go dependencies (see "Wails v2 Patches" below)
