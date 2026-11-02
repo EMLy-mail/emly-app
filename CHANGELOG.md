@@ -1,5 +1,12 @@
 # Changelog EMLy
 
+# 2.2.8 (2026-11-02)
+1) Aggiornato Go alla v1.27 e aggiornate dipendenze lato Backend (Go), inclusa la libreria `mailfmt` alla v0.2.0.
+2) Aggiornato Wails v2 alla v2.17.1, con le patch su `vendor/` (OpenDevTools e nomi dei parametri/JSDoc nei binding) riallineate alla nuova versione.
+3) Rimossa l'icona di EMLy nella system tray: chiudendo la finestra principale ora l'app termina. Rimossi anche il toggle nelle Impostazioni (Zona Pericolosa), la chiave `DISABLE_TRAY_ICON` da config.ini e la patch Wails per il supporto tray.
+4) Aggiornate dipendenze lato Frontend (Svelte 5.57, Vite 8.3, pdf.js 6.5, tailwind-variants 4).
+5) Migrato il Frontend a SvelteKit 3. Nessun cambiamento di comportamento visibile per l'utente, tranne il pulsante di test dell'errore 404 nelle Impostazioni (Zona Pericolosa), che ora ricarica la pagina per mostrare l'errore.
+
 # 2.2.7 (2026-10-01)
 1) Disattivato il controllo di integrità di default.
 
