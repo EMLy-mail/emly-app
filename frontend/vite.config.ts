@@ -1,3 +1,5 @@
+import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { createRequire } from 'node:module';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
@@ -89,8 +91,12 @@ function pdfjsAssets(): Plugin {
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
-		sveltekit(),
-		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide'}),
+		sveltekit({
+			preprocess: vitePreprocess(),
+			// Wails embeds the static build (frontend/build) into the Go binary.
+			adapter: adapter()
+		}),
+		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' }),
 		devtoolsJson(),
 		pdfjsAssets()
 	],
