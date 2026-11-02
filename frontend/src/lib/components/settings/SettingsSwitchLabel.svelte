@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Switch } from "$lib/components/ui/switch";
-  import { Label } from "$lib/components/ui/label";
-  import type { utils } from "$lib/wailsjs/go/models"
-  import { isDevMachine } from "$lib/utils/hostIntegrity";
+  import { Switch } from "#lib/components/ui/switch/index.js";
+  import { Label } from "#lib/components/ui/label/index.js";
+  import type { utils } from "#lib/wailsjs/go/models.js"
+  import { isDevMachine } from "#lib/utils/hostIntegrity.js";
 
   type SwitchLabelType = "normal" | "danger" | "danger-bypass";
 

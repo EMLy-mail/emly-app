@@ -7,11 +7,11 @@ import {
   DetectEmailFormat,
   ShowOpenFileDialog,
   ConvertToUTF8,
-} from '$lib/wailsjs/go/main/App';
-import type { email as mailfmt } from '$lib/wailsjs/go/models';
-import { isBase64, isHtml } from '$lib/utils';
+} from '#lib/wailsjs/go/main/App.js';
+import type { email as mailfmt } from '#lib/wailsjs/go/models.js';
+import { isBase64, isHtml } from '#lib/utils.js';
 import { looksLikeBase64, tryDecodeBase64 } from './data-utils';
-import { trace } from '$lib/utils/startupTrace';
+import { trace } from '#lib/utils/startupTrace.js';
 import DOMPurify from 'dompurify';
 
 export interface LoadEmailResult {

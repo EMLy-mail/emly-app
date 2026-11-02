@@ -3,7 +3,7 @@
     import type {
         GitHubUserData,
         ContributorProfile,
-    } from "$lib/data/contributors";
+    } from "#lib/data/contributors.js";
 
     let {
         contributor,

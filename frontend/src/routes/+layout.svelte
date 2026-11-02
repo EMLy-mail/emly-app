@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import { setupConsoleLogger } from '$lib/utils/logger-hook';
-	import { ensureHostIntegrityChecked } from '$lib/utils/hostIntegrityCheck';
-	import { trace } from '$lib/utils/startupTrace';
+	import { setupConsoleLogger } from '#lib/utils/logger-hook.js';
+	import { ensureHostIntegrityChecked } from '#lib/utils/hostIntegrityCheck.js';
+	import { trace } from '#lib/utils/startupTrace.js';
 	import "./layout.css";
 	
 	let { children } = $props();

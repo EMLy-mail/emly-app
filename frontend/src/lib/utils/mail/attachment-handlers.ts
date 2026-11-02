@@ -9,11 +9,11 @@ import {
   OpenImageWindow,
   OpenEMLWindow,
   OpenDocument,
-} from '$lib/wailsjs/go/main/App';
-import { settingsStore } from '$lib/stores/settings.svelte';
-import { mailState } from '$lib/stores/mail-state.svelte';
+} from '#lib/wailsjs/go/main/App.js';
+import { settingsStore } from '#lib/stores/settings.svelte.js';
+import { mailState } from '#lib/stores/mail-state.svelte.js';
 import { toast } from 'svelte-sonner';
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 
 export interface AttachmentHandlerResult {
   success: boolean;

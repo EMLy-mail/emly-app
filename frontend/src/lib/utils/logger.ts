@@ -6,12 +6,12 @@
  * and is forwarded to slog on the backend as structured JSON.
  *
  * Usage:
- *   import { logger } from '$lib/utils/logger';
+ *   import { logger } from '#lib/utils/logger.js';
  *   logger.info('email loaded', { filePath: '/tmp/test.eml' });
  *   logger.error('failed to parse', { error: err.message });
  */
 
-import { FrontendLog } from '$lib/wailsjs/go/main/App';
+import { FrontendLog } from '#lib/wailsjs/go/main/App.js';
 
 type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 

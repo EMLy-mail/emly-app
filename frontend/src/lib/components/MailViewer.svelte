@@ -15,22 +15,22 @@
         sidebarOpen,
         runningInDebugMode,
         hostIntegrityFailed,
-    } from "$lib/stores/app";
+    } from "#lib/stores/app.js";
     import { onDestroy, onMount } from "svelte";
     import { toast } from "svelte-sonner";
     import {
         BrowserOpenURL,
         ClipboardSetText,
-    } from "$lib/wailsjs/runtime/runtime";
-    import { GetAttachmentData } from "$lib/wailsjs/go/main/App";
-    import { mailState } from "$lib/stores/mail-state.svelte";
-    import type { email as mailfmt } from "$lib/wailsjs/go/models";
-    import * as m from "$lib/paraglide/messages";
-    import { cancelCurrentToast } from "$lib/utils/open-default-attachment-toast";
-    import { saveAllAttachmentsNatively } from "$lib/utils/attachment-download";
-    import LinkConfirmationDialog from "$lib/components/LinkConfirmationDialog.svelte";
-    import MailDebugInfoDialog from "$lib/components/MailDebugInfoDialog.svelte";
-    import EmailAttachmentsList from "$lib/components/EmailAttachmentsList.svelte";
+    } from "#lib/wailsjs/runtime/runtime.js";
+    import { GetAttachmentData } from "#lib/wailsjs/go/main/App.js";
+    import { mailState } from "#lib/stores/mail-state.svelte.js";
+    import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
+    import * as m from "#lib/paraglide/messages.js";
+    import { cancelCurrentToast } from "#lib/utils/open-default-attachment-toast.js";
+    import { saveAllAttachmentsNatively } from "#lib/utils/attachment-download.js";
+    import LinkConfirmationDialog from "#lib/components/LinkConfirmationDialog.svelte";
+    import MailDebugInfoDialog from "#lib/components/MailDebugInfoDialog.svelte";
+    import EmailAttachmentsList from "#lib/components/EmailAttachmentsList.svelte";
 
     import {
         IFRAME_UTIL_HTML_DARK,
@@ -43,8 +43,8 @@
         openAndLoadEmail,
         processEmailBody,
         isPecOpenBlocked,
-    } from "$lib/utils/mail";
-    import { settingsStore } from "$lib/stores/settings.svelte";
+    } from "#lib/utils/mail/index.js";
+    import { settingsStore } from "#lib/stores/settings.svelte.js";
 
     // ============================================================================
     // Props

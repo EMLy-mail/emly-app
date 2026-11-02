@@ -2,8 +2,8 @@
   import { onMount, onDestroy } from "svelte";
   import NativePDFViewer from "./NativePDFViewer.svelte";
   import PdfjsViewer from "./PdfjsViewer.svelte";
-  import { settingsStore } from "$lib/stores/settings.svelte";
-  import * as m from "$lib/paraglide/messages.js";
+  import { settingsStore } from "#lib/stores/settings.svelte.js";
+  import * as m from "#lib/paraglide/messages.js";
 
   interface Props {
     base64Data: string;

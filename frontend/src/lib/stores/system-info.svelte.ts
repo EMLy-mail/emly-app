@@ -1,4 +1,4 @@
-import type { utils } from '$lib/wailsjs/go/models';
+import type { utils } from '#lib/wailsjs/go/models.js';
 
 class SystemInfoStore {
 	data = $state<utils.ExtendedMachineInfo | null>(null);

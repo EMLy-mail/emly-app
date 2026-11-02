@@ -1,13 +1,13 @@
 <script lang="ts">
-    import * as Dialog from "$lib/components/ui/dialog/index.js";
-    import { Button } from "$lib/components/ui/button/index.js";
+    import * as Dialog from "#lib/components/ui/dialog/index.js";
+    import { Button } from "#lib/components/ui/button/index.js";
     import { Info, ShieldCheck, Loader2, FolderOpen } from "@lucide/svelte";
-    import * as m from "$lib/paraglide/messages";
+    import * as m from "#lib/paraglide/messages.js";
     import {
         DetectEmailFormat,
         OpenFolderInExplorer,
-    } from "$lib/wailsjs/go/main/App";
-    import type { email as mailfmt } from "$lib/wailsjs/go/models";
+    } from "#lib/wailsjs/go/main/App.js";
+    import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
 
     let {
         open = $bindable(false),

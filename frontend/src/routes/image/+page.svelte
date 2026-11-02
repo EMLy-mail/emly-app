@@ -10,12 +10,12 @@
     Download,
     Loader2
   } from "@lucide/svelte";
-  import { sidebarOpen } from "$lib/stores/app";
+  import { sidebarOpen } from "#lib/stores/app.js";
   import { toast } from "svelte-sonner";
-  import * as m from "$lib/paraglide/messages.js";
-  import { logger } from "$lib/utils/logger";
-  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
-  import { toDisplayableImageSrc, mimeTypeForFilename } from "$lib/utils/image-decode";
+  import * as m from "#lib/paraglide/messages.js";
+  import { logger } from "#lib/utils/logger.js";
+  import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
+  import { toDisplayableImageSrc, mimeTypeForFilename } from "#lib/utils/image-decode.js";
 
   let { data }: { data: PageData } = $props();
 

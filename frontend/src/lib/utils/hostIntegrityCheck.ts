@@ -2,14 +2,14 @@ import {
   GetExtendedMachineData,
   GetUpdaterADStatus,
   GetUpdaterSystemInfo,
-} from '$lib/wailsjs/go/main/App';
-import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
-import { settingsStore } from '$lib/stores/settings.svelte.js';
-import { hostIntegrityFailed, hostIntegrityStanding } from '$lib/stores/app';
-import { updaterStatusStore } from '$lib/stores/updater-status.svelte.js';
+} from '#lib/wailsjs/go/main/App.js';
+import { systemInfoStore } from '#lib/stores/system-info.svelte.js';
+import { settingsStore } from '#lib/stores/settings.svelte.js';
+import { hostIntegrityFailed, hostIntegrityStanding } from '#lib/stores/app.js';
+import { updaterStatusStore } from '#lib/stores/updater-status.svelte.js';
 import { evaluateHostname, isInsideTREGCCADDomain, deriveHostIntegrityStanding } from './hostIntegrity';
 import { logIPCRequest, logIPCResponse, logIPCError } from './ipcLog';
-import { LogDebug } from '$lib/wailsjs/runtime/runtime';
+import { LogDebug } from '#lib/wailsjs/runtime/runtime.js';
 
 let checkPromise: Promise<boolean> | null = null;
 let standingPromise: Promise<void> | null = null;

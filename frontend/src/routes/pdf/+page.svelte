@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import type { PageData } from "./$types";
-  import { sidebarOpen } from "$lib/stores/app";
+  import { sidebarOpen } from "#lib/stores/app.js";
   import { toast } from "svelte-sonner";
-  import * as m from "$lib/paraglide/messages.js";
-  import { logger } from "$lib/utils/logger";
-  import NativePDFViewer from "$lib/components/NativePDFViewer.svelte";
-  import PdfjsViewer from "$lib/components/PdfjsViewer.svelte";
-  import { settingsStore } from "$lib/stores/settings.svelte";
+  import * as m from "#lib/paraglide/messages.js";
+  import { logger } from "#lib/utils/logger.js";
+  import NativePDFViewer from "#lib/components/NativePDFViewer.svelte";
+  import PdfjsViewer from "#lib/components/PdfjsViewer.svelte";
+  import { settingsStore } from "#lib/stores/settings.svelte.js";
 
   let { data }: { data: PageData } = $props();
 

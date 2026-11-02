@@ -1,8 +1,8 @@
 <script lang="ts">
   import SettingsIcon from "@lucide/svelte/icons/settings";
-  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import { dangerZoneEnabled } from "$lib/stores/app";
-  import * as m from "$lib/paraglide/messages.js";
+  import * as Sidebar from "#lib/components/ui/sidebar/index.js";
+  import { dangerZoneEnabled } from "#lib/stores/app.js";
+  import * as m from "#lib/paraglide/messages.js";
   import { Mail, Heart, Info } from "@lucide/svelte/icons";
 
   const CLICK_WINDOW_MS = 4000;

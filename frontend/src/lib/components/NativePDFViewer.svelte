@@ -21,10 +21,10 @@
   import { onDestroy, untrack } from "svelte";
   import { PDFDocument, degrees } from "pdf-lib";
   import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Download } from "@lucide/svelte";
-  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
-  import { settingsStore } from "$lib/stores/settings.svelte";
-  import * as m from "$lib/paraglide/messages.js";
-  import "$lib/styles/viewer-toolbar.css";
+  import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
+  import { settingsStore } from "#lib/stores/settings.svelte.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import "#lib/styles/viewer-toolbar.css";
 
   interface Props {
     src: string;

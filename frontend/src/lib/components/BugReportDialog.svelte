@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { bugReportDialogOpen } from "$lib/stores/app";
-    import * as m from "$lib/paraglide/messages.js";
-    import * as Dialog from "$lib/components/ui/dialog/index.js";
-    import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-    import { Input } from "$lib/components/ui/input/index.js";
-    import { Label } from "$lib/components/ui/label/index.js";
-    import { Textarea } from "$lib/components/ui/textarea/index.js";
+    import { bugReportDialogOpen } from "#lib/stores/app.js";
+    import * as m from "#lib/paraglide/messages.js";
+    import * as Dialog from "#lib/components/ui/dialog/index.js";
+    import { Button, buttonVariants } from "#lib/components/ui/button/index.js";
+    import { Input } from "#lib/components/ui/input/index.js";
+    import { Label } from "#lib/components/ui/label/index.js";
+    import { Textarea } from "#lib/components/ui/textarea/index.js";
     import {
         CheckCircle,
         Copy,
@@ -21,10 +21,10 @@
         SubmitBugReport,
         OpenFolderInExplorer,
         GetConfig,
-    } from "$lib/wailsjs/go/main/App";
+    } from "#lib/wailsjs/go/main/App.js";
     import { browser } from "$app/environment";
     import { dev } from "$app/environment";
-    import { systemInfoStore } from "$lib/stores/system-info.svelte";
+    import { systemInfoStore } from "#lib/stores/system-info.svelte.js";
 
     // Bug report form state
     let userName = $state("");

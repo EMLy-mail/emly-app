@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { toast } from 'svelte-sonner';
-import { hostIntegrityFailed } from '$lib/stores/app';
-import * as m from '$lib/paraglide/messages.js';
+import { hostIntegrityFailed } from '#lib/stores/app.js';
+import * as m from '#lib/paraglide/messages.js';
 
 /**
  * Blocks opening PEC emails when the host integrity check has failed.

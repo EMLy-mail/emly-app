@@ -1,12 +1,12 @@
 import type { PageLoad } from './$types';
-import { GetConfig } from "$lib/wailsjs/go/main/App";
+import { GetConfig } from "#lib/wailsjs/go/main/App.js";
 import { browser } from '$app/environment';
-import type { utils } from '$lib/wailsjs/go/models';
+import type { utils } from '#lib/wailsjs/go/models.js';
 import {
     CONTRIBUTOR_ASSIGNMENTS,
     type ContributorAssignment,
     type GitHubUserData,
-} from '$lib/data/contributors';
+} from '#lib/data/contributors.js';
 
 interface ContributorsData {
     team: Array<GitHubUserData | null>;

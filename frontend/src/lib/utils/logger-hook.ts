@@ -5,7 +5,7 @@
  * Call setupConsoleLogger() once at app startup (e.g. in root layout).
  */
 
-import { FrontendLog } from '$lib/wailsjs/go/main/App';
+import { FrontendLog } from '#lib/wailsjs/go/main/App.js';
 
 function safeStringify(obj: unknown): string {
   try {

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Image, FileText, MailOpen, File, Loader2 } from "@lucide/svelte";
     import { toast } from "svelte-sonner";
-    import { hostIntegrityFailed } from "$lib/stores/app";
-    import * as m from "$lib/paraglide/messages";
-    import type { email as mailfmt } from "$lib/wailsjs/go/models";
-    import { GetAttachmentData } from "$lib/wailsjs/go/main/App";
+    import { hostIntegrityFailed } from "#lib/stores/app.js";
+    import * as m from "#lib/paraglide/messages.js";
+    import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
+    import { GetAttachmentData } from "#lib/wailsjs/go/main/App.js";
     import {
         CONTENT_TYPES,
         arrayBufferToBase64,
@@ -13,10 +13,10 @@
         openImageAttachment,
         openEMLAttachment,
         openDocAttachment,
-    } from "$lib/utils/mail";
-    import { showDefaultAttachmentToast } from "$lib/utils/open-default-attachment-toast";
-    import { saveAttachmentNatively } from "$lib/utils/attachment-download";
-    import { settingsStore } from "$lib/stores/settings.svelte";
+    } from "#lib/utils/mail/index.js";
+    import { showDefaultAttachmentToast } from "#lib/utils/open-default-attachment-toast.js";
+    import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
+    import { settingsStore } from "#lib/stores/settings.svelte.js";
 
     let {
         attachments,

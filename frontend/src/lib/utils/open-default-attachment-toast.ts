@@ -1,6 +1,6 @@
 import { toast } from "svelte-sonner";
 
-import OpenDefaultAttachmentBar from "$lib/components/OpenDefaultAttachmentBar.svelte";
+import OpenDefaultAttachmentBar from "#lib/components/OpenDefaultAttachmentBar.svelte";
 
 const OPEN_DEFAULT_ATTACHMENT_TOAST_ID = "open-default-attachment";
 const ONE_YEAR_MS = 1000 * 60 * 60 * 24 * 365;

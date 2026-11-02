@@ -1,6 +1,6 @@
 <script lang="ts">
-    import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-    import * as m from "$lib/paraglide/messages";
+    import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
+    import * as m from "#lib/paraglide/messages.js";
 
     let {
         open = $bindable(false),

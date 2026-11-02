@@ -54,9 +54,9 @@
     ChevronLeft,
     ChevronRight,
   } from "@lucide/svelte";
-  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
-  import * as m from "$lib/paraglide/messages.js";
-  import "$lib/styles/viewer-toolbar.css";
+  import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import "#lib/styles/viewer-toolbar.css";
 
   interface Props {
     src: string;

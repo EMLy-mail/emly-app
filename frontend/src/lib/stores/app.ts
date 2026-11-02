@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { browser } from "$app/environment";
-import type { HostIntegrityStanding } from "$lib/utils/hostIntegrity";
+import type { HostIntegrityStanding } from "#lib/utils/hostIntegrity.js";
 
 const storedDebug = browser
   ? sessionStorage.getItem("debugWindowInSettings") === "true"

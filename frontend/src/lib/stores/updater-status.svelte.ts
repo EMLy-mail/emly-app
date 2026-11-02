@@ -1,6 +1,6 @@
-import { GetEMLyUpdaterStatus, GetUpdaterIPCStatus } from "$lib/wailsjs/go/main/App";
-import { LogDebug } from "$lib/wailsjs/runtime/runtime";
-import { logIPCRequest, logIPCResponse, logIPCError } from "$lib/utils/ipcLog";
+import { GetEMLyUpdaterStatus, GetUpdaterIPCStatus } from "#lib/wailsjs/go/main/App.js";
+import { LogDebug } from "#lib/wailsjs/runtime/runtime.js";
+import { logIPCRequest, logIPCResponse, logIPCError } from "#lib/utils/ipcLog.js";
 
 // Shared, app-wide state for the EMLy Updater's local (service) status and
 // its IPC pipe status. Both checks are kicked off once from the root

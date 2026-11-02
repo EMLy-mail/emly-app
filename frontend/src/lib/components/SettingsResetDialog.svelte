@@ -1,7 +1,7 @@
 <script lang="ts">
-    import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-    import type { SettingsResetEntry } from "$lib/stores/settings-reset.svelte";
-    import * as m from "$lib/paraglide/messages";
+    import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
+    import type { SettingsResetEntry } from "#lib/stores/settings-reset.svelte.js";
+    import * as m from "#lib/paraglide/messages.js";
 
     let {
         open,

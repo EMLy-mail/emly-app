@@ -1,4 +1,4 @@
-import type { api } from "$lib/wailsjs/go/models";
+import type { api } from "#lib/wailsjs/go/models.js";
 
 type SupportedFileTypePreview = "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "tiff" | "heic" | "heif";
 

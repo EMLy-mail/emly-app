@@ -56,5 +56,9 @@
     "@rollup/rollup-linux-x64-gnu": "^4.67.4",
     "@rollup/rollup-win32-arm64-msvc": "^4.67.4",
     "@rollup/rollup-win32-x64-msvc": "^4.67.4"
+  },
+  "imports": {
+    "#lib": "./src/lib/index.js",
+    "#lib/*": "./src/lib/*"
   }
 }

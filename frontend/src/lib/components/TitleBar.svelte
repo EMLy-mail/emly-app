@@ -8,7 +8,7 @@
         WindowIsMaximised,
         Quit,
         WindowToggleMaximise
-    } from "$lib/wailsjs/runtime/runtime";
+    } from "#lib/wailsjs/runtime/runtime.js";
 
     let {
         title = "EMLy",

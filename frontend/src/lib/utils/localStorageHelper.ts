@@ -1,5 +1,5 @@
-import { GetConfig, SaveConfig } from "$lib/wailsjs/go/main/App";
-import type { utils } from "$lib/wailsjs/go/models" 
+import { GetConfig, SaveConfig } from "#lib/wailsjs/go/main/App.js";
+import type { utils } from "#lib/wailsjs/go/models.js" 
 
 async function loadConfig() {
     try {

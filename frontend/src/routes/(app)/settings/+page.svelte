@@ -1,43 +1,43 @@
 <script lang="ts">
     import { browser } from "$app/environment";
     import { goto } from "$app/navigation";
-    import { Button } from "$lib/components/ui/button";
-    import * as Card from "$lib/components/ui/card";
-    import { Label } from "$lib/components/ui/label";
-    import { Separator } from "$lib/components/ui/separator";
-    import { Switch } from "$lib/components/ui/switch";
+    import { Button } from "#lib/components/ui/button/index.js";
+    import * as Card from "#lib/components/ui/card/index.js";
+    import { Label } from "#lib/components/ui/label/index.js";
+    import { Separator } from "#lib/components/ui/separator/index.js";
+    import { Switch } from "#lib/components/ui/switch/index.js";
     import { ChevronLeft, Flame, Sun, Moon } from "@lucide/svelte";
     import type {
         EMLy_GUI_Settings,
         PdfRendererEngine,
         ReleaseChannel,
-    } from "$lib/types";
+    } from "#lib/types.js";
     import { toast } from "svelte-sonner";
     import { It, Us } from "svelte-flags";
-    import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
-    import * as Select from "$lib/components/ui/select/index.js";
-    import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-    import { buttonVariants } from "$lib/components/ui/button/index.js";
-    import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+    import * as RadioGroup from "#lib/components/ui/radio-group/index.js";
+    import * as Select from "#lib/components/ui/select/index.js";
+    import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
+    import { buttonVariants } from "#lib/components/ui/button/index.js";
+    import { Checkbox } from "#lib/components/ui/checkbox/index.js";
     import {
         dismissUnsavedChangesToast,
         showUnsavedChangesToast,
-    } from "$lib/utils/unsaved-changes-toast";
+    } from "#lib/utils/unsaved-changes-toast.js";
     import {
         dangerZoneEnabled,
         unsavedChanges,
         hostIntegrityFailed,
-    } from "$lib/stores/app";
-    import { LogDebug, LogInfo } from "$lib/wailsjs/runtime/runtime";
+    } from "#lib/stores/app.js";
+    import { LogDebug, LogInfo } from "#lib/wailsjs/runtime/runtime.js";
     import {
         settingsStore,
         defaultSettings,
         releaseChannels,
         parseReleaseChannel,
-    } from "$lib/stores/settings.svelte";
-    import * as m from "$lib/paraglide/messages";
-    import { setLocale } from "$lib/paraglide/runtime";
-    import { mailState } from "$lib/stores/mail-state.svelte.js";
+    } from "#lib/stores/settings.svelte.js";
+    import * as m from "#lib/paraglide/messages.js";
+    import { setLocale } from "#lib/paraglide/runtime.js";
+    import { mailState } from "#lib/stores/mail-state.svelte.js";
     import { dev } from "$app/environment";
     import {
         ReloadConfig,
@@ -49,10 +49,10 @@
         SetGUIReleaseChannel,
         OpenDevTools,
         RestartApp,
-    } from "$lib/wailsjs/go/main/App";
-    import SettingsSwitchLabel from "$lib/components/settings/SettingsSwitchLabel.svelte";
-    import SafetyCheckDialog from "$lib/components/settings/SafetyCheckDialog.svelte";
-    import { systemInfoStore } from '$lib/stores/system-info.svelte.js';
+    } from "#lib/wailsjs/go/main/App.js";
+    import SettingsSwitchLabel from "#lib/components/settings/SettingsSwitchLabel.svelte";
+    import SafetyCheckDialog from "#lib/components/settings/SafetyCheckDialog.svelte";
+    import { systemInfoStore } from '#lib/stores/system-info.svelte.js';
 
     let { data } = $props();
     let config = $derived(data.config);

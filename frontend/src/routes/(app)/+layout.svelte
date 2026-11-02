@@ -2,7 +2,7 @@
     import { browser } from "$app/environment";
     import { page, navigating } from "$app/state";
     import { beforeNavigate, goto } from "$app/navigation";
-    import { locales, localizeHref } from "$lib/paraglide/runtime";
+    import { locales, localizeHref } from "#lib/paraglide/runtime.js";
     import {
         unsavedChanges,
         sidebarOpen,
@@ -11,14 +11,14 @@
         runningInDebugMode,
         hostIntegrityFailed,
         hostIntegrityStanding,
-    } from "$lib/stores/app";
+    } from "#lib/stores/app.js";
     import { onMount } from "svelte";
-    import * as m from "$lib/paraglide/messages.js";
-    import type { utils } from "$lib/wailsjs/go/models";
-    import { Toaster } from "$lib/components/ui/sonner/index.js";
-    import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-    import AppSidebar from "$lib/components/SidebarApp.svelte";
-    import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+    import * as m from "#lib/paraglide/messages.js";
+    import type { utils } from "#lib/wailsjs/go/models.js";
+    import { Toaster } from "#lib/components/ui/sonner/index.js";
+    import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
+    import AppSidebar from "#lib/components/SidebarApp.svelte";
+    import * as Sidebar from "#lib/components/ui/sidebar/index.js";
     import { dev } from "$app/environment";
     import {
         PanelRightClose,
@@ -32,27 +32,27 @@
         TriangleAlert,
         ShieldAlert
     } from "@lucide/svelte";
-    import { Separator } from "$lib/components/ui/separator/index.js";
+    import { Separator } from "#lib/components/ui/separator/index.js";
     import { toast } from "svelte-sonner";
-    import { buttonVariants } from "$lib/components/ui/button/index.js";
-    import BugReportDialog from "$lib/components/BugReportDialog.svelte";
-    import TitleBar from "$lib/components/TitleBar.svelte";
+    import { buttonVariants } from "#lib/components/ui/button/index.js";
+    import BugReportDialog from "#lib/components/BugReportDialog.svelte";
+    import TitleBar from "#lib/components/TitleBar.svelte";
 
     import { RefreshCcwDot } from "@lucide/svelte";
     import {
         IsDebuggerRunning,
         QuitApp,
         IsAppInDebugMode,
-    } from "$lib/wailsjs/go/main/App";
+    } from "#lib/wailsjs/go/main/App.js";
     import {
         settingsStore,
         parseReleaseChannel,
-    } from "$lib/stores/settings.svelte.js";
-  import { mailState } from "$lib/stores/mail-state.svelte.js";
-    import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
-    import { ensureExportFolderWritable } from "$lib/utils/export-folder-check";
-    import { settingsResetStore } from "$lib/stores/settings-reset.svelte";
-    import SettingsResetDialog from "$lib/components/SettingsResetDialog.svelte";
+    } from "#lib/stores/settings.svelte.js";
+  import { mailState } from "#lib/stores/mail-state.svelte.js";
+    import { ensureHostIntegrityChecked } from "#lib/utils/hostIntegrityCheck.js";
+    import { ensureExportFolderWritable } from "#lib/utils/export-folder-check.js";
+    import { settingsResetStore } from "#lib/stores/settings-reset.svelte.js";
+    import SettingsResetDialog from "#lib/components/SettingsResetDialog.svelte";
 
     let versionInfo: utils.Config | null = $state(null);
     let isDebugerOn: boolean = $state(false);

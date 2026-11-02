@@ -1,12 +1,12 @@
 <script lang="ts">
-  import MailViewer from "$lib/components/MailViewer.svelte";
-  import PDFTabContent from "$lib/components/PDFTabContent.svelte";
-  import ImageViewer from "$lib/components/ImageViewer.svelte";
-  import TabStrip from "$lib/components/TabStrip.svelte";
-  import { mailState } from "$lib/stores/mail-state.svelte";
-  import { settingsStore } from "$lib/stores/settings.svelte";
-  import { sidebarOpen } from "$lib/stores/app";
-  import * as m from "$lib/paraglide/messages.js";
+  import MailViewer from "#lib/components/MailViewer.svelte";
+  import PDFTabContent from "#lib/components/PDFTabContent.svelte";
+  import ImageViewer from "#lib/components/ImageViewer.svelte";
+  import TabStrip from "#lib/components/TabStrip.svelte";
+  import { mailState } from "#lib/stores/mail-state.svelte.js";
+  import { settingsStore } from "#lib/stores/settings.svelte.js";
+  import { sidebarOpen } from "#lib/stores/app.js";
+  import * as m from "#lib/paraglide/messages.js";
   import { toast } from "svelte-sonner";
   import { Loader2 } from "@lucide/svelte";
   import {
@@ -14,15 +14,15 @@
     isPecOpenBlocked,
     loadEmailFromPath,
     isEmailFile,
-  } from "$lib/utils/mail";
+  } from "#lib/utils/mail/index.js";
   import { onDestroy, onMount } from "svelte";
   import {
     EventsOn,
     EventsEmit,
     WindowShow,
     WindowUnminimise,
-  } from "$lib/wailsjs/runtime/runtime";
-  import { trace } from "$lib/utils/startupTrace";
+  } from "#lib/wailsjs/runtime/runtime.js";
+  import { trace } from "#lib/utils/startupTrace.js";
 
   let { data } = $props();
 

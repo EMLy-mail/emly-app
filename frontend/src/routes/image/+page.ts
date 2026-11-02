@@ -1,5 +1,5 @@
 import type { PageLoad } from './$types';
-import { GetImageViewerData } from "$lib/wailsjs/go/main/App";
+import { GetImageViewerData } from "#lib/wailsjs/go/main/App.js";
 
 export const load = (async () => {
     try {

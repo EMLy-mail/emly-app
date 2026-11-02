@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { LayoutProps } from "./$types";
-  import { settingsStore } from "$lib/stores/settings.svelte.js";
-  import TitleBar from "$lib/components/TitleBar.svelte";
+  import { settingsStore } from "#lib/stores/settings.svelte.js";
+  import TitleBar from "#lib/components/TitleBar.svelte";
 
   let { data, children }: LayoutProps = $props();
 

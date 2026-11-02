@@ -1,5 +1,5 @@
 import type { LayoutLoad } from './$types';
-import { GetConfig } from "$lib/wailsjs/go/main/App";
+import { GetConfig } from "#lib/wailsjs/go/main/App.js";
 
 export const load = (async () => {
     try {

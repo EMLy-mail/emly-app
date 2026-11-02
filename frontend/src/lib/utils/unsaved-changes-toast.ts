@@ -1,6 +1,6 @@
 import { toast } from "svelte-sonner";
 
-import UnsavedBar from "$lib/components/UnsavedBar.svelte";
+import UnsavedBar from "#lib/components/UnsavedBar.svelte";
 
 const UNSAVED_CHANGES_TOAST_ID = "unsaved-changes";
 const ONE_YEAR_MS = 1000 * 60 * 60 * 24 * 365;

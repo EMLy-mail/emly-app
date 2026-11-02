@@ -1,10 +1,10 @@
 <script lang="ts">
     import { page } from "$app/state";
-    import * as m from "$lib/paraglide/messages.js";
+    import * as m from "#lib/paraglide/messages.js";
     import { dev } from "$app/environment";
-    import { Quit } from "$lib/wailsjs/runtime/runtime";
-    import { GetLogsDir, OpenFolderInExplorer } from "$lib/wailsjs/go/main/App";
-    import TitleBar from "$lib/components/TitleBar.svelte";
+    import { Quit } from "#lib/wailsjs/runtime/runtime.js";
+    import { GetLogsDir, OpenFolderInExplorer } from "#lib/wailsjs/go/main/App.js";
+    import TitleBar from "#lib/components/TitleBar.svelte";
 
     async function openLogs() {
         try {

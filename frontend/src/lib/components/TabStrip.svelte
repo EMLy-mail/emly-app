@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { mailState } from "$lib/stores/mail-state.svelte";
-    import type { AppTab } from "$lib/stores/mail-state.svelte";
-    import * as m from "$lib/paraglide/messages.js";
+    import { mailState } from "#lib/stores/mail-state.svelte.js";
+    import type { AppTab } from "#lib/stores/mail-state.svelte.js";
+    import * as m from "#lib/paraglide/messages.js";
     import {
         X,
         Plus,
@@ -11,7 +11,7 @@
         ChevronLeft,
         ChevronRight,
     } from "@lucide/svelte";
-    import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+    import * as ContextMenu from "#lib/components/ui/context-menu/index.js";
 
     let { onAddTab, isAddingTab }: { onAddTab: () => void; isAddingTab: boolean } =
         $props();

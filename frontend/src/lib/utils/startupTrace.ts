@@ -10,7 +10,7 @@
  * measuring. Failures are swallowed - a missing binding shouldn't break
  * app startup.
  */
-import { TraceStartupStep } from '$lib/wailsjs/go/main/App';
+import { TraceStartupStep } from '#lib/wailsjs/go/main/App.js';
 
 export function trace(step: string, detail?: string | number): void {
   try {

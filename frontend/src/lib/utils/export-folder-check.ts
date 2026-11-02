@@ -2,10 +2,10 @@ import {
     CheckFolderWritable,
     GetExportAttachmentFolder,
     SetExportAttachmentFolder,
-} from "$lib/wailsjs/go/main/App";
-import { settingsResetStore } from "$lib/stores/settings-reset.svelte";
-import * as m from "$lib/paraglide/messages";
-import { LogDebug } from "$lib/wailsjs/runtime/runtime";
+} from "#lib/wailsjs/go/main/App.js";
+import { settingsResetStore } from "#lib/stores/settings-reset.svelte.js";
+import * as m from "#lib/paraglide/messages.js";
+import { LogDebug } from "#lib/wailsjs/runtime/runtime.js";
 
 let checkPromise: Promise<void> | null = null;
 

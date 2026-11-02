@@ -1,8 +1,8 @@
 <script lang="ts">
-    import * as Dialog from "$lib/components/ui/dialog/index.js";
-    import { Badge } from "$lib/components/ui/badge/index.js";
-    import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-    import { Separator } from "$lib/components/ui/separator";
+    import * as Dialog from "#lib/components/ui/dialog/index.js";
+    import { Badge } from "#lib/components/ui/badge/index.js";
+    import { Button, buttonVariants } from "#lib/components/ui/button/index.js";
+    import { Separator } from "#lib/components/ui/separator/index.js";
     import {
         CircleCheck,
         CircleX,
@@ -10,23 +10,23 @@
         OctagonX,
         TriangleAlert,
     } from "@lucide/svelte";
-    import * as m from "$lib/paraglide/messages";
-    import { LogDebug } from "$lib/wailsjs/runtime/runtime";
+    import * as m from "#lib/paraglide/messages.js";
+    import { LogDebug } from "#lib/wailsjs/runtime/runtime.js";
     import {
         GetUpdaterADStatus,
         GetUpdaterSystemInfo,
-    } from "$lib/wailsjs/go/main/App";
-    import { settingsStore } from "$lib/stores/settings.svelte";
-    import { runningInDebugMode } from "$lib/stores/app";
-    import { systemInfoStore } from "$lib/stores/system-info.svelte.js";
-    import { updaterStatusStore } from "$lib/stores/updater-status.svelte.js";
+    } from "#lib/wailsjs/go/main/App.js";
+    import { settingsStore } from "#lib/stores/settings.svelte.js";
+    import { runningInDebugMode } from "#lib/stores/app.js";
+    import { systemInfoStore } from "#lib/stores/system-info.svelte.js";
+    import { updaterStatusStore } from "#lib/stores/updater-status.svelte.js";
     import {
         evaluateHostname,
         isInsideTREGCCADDomain,
         deriveHostIntegrityStanding,
         type HostIntegrityStanding,
-    } from "$lib/utils/hostIntegrity";
-    import { logIPCRequest, logIPCResponse, logIPCError } from "$lib/utils/ipcLog";
+    } from "#lib/utils/hostIntegrity.js";
+    import { logIPCRequest, logIPCResponse, logIPCError } from "#lib/utils/ipcLog.js";
 
     let { open = $bindable(false) }: { open: boolean } = $props();
 

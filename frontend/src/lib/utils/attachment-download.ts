@@ -7,9 +7,9 @@
  * downloads must go through these helpers.
  */
 import { toast } from "svelte-sonner";
-import * as m from "$lib/paraglide/messages";
-import { SaveAttachment, OpenExplorerForPath } from "$lib/wailsjs/go/main/App";
-import { logger } from "$lib/utils/logger";
+import * as m from "#lib/paraglide/messages.js";
+import { SaveAttachment, OpenExplorerForPath } from "#lib/wailsjs/go/main/App.js";
+import { logger } from "#lib/utils/logger.js";
 
 export type SaveAttachmentOptions = {
   /** Open Windows Explorer with the saved file selected (default: true). */

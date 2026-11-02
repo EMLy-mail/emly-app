@@ -9,10 +9,10 @@
     Download,
     Loader2,
   } from "@lucide/svelte";
-  import * as m from "$lib/paraglide/messages.js";
-  import { saveAttachmentNatively } from "$lib/utils/attachment-download";
-  import { toDisplayableImageSrc, mimeTypeForFilename } from "$lib/utils/image-decode";
-  import "$lib/styles/viewer-toolbar.css";
+  import * as m from "#lib/paraglide/messages.js";
+  import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
+  import { toDisplayableImageSrc, mimeTypeForFilename } from "#lib/utils/image-decode.js";
+  import "#lib/styles/viewer-toolbar.css";
 
   interface Props {
     base64Data: string;

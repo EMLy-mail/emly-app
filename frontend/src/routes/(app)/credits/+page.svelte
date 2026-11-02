@@ -1,8 +1,8 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { Button } from "$lib/components/ui/button";
-    import * as Card from "$lib/components/ui/card";
-    import { Separator } from "$lib/components/ui/separator";
+    import { Button } from "#lib/components/ui/button/index.js";
+    import * as Card from "#lib/components/ui/card/index.js";
+    import { Separator } from "#lib/components/ui/separator/index.js";
     import {
         ChevronLeft,
         Heart,
@@ -12,11 +12,11 @@
         GitMerge,
         BadgeInfo,
     } from "@lucide/svelte";
-    import * as m from "$lib/paraglide/messages";
-    import { OpenURLInBrowser } from "$lib/wailsjs/go/main/App";
+    import * as m from "#lib/paraglide/messages.js";
+    import { OpenURLInBrowser } from "#lib/wailsjs/go/main/App.js";
     import "@risadams/pride-flags/dist/pride-flags.css";
-    import ContributorCard from "$lib/components/ContributorCard.svelte";
-    import { CONTRIBUTOR_PROFILES } from "$lib/data/contributors";
+    import ContributorCard from "#lib/components/ContributorCard.svelte";
+    import { CONTRIBUTOR_PROFILES } from "#lib/data/contributors.js";
 
     let { data } = $props();
     let config = $derived(data.config);

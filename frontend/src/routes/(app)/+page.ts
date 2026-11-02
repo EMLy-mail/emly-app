@@ -4,10 +4,10 @@ import {
   GetViewerData,
   GetStartupFile,
   ReadAuto,
-} from "$lib/wailsjs/go/main/App";
+} from "#lib/wailsjs/go/main/App.js";
 import DOMPurify from "dompurify";
-import { ensureHostIntegrityChecked } from "$lib/utils/hostIntegrityCheck";
-import { trace } from "$lib/utils/startupTrace";
+import { ensureHostIntegrityChecked } from "#lib/utils/hostIntegrityCheck.js";
+import { trace } from "#lib/utils/startupTrace.js";
 
 export const load: PageLoad = async () => {
   trace("fe_load_start");

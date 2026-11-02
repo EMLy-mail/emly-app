@@ -1,5 +1,5 @@
-import type { email as mailfmt } from "$lib/wailsjs/go/models";
-import { SetCurrentMailFilePath } from "$lib/wailsjs/go/main/App";
+import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
+import { SetCurrentMailFilePath } from "#lib/wailsjs/go/main/App.js";
 
 export type AppTab =
     | { id: string; type: "email"; email: mailfmt.Data; filePath?: string }
