@@ -10,7 +10,7 @@ require (
 	github.com/jaypipes/ghw v0.26.0
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
 	github.com/mbndr/figlet4go v0.0.0-20190224160619-d6cef5b186ea
-	github.com/wailsapp/wails/v2 v2.13.0
+	github.com/wailsapp/wails/v2 v2.17.1
 	golang.org/x/mod v0.42.0
 	golang.org/x/sys v0.49.0
 	google.golang.org/protobuf v1.36.12
@@ -21,6 +21,7 @@ require (
 require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/gen2brain/shm v0.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.4 // indirect
@@ -47,7 +48,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.23 // indirect
-	github.com/wailsapp/mimetype v1.4.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
