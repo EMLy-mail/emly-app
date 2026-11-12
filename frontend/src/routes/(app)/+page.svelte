@@ -153,9 +153,9 @@
                   embedded={true}
                 />
               {:else if tab.type === "pdf" && tab.id === mailState.activeTabId}
-                <PDFTabContent base64Data={tab.base64Data} filename={tab.filename} />
+                <PDFTabContent source={tab.source} filename={tab.filename} />
               {:else if tab.type === "image" && tab.id === mailState.activeTabId}
-                <ImageViewer base64Data={tab.base64Data} filename={tab.filename} />
+                <ImageViewer source={tab.source} filename={tab.filename} />
               {/if}
             </div>
           {/each}

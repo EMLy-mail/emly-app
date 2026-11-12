@@ -244,6 +244,32 @@ export function IsAppInDebugMode():Promise<boolean>;
 export function IsDebuggerRunning():Promise<boolean>;
 
 /**
+ * OpenAttachmentEMLWindow opens the EML attachment at index of filePath in a
+ * new EMLy window.
+ */
+export function OpenAttachmentEMLWindow(filePath:string,index:number,filename:string):Promise<void>;
+
+/**
+ * OpenAttachmentExternal writes the attachment at index of filePath to a
+ * temp file and opens it with the system's default application. Replaces
+ * OpenPDF/OpenImage/OpenDocument for by-reference attachments.
+ */
+export function OpenAttachmentExternal(filePath:string,index:number,filename:string):Promise<void>;
+
+/**
+ * OpenAttachmentImageWindow opens the image attachment at index of filePath
+ * in the built-in image viewer window.
+ */
+export function OpenAttachmentImageWindow(filePath:string,index:number,filename:string):Promise<void>;
+
+/**
+ * OpenAttachmentPDFWindow opens the PDF attachment at index of filePath in
+ * the built-in PDF viewer window. filename is used for the duplicate-window
+ * check and the temp file name.
+ */
+export function OpenAttachmentPDFWindow(filePath:string,index:number,filename:string):Promise<void>;
+
+/**
  * OpenDefaultAppsSettings opens the Windows Settings app to the Default Apps page.
  * This allows users to easily set EMLy as the default handler for email files.
  * 
@@ -451,6 +477,12 @@ export function SaveAttachment(filename:string,base64Data:string):Promise<string
  * Returns an error if saving fails.
  */
 export function SaveConfig(cfg:utils.Config):Promise<void>;
+
+/**
+ * SaveMailAttachment saves the attachment at index of filePath into the
+ * export folder (see SaveAttachment) and returns the saved path.
+ */
+export function SaveMailAttachment(filePath:string,index:number,filename:string):Promise<string>;
 
 /**
  * SaveScreenshot captures and saves the screenshot to the system temp directory.

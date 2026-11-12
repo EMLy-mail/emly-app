@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import {
     RotateCcw,
     RotateCw,
@@ -11,15 +11,20 @@
   } from "@lucide/svelte";
   import * as m from "#lib/paraglide/messages.js";
   import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
-  import { toDisplayableImageSrc, mimeTypeForFilename } from "#lib/utils/image-decode.js";
+  import { toDisplayableImageFromBlob, mimeTypeForFilename } from "#lib/utils/image-decode.js";
+  import {
+    type AttachmentSource,
+    attachmentSourceToBlob,
+  } from "#lib/utils/mail/attachment-source.js";
   import "#lib/styles/viewer-toolbar.css";
 
   interface Props {
-    base64Data: string;
+    /** Attachment reference (raw bytes via AssetServer) or base64 data. */
+    source: AttachmentSource;
     filename: string;
   }
 
-  let { base64Data, filename }: Props = $props();
+  let { source, filename }: Props = $props();
 
   let rotation = $state(0);
   let scale = $state(1);
@@ -34,21 +39,30 @@
   /** Set only for HEIC/HEIF or mislabeled TIFF: the converted JPEG to offer on download,
    *  since most systems can't open the original format directly. */
   let downloadOverride: { base64: string; filename: string } | undefined;
+  /** Object URL backing displaySrc (native formats), revoked on destroy. */
+  let objectUrl: string | null = null;
+  let destroyed = false;
 
   let isDragging = false;
   let startX = 0;
   let startY = 0;
 
   onMount(async () => {
-    // Convert to a displayable <img> src: a fast-path data: URI for
-    // regular formats, or a decoded JPEG for HEIC/HEIF/TIFF (which the browser
-    // can't render natively).
+    // Convert to a displayable <img> src: an object URL of the raw bytes for
+    // regular formats (no base64 copy in the renderer), or a decoded JPEG
+    // for HEIC/HEIF/TIFF (which the browser can't render natively).
     try {
-      const result = await toDisplayableImageSrc(
-        base64Data,
+      const blob = await attachmentSourceToBlob(source);
+      const result = await toDisplayableImageFromBlob(
+        blob,
         filename,
         mimeTypeForFilename(filename),
       );
+      if (result.objectUrl) objectUrl = result.src;
+      if (destroyed) {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        return;
+      }
       displaySrc = result.src;
       downloadOverride = result.download;
     } catch (e) {
@@ -56,6 +70,11 @@
     } finally {
       decoding = false;
     }
+  });
+
+  onDestroy(() => {
+    destroyed = true;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
   });
 
   function fitToScreen() {
@@ -104,8 +123,8 @@
       void saveAttachmentNatively(downloadOverride.base64, downloadOverride.filename);
       return;
     }
-    if (!base64Data || !filename) return;
-    void saveAttachmentNatively(base64Data, filename);
+    if (!filename) return;
+    void saveAttachmentNatively(source, filename);
   }
 
   function handleWheel(e: WheelEvent) {

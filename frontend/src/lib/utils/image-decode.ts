@@ -1,9 +1,10 @@
 /**
  * Client-side image -> displayable-image conversion.
  *
- * EMLy's built-in image viewers only ever receive base64 bytes from the Go
- * backend, which just passes raw file bytes through unchanged (see
- * app_viewer.go GetImageViewerData/GetViewerData). Browsers/WebView2 cannot
+ * EMLy's built-in image viewers receive either base64 bytes from the Go
+ * backend (viewer windows: app_viewer.go GetImageViewerData/GetViewerData,
+ * see toDisplayableImageSrc) or a Blob of raw bytes from the AssetServer
+ * (image tabs: app_attachments.go, see toDisplayableImageFromBlob). Browsers/WebView2 cannot
  * natively decode HEIC/HEIF or TIFF for an <img> tag, so for those formats we
  * decode to a JPEG in-browser - HEIC via libheif-js (WASM), TIFF via utif -
  * purely for on-screen display.
@@ -66,6 +67,15 @@ function sniffImageFormat(bytes: Uint8Array): SniffedFormat | null {
   }
   if (ascii(4, 8) === "ftyp" && HEIC_BRANDS.has(ascii(8, 12))) return "heic";
   return null;
+}
+
+/** Sniffs the format from the first bytes of a Blob (reads only 16 bytes). */
+async function sniffBlob(blob: Blob): Promise<SniffedFormat | null> {
+  try {
+    return sniffImageFormat(new Uint8Array(await blob.slice(0, 16).arrayBuffer()));
+  } catch {
+    return null;
+  }
 }
 
 /** Decodes just enough of the base64 payload to sniff its magic bytes. */
@@ -136,13 +146,60 @@ export async function toDisplayableImageSrc(
   return { src: `data:${mime};base64,${base64Data}` };
 }
 
+/**
+ * Blob counterpart of toDisplayableImageSrc, for viewers that get raw bytes
+ * (AssetServer) instead of base64. Browser-native formats become an object
+ * URL of the Blob itself - no base64 copy, no data: URI; `objectUrl` is
+ * true and the caller must URL.revokeObjectURL(src) when done. HEIC/HEIF and
+ * TIFF are decoded to a JPEG data: URI exactly like toDisplayableImageSrc.
+ */
+export async function toDisplayableImageFromBlob(
+  blob: Blob,
+  filename: string,
+  mimeType: string,
+): Promise<DisplayableImage & { objectUrl: boolean }> {
+  const sniffed = await sniffBlob(blob);
+  const format = sniffed ?? (isHeic(filename) ? "heic" : isTiffFilename(filename) ? "tiff" : null);
+
+  if (format === "heic" || format === "tiff") {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    try {
+      if (format === "heic") {
+        const dataUrl = await decodeHeicBytesToJpeg(bytes);
+        return {
+          src: dataUrl,
+          objectUrl: false,
+          download: { base64: dataUrl.split(",")[1] ?? "", filename: withJpgExtension(filename) },
+        };
+      }
+      const dataUrl = await decodeTiffBytesToJpeg(bytes);
+      return isTiffFilename(filename)
+        ? { src: dataUrl, objectUrl: false }
+        : {
+            src: dataUrl,
+            objectUrl: false,
+            download: { base64: dataUrl.split(",")[1] ?? "", filename: withJpgExtension(filename) },
+          };
+    } catch (err) {
+      throw normalizeDecodeError(err);
+    }
+  }
+
+  const mime = format ? `image/${format}` : mimeType;
+  return { src: URL.createObjectURL(new Blob([blob], { type: mime })), objectUrl: true };
+}
+
 async function decodeHeicToJpeg(base64Data: string): Promise<string> {
+  return decodeHeicBytesToJpeg(base64ToUint8Array(base64Data));
+}
+
+async function decodeHeicBytesToJpeg(bytes: Uint8Array): Promise<string> {
   const mod = await import("libheif-js/wasm-bundle");
   // The wasm-bundle package is CommonJS; depending on bundler interop the
   // named export may land on `.default` or directly on the module object.
   const libheif = mod.default ?? mod;
   const decoder = new libheif.HeifDecoder();
-  const images = decoder.decode(base64ToUint8Array(base64Data));
+  const images = decoder.decode(bytes);
   if (!images || images.length === 0) {
     throw new Error("No image found in HEIC/HEIF file");
   }
@@ -166,10 +223,13 @@ async function decodeHeicToJpeg(base64Data: string): Promise<string> {
 }
 
 async function decodeTiffToJpeg(base64Data: string): Promise<string> {
+  return decodeTiffBytesToJpeg(base64ToUint8Array(base64Data));
+}
+
+async function decodeTiffBytesToJpeg(bytes: Uint8Array): Promise<string> {
   const mod = await import("utif");
   // CommonJS package: same interop caveat as libheif-js above.
   const UTIF = mod.default ?? mod;
-  const bytes = base64ToUint8Array(base64Data);
   const ifds = UTIF.decode(bytes);
   // Multi-page TIFFs show their first page; skip non-image directories.
   const page = ifds.find((ifd) => ifd["t256"] != null);

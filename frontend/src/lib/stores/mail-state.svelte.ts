@@ -1,10 +1,13 @@
 import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
+import type { AttachmentSource } from "#lib/utils/mail/attachment-source.js";
 import { SetCurrentMailFilePath } from "#lib/wailsjs/go/main/App.js";
 
 export type AppTab =
     | { id: string; type: "email"; email: mailfmt.Data; filePath?: string }
-    | { id: string; type: "pdf";   filename: string; base64Data: string }
-    | { id: string; type: "image"; filename: string; base64Data: string };
+    // source: attachment reference (bytes fetched as a Blob when the tab is
+    // shown) or base64 already in hand ("Old Pre-loading" mode).
+    | { id: string; type: "pdf";   filename: string; source: AttachmentSource }
+    | { id: string; type: "image"; filename: string; source: AttachmentSource };
 
 // Keep EmailTab exported for any existing consumers
 export type EmailTab = Extract<AppTab, { type: "email" }>;
@@ -46,17 +49,17 @@ class MailState {
         return id;
     }
 
-    addPDFTab(filename: string, base64Data: string): string {
+    addPDFTab(filename: string, source: AttachmentSource): string {
         const id = crypto.randomUUID();
-        this.tabs = [...this.tabs, { id, type: "pdf", filename, base64Data }];
+        this.tabs = [...this.tabs, { id, type: "pdf", filename, source }];
         this.activeTabId = id;
         this.syncCurrentMailFilePath();
         return id;
     }
 
-    addImageTab(filename: string, base64Data: string): string {
+    addImageTab(filename: string, source: AttachmentSource): string {
         const id = crypto.randomUUID();
-        this.tabs = [...this.tabs, { id, type: "image", filename, base64Data }];
+        this.tabs = [...this.tabs, { id, type: "image", filename, source }];
         this.activeTabId = id;
         this.syncCurrentMailFilePath();
         return id;

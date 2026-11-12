@@ -55,6 +55,7 @@
     ChevronRight,
   } from "@lucide/svelte";
   import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
+  import type { AttachmentSource } from "#lib/utils/mail/attachment-source.js";
   import * as m from "#lib/paraglide/messages.js";
   import "#lib/styles/viewer-toolbar.css";
 
@@ -63,9 +64,14 @@
     filename?: string;
     height?: string;
     base64Data?: string;
+    /** What the download button saves: an attachment reference (Go saves
+     *  the bytes itself) or base64. Defaults to base64Data. */
+    saveSource?: AttachmentSource;
   }
 
-  let { src, filename = "", height = "100%", base64Data = "" }: Props = $props();
+  let { src, filename = "", height = "100%", base64Data = "", saveSource }: Props = $props();
+
+  let downloadSource = $derived<AttachmentSource | null>(saveSource ?? (base64Data || null));
 
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 400;
@@ -273,8 +279,8 @@
   }
 
   function downloadPdf() {
-    if (!base64Data) return;
-    void saveAttachmentNatively(base64Data, filename || "document.pdf");
+    if (!downloadSource) return;
+    void saveAttachmentNatively(downloadSource, filename || "document.pdf");
   }
 
   onDestroy(() => {
@@ -294,7 +300,7 @@
       <button
         class="btn"
         onclick={downloadPdf}
-        disabled={!base64Data}
+        disabled={!downloadSource}
         title={m.mail_download_btn_title()}
       >
         <Download size="16" />

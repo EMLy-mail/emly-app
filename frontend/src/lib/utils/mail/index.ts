@@ -33,6 +33,17 @@ export {
   type AttachmentHandlerResult,
 } from './attachment-handlers';
 
+// Attachment sources (by-reference access, see app_attachments.go)
+export {
+  attachmentUrl,
+  attachmentSourceToBlob,
+  base64ToBytes,
+  fetchAttachmentBlob,
+  isAttachmentRef,
+  type AttachmentRef,
+  type AttachmentSource,
+} from './attachment-source';
+
 // Email loader
 export {
   getEmailFileType,

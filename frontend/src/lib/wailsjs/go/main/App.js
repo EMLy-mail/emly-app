@@ -293,6 +293,40 @@ export function IsDebuggerRunning() {
 }
 
 /**
+ * OpenAttachmentEMLWindow opens the EML attachment at index of filePath in a
+ * new EMLy window.
+ */
+export function OpenAttachmentEMLWindow(filePath, index, filename) {
+  return window['go']['main']['App']['OpenAttachmentEMLWindow'](filePath, index, filename);
+}
+
+/**
+ * OpenAttachmentExternal writes the attachment at index of filePath to a
+ * temp file and opens it with the system's default application. Replaces
+ * OpenPDF/OpenImage/OpenDocument for by-reference attachments.
+ */
+export function OpenAttachmentExternal(filePath, index, filename) {
+  return window['go']['main']['App']['OpenAttachmentExternal'](filePath, index, filename);
+}
+
+/**
+ * OpenAttachmentImageWindow opens the image attachment at index of filePath
+ * in the built-in image viewer window.
+ */
+export function OpenAttachmentImageWindow(filePath, index, filename) {
+  return window['go']['main']['App']['OpenAttachmentImageWindow'](filePath, index, filename);
+}
+
+/**
+ * OpenAttachmentPDFWindow opens the PDF attachment at index of filePath in
+ * the built-in PDF viewer window. filename is used for the duplicate-window
+ * check and the temp file name.
+ */
+export function OpenAttachmentPDFWindow(filePath, index, filename) {
+  return window['go']['main']['App']['OpenAttachmentPDFWindow'](filePath, index, filename);
+}
+
+/**
  * OpenDefaultAppsSettings opens the Windows Settings app to the Default Apps page.
  * This allows users to easily set EMLy as the default handler for email files.
  * 
@@ -541,6 +575,14 @@ export function SaveAttachment(filename, base64Data) {
  */
 export function SaveConfig(cfg) {
   return window['go']['main']['App']['SaveConfig'](cfg);
+}
+
+/**
+ * SaveMailAttachment saves the attachment at index of filePath into the
+ * export folder (see SaveAttachment) and returns the saved path.
+ */
+export function SaveMailAttachment(filePath, index, filename) {
+  return window['go']['main']['App']['SaveMailAttachment'](filePath, index, filename);
 }
 
 /**

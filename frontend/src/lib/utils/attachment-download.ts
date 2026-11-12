@@ -8,7 +8,8 @@
  */
 import { toast } from "svelte-sonner";
 import * as m from "#lib/paraglide/messages.js";
-import { SaveAttachment, OpenExplorerForPath } from "#lib/wailsjs/go/main/App.js";
+import { SaveAttachment, SaveMailAttachment, OpenExplorerForPath } from "#lib/wailsjs/go/main/App.js";
+import { type AttachmentSource, isAttachmentRef } from "#lib/utils/mail/attachment-source.js";
 import { logger } from "#lib/utils/logger.js";
 
 export type SaveAttachmentOptions = {
@@ -19,17 +20,21 @@ export type SaveAttachmentOptions = {
 };
 
 /**
- * Saves a single base64-encoded attachment to disk via the Go backend.
+ * Saves a single attachment to disk via the Go backend. source is either a
+ * reference (mail path + index: Go reads the bytes itself, nothing crosses
+ * the IPC bridge) or base64 content already in hand.
  * Returns the saved path, or null if saving failed.
  */
 export async function saveAttachmentNatively(
-  base64Content: string,
+  source: AttachmentSource,
   filename: string,
   options: SaveAttachmentOptions = {},
 ): Promise<string | null> {
   const { openExplorer = true, showToast = true } = options;
   try {
-    const savedPath = await SaveAttachment(filename, base64Content);
+    const savedPath = isAttachmentRef(source)
+      ? await SaveMailAttachment(source.filePath, source.index, filename)
+      : await SaveAttachment(filename, source);
     logger.info("attachment saved natively", { filename, savedPath });
 
     if (showToast) {
@@ -56,13 +61,13 @@ export async function saveAttachmentNatively(
  * once with the last saved file selected.
  */
 export async function saveAllAttachmentsNatively(
-  attachments: { filename: string; base64: string }[],
+  attachments: { filename: string; source: AttachmentSource }[],
 ): Promise<void> {
   let lastSavedPath: string | null = null;
   let savedCount = 0;
 
   for (const att of attachments) {
-    const savedPath = await saveAttachmentNatively(att.base64, att.filename, {
+    const savedPath = await saveAttachmentNatively(att.source, att.filename, {
       openExplorer: false,
       showToast: false,
     });

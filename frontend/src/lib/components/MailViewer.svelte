@@ -22,7 +22,6 @@
         BrowserOpenURL,
         ClipboardSetText,
     } from "#lib/wailsjs/runtime/runtime.js";
-    import { GetAttachmentData } from "#lib/wailsjs/go/main/App.js";
     import { mailState } from "#lib/stores/mail-state.svelte.js";
     import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
     import * as m from "#lib/paraglide/messages.js";
@@ -182,23 +181,23 @@
         if (!activeEmail || !activeEmail.attachments || !activeFilePath) return;
 
         // ReadEML/ReadMSG/ReadAuto no longer send attachment bytes up front
-        // (see backend/app_mail.go: stripAttachmentData) - fetch each one's
-        // bytes on demand, only now that the user actually asked to
-        // download them.
+        // (see backend/app_mail.go: stripAttachmentData) - each attachment
+        // is passed by reference (mail path + index) and Go reads and saves
+        // the bytes itself (SaveMailAttachment), so nothing crosses the IPC
+        // bridge.
         isLoading = true;
         loadingText = m.mail_downloading_attachments_text();
         try {
-            const attachments = await Promise.all(
-                activeEmail.attachments.map(async (att, index) => ({
-                    filename: att.filename,
-                    // "Old Pre-loading of attachments" (Settings → Danger
-                    // Zone, off by default) sends full bytes up front - use
-                    // them directly instead of an extra round trip.
-                    base64: hasPreloadedAttachmentData(att.data)
-                        ? arrayBufferToBase64(att.data)
-                        : await GetAttachmentData(activeFilePath!, index),
-                })),
-            );
+            const filePath = activeFilePath;
+            const attachments = activeEmail.attachments.map((att, index) => ({
+                filename: att.filename,
+                // "Old Pre-loading of attachments" (Settings → Danger Zone,
+                // off by default) sends full bytes up front - use them
+                // directly.
+                source: hasPreloadedAttachmentData(att.data)
+                    ? arrayBufferToBase64(att.data)
+                    : { filePath, index },
+            }));
             await saveAllAttachmentsNatively(attachments);
         } catch (error) {
             console.error("Failed to fetch attachments for download:", error);

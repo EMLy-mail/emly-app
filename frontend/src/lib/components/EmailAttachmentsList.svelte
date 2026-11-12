@@ -4,11 +4,11 @@
     import { hostIntegrityFailed } from "#lib/stores/app.js";
     import * as m from "#lib/paraglide/messages.js";
     import type { email as mailfmt } from "#lib/wailsjs/go/models.js";
-    import { GetAttachmentData } from "#lib/wailsjs/go/main/App.js";
     import {
         CONTENT_TYPES,
         arrayBufferToBase64,
         hasPreloadedAttachmentData,
+        type AttachmentSource,
         openPDFAttachment,
         openImageAttachment,
         openEMLAttachment,
@@ -29,29 +29,32 @@
     $inspect(attachments, "attachments");
 
     // ReadEML/ReadMSG/ReadAuto no longer send attachment bytes up front (see
-    // backend/app_mail.go: stripAttachmentData) - a heavy mail used to ship
-    // every attachment's bytes across the Wails IPC bridge before the user
-    // had looked at anything. Instead, fetch one attachment's bytes only
-    // when its button is actually clicked (open or save).
+    // backend/app_mail.go: stripAttachmentData). Attachments are addressed
+    // by reference (mail path + index): opening in a viewer window, with an
+    // external app or saving is done entirely in Go (app_attachments.go), so
+    // the bytes never cross the Wails IPC bridge as base64.
     let pendingIndex = $state<number | null>(null);
 
-    async function fetchAttachmentBase64(index: number): Promise<string | null> {
+    function attachmentSource(index: number): AttachmentSource | null {
         // "Old Pre-loading of attachments" (Settings → Danger Zone, off by
         // default) makes the backend send full bytes up front - use them
-        // directly and skip the extra round trip entirely.
+        // directly.
         const att = attachments?.[index];
         if (att && hasPreloadedAttachmentData(att.data)) {
             return arrayBufferToBase64(att.data);
         }
-
-        if (!filePath) return null;
-        pendingIndex = index;
-        try {
-            return await GetAttachmentData(filePath, index);
-        } catch (error) {
-            console.error("Failed to fetch attachment data:", error);
+        if (!filePath) {
             toast.error(m.attachment_fetch_error());
             return null;
+        }
+        return { filePath, index };
+    }
+
+    // Shows the button spinner while the backend loads/opens the attachment.
+    async function withPending(index: number, action: () => Promise<unknown>) {
+        pendingIndex = index;
+        try {
+            await action();
         } finally {
             pendingIndex = null;
         }
@@ -103,39 +106,39 @@
 
     async function handleOpenPDF(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
-        const base64Data = await fetchAttachmentBase64(index);
-        if (base64Data === null) return;
-        await openPDFAttachment(base64Data, filename);
+        const source = attachmentSource(index);
+        if (source === null) return;
+        await withPending(index, () => openPDFAttachment(source, filename));
     }
 
     async function handleOpenImage(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
-        const base64Data = await fetchAttachmentBase64(index);
-        if (base64Data === null) return;
-        await openImageAttachment(base64Data, filename);
+        const source = attachmentSource(index);
+        if (source === null) return;
+        await withPending(index, () => openImageAttachment(source, filename));
     }
 
     async function handleOpenEML(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
-        const base64Data = await fetchAttachmentBase64(index);
-        if (base64Data === null) return;
-        await openEMLAttachment(base64Data, filename);
+        const source = attachmentSource(index);
+        if (source === null) return;
+        await withPending(index, () => openEMLAttachment(source, filename));
     }
 
     async function handleOpenDoc(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
-        const base64Data = await fetchAttachmentBase64(index);
-        if (base64Data === null) return;
-        await openDocAttachment(base64Data, filename);
+        const source = attachmentSource(index);
+        if (source === null) return;
+        await withPending(index, () => openDocAttachment(source, filename));
     }
 
     async function handleSaveDefault(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
         showDefaultAttachmentToast({
             onSave: async () => {
-                const base64Data = await fetchAttachmentBase64(index);
-                if (base64Data === null) return;
-                void saveAttachmentNatively(base64Data, filename);
+                const source = attachmentSource(index);
+                if (source === null) return;
+                await withPending(index, () => saveAttachmentNatively(source, filename));
             },
             onReset: () => {},
         });
