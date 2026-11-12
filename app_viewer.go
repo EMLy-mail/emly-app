@@ -52,8 +52,8 @@ type ViewerData struct {
 // Built-in Viewer Window Methods
 // =============================================================================
 
-// openInViewerWindow decodes base64Data, writes it to a uniquely-named temp
-// file, and launches a new EMLy instance to display it, tracking the open
+// openInViewerWindow obtains the file bytes via load, writes them to a
+// uniquely-named temp file, and launches a new EMLy instance to display it, tracking the open
 // file in tracker (guarded by mux) to prevent duplicate windows for the same
 // filename. The tracking entry is released once the launched process exits.
 //
@@ -64,7 +64,7 @@ func (a *App) openInViewerWindow(
 	mux *sync.Mutex,
 	tracker map[string]bool,
 	kind string,
-	base64Data string,
+	load func() ([]byte, error),
 	filename string,
 	tempNamer func(timestamp, filename string) string,
 	argsBuilder func(tempFile string) []string,
@@ -83,10 +83,10 @@ func (a *App) openInViewerWindow(
 		mux.Unlock()
 	}
 
-	data, err := base64.StdEncoding.DecodeString(base64Data)
+	data, err := load()
 	if err != nil {
 		release()
-		return fmt.Errorf("failed to decode base64: %w", err)
+		return err
 	}
 
 	tempDir := os.TempDir()
@@ -131,9 +131,14 @@ func (a *App) openInViewerWindow(
 // Returns:
 //   - error: Error if the file is already open or if launching fails
 func (a *App) OpenEMLWindow(base64Data string, filename string) error {
+	return a.openEMLViewer(base64Loader(base64Data), filename)
+}
+
+// openEMLViewer launches an EML viewer window for the bytes returned by load.
+func (a *App) openEMLViewer(load func() ([]byte, error), filename string) error {
 	return a.openInViewerWindow(
 		&a.openEMLsMux, a.openEMLs, "eml",
-		base64Data, filename,
+		load, filename,
 		func(timestamp, filename string) string {
 			return fmt.Sprintf("%s_%s_%s", "emly_attachment", timestamp, filename)
 		},
@@ -154,9 +159,14 @@ func (a *App) OpenEMLWindow(base64Data string, filename string) error {
 // Returns:
 //   - error: Error if the image is already open or if launching fails
 func (a *App) OpenImageWindow(base64Data string, filename string) error {
+	return a.openImageViewer(base64Loader(base64Data), filename)
+}
+
+// openImageViewer launches an image viewer window for the bytes returned by load.
+func (a *App) openImageViewer(load func() ([]byte, error), filename string) error {
 	return a.openInViewerWindow(
 		&a.openImagesMux, a.openImages, "image",
-		base64Data, filename,
+		load, filename,
 		func(timestamp, filename string) string { return fmt.Sprintf("%s_%s", timestamp, filename) },
 		func(tempFile string) []string { return []string{"--view-image=" + tempFile} },
 	)
@@ -175,12 +185,29 @@ func (a *App) OpenImageWindow(base64Data string, filename string) error {
 // Returns:
 //   - error: Error if the PDF is already open or if launching fails
 func (a *App) OpenPDFWindow(base64Data string, filename string) error {
+	return a.openPDFViewer(base64Loader(base64Data), filename)
+}
+
+// openPDFViewer launches a PDF viewer window for the bytes returned by load.
+func (a *App) openPDFViewer(load func() ([]byte, error), filename string) error {
 	return a.openInViewerWindow(
 		&a.openPDFsMux, a.openPDFs, "pdf",
-		base64Data, filename,
+		load, filename,
 		func(timestamp, filename string) string { return fmt.Sprintf("%s_%s", timestamp, filename) },
 		func(tempFile string) []string { return []string{"--view-pdf=" + tempFile} },
 	)
+}
+
+// base64Loader returns a loader that decodes base64Data, for the legacy
+// viewer entry points that still receive bytes from the frontend.
+func base64Loader(base64Data string) func() ([]byte, error) {
+	return func() ([]byte, error) {
+		data, err := base64.StdEncoding.DecodeString(base64Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode base64: %w", err)
+		}
+		return data, nil
+	}
 }
 
 // =============================================================================
@@ -200,7 +227,11 @@ func openWithDefaultApp(base64Data string, filename string) error {
 	if err != nil {
 		return fmt.Errorf("failed to decode base64: %w", err)
 	}
+	return openBytesWithDefaultApp(data, filename)
+}
 
+// openBytesWithDefaultApp is openWithDefaultApp for raw bytes.
+func openBytesWithDefaultApp(data []byte, filename string) error {
 	// Save to temp file with timestamp for uniqueness
 	tempDir := os.TempDir()
 	timestamp := time.Now().Format("20060102_150405")

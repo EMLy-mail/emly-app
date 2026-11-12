@@ -33,6 +33,7 @@ func (a *App) ReadEML(filePath string) (data *mailfmt.EmailData, err error) {
 	pkglogger.TraceStep("go_read_eml_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(data))
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadEML", data)
+		a.registerMailPath(filePath)
 		if !oldAttachmentPreloadEnabled() {
 			stripAttachmentData(data)
 		}
@@ -51,6 +52,7 @@ func (a *App) ReadPEC(filePath string) (data *mailfmt.EmailData, err error) {
 	pkglogger.TraceStep("go_read_pec_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(data))
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadPEC", data)
+		a.registerMailPath(filePath)
 		if !oldAttachmentPreloadEnabled() {
 			stripAttachmentData(data)
 		}
@@ -69,6 +71,7 @@ func (a *App) ReadMSG(filePath string) (data *mailfmt.EmailData, err error) {
 	pkglogger.TraceStep("go_read_msg_done", fmt.Sprintf("took=%dms", time.Since(start).Milliseconds()), attachmentsDetail(data))
 	if err == nil && data != nil {
 		logParsedMailInfo("ReadMSG", data)
+		a.registerMailPath(filePath)
 		if !oldAttachmentPreloadEnabled() {
 			stripAttachmentData(data)
 		}
@@ -131,6 +134,7 @@ func (a *App) ReadAuto(filePath string) (result *mailfmt.EmailData, err error) {
 
 	if err == nil && result != nil {
 		logParsedMailInfo("ReadAuto", result)
+		a.registerMailPath(filePath)
 		if !oldAttachmentPreloadEnabled() {
 			stripAttachmentData(result)
 		}
@@ -159,33 +163,14 @@ func (a *App) GetAttachmentData(filePath string, index int) (b64 string, err err
 
 	pkglogger.TraceStep("go_get_attachment_start", filepath.Base(filePath), fmt.Sprintf("index=%d", index))
 
-	format, err := mailfmt.DetectEmailFormat(filePath)
+	att, err := loadAttachment(filePath, index)
 	if err != nil {
 		return "", err
 	}
 
-	var data *mailfmt.EmailData
-	switch format {
-	case mailfmt.FormatMSG:
-		data, err = mailfmt.ReadMsgFile(filePath)
-	default: // FormatEML or FormatUnknown – try PEC first, fall back to plain EML
-		data, err = mailfmt.ReadPecInnerEml(filePath)
-		if err != nil {
-			data, err = mailfmt.ReadEmlFile(filePath)
-		}
-	}
-	if err != nil {
-		return "", err
-	}
-
-	if index < 0 || index >= len(data.Attachments) {
-		err = fmt.Errorf("attachment index %d out of range (have %d)", index, len(data.Attachments))
-		return "", err
-	}
-
-	b64 = base64.StdEncoding.EncodeToString(data.Attachments[index].Data)
+	b64 = base64.StdEncoding.EncodeToString(att.Data)
 	pkglogger.TraceStep("go_get_attachment_done",
-		fmt.Sprintf("took=%dms attachment_bytes=%d", time.Since(start).Milliseconds(), len(data.Attachments[index].Data)))
+		fmt.Sprintf("took=%dms attachment_bytes=%d", time.Since(start).Milliseconds(), len(att.Data)))
 	return b64, nil
 }
 

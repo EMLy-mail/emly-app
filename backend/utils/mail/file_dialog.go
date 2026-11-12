@@ -107,7 +107,13 @@ func SaveAttachmentToFolder(filename string, base64Data string, folderPath strin
 	if err != nil {
 		return "", fmt.Errorf("failed to decode attachment data: %w", err)
 	}
+	return SaveAttachmentBytesToFolder(filename, data, folderPath)
+}
 
+// SaveAttachmentBytesToFolder is SaveAttachmentToFolder for raw bytes, used
+// when the backend already holds the attachment (no base64 round trip
+// through the frontend).
+func SaveAttachmentBytesToFolder(filename string, data []byte, folderPath string) (string, error) {
 	targetFolder := strings.TrimSpace(folderPath)
 	if targetFolder == "" {
 		targetFolder = filepath.Join(os.Getenv("USERPROFILE"), "Downloads")

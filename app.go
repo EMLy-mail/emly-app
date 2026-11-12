@@ -71,6 +71,7 @@ func NewApp(userAgent string) *App {
 		openImages: make(map[string]bool),
 		openPDFs:   make(map[string]bool),
 		openEMLs:   make(map[string]bool),
+		knownMails: make(map[string]bool),
 		httpClient: &http.Client{
 			Transport: &userAgentTransport{
 				ua:   userAgent,

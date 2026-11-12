@@ -123,7 +123,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets:     assets,
 			Handler:    spaFallbackHandler(assets),
-			Middleware: userAgentMiddleware(userAgent),
+			Middleware: assetserver.ChainMiddleware(userAgentMiddleware(userAgent), app.attachmentMiddleware),
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
