@@ -7,13 +7,14 @@ import {
     type ContributorAssignment,
     type GitHubUserData,
 } from '#lib/data/contributors.js';
+import * as m from '#lib/paraglide/messages.js';
 
 interface ContributorsData {
     team: Array<GitHubUserData | null>;
     specialThanks: Array<GitHubUserData | null>;
 }
 
-export const load = (async ({ fetch }) => {
+export const load = (async ({ fetch, url }) => {
     if (!browser) return {
         config: null, contributorsData: {
             team: [], specialThanks: []
@@ -95,8 +96,18 @@ export const load = (async ({ fetch }) => {
         }
 
         for (let i = 0; i < contributorsData.specialThanks.length; i++) {
-            if (contributorsData.specialThanks[i]) {
-                contributorsData.specialThanks[i]!.name = `${contributorsData.specialThanks[i]!.name} (meow)`;
+            switch (contributorsData.specialThanks[i]?.id) {
+                case 20886839: // Amber
+                    contributorsData.specialThanks[i]!.name = `${m.credits_special_thanks_amber()} (${m.credits_special_thanks_amber_desc()})`;
+                    break;
+
+                case 35636667: // Lauren
+                    contributorsData.specialThanks[i]!.name = `${m.credits_special_thanks_lauren()} (${m.credits_special_thanks_lauren_desc()})`;
+                    break;
+
+                default:
+                    // No special handling for other contributors
+                    break;
             }
         }
     }

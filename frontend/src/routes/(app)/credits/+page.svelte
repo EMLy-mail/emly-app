@@ -97,9 +97,9 @@
             url: "https://www.typescriptlang.org",
         },
         {
-            name: "Tailwind CSS",
-            description: m.credits_tech_tailwind(),
-            url: "https://tailwindcss.com",
+            name: "mailfmt",
+            description: m.credits_tech_mailfmt(),
+            url: "https://github.com/ffois/mailfmt",
         },
     ];
 
