@@ -3,6 +3,7 @@
   import * as Sidebar from "#lib/components/ui/sidebar/index.js";
   import { dangerZoneEnabled } from "#lib/stores/app.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { goto } from "$app/navigation";
   import { Mail, Heart, Info } from "@lucide/svelte/icons";
 
   const CLICK_WINDOW_MS = 4000;
@@ -18,13 +19,24 @@
 
     if (recentClicks.length >= REQUIRED_CLICKS) {
       recentClicks = [];
-      try {
-        sessionStorage.setItem("debugWindowInSettings", "true");
-        dangerZoneEnabled.set(true);
-      } catch (e) {
-        console.error("Failed to enable debug window:", e);
-      }
+      activateDangerZone();
     }
+  }
+
+  function activateDangerZone() {
+    try {
+      sessionStorage.setItem("debugWindowInSettings", "true");
+      dangerZoneEnabled.set(true);
+    } catch (e) {
+      console.error("Failed to enable debug window:", e);
+    }
+  }
+
+  function forceEasterEgg(event: MouseEvent) {
+    if (!event.shiftKey) return;
+    // Shift+click on a link opens a new window by default; block that.
+    event.preventDefault();
+    goto("/credits?force=true");
   }
 
   // Menu items.
@@ -82,6 +94,11 @@
                     </a>
                   {:else if item.url === "/settings"}
                     <a href={item.url} {...props} onclick={enableDangerZone}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </a>
+                  {:else if item.url === "/credits"}
+                    <a href={item.url} {...props} onclick={forceEasterEgg}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>

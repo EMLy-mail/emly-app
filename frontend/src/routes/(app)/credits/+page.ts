@@ -87,7 +87,7 @@ export const load = (async ({ fetch }) => {
 
     let easterEgg = false;
 
-    if (Math.random() < getTriggerFloat()) {
+    if (Math.random() < getTriggerFloat() || url.searchParams.get("force") === "true") {
         easterEgg = true;
 
         if (contributorsData.team[0] && contributorsData.team[0].id === 278996585) {
