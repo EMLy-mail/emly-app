@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -25,6 +26,21 @@ func main() {
 	// the true process start, not just the point config/logger setup happens
 	// to finish.
 	processStart := time.Now()
+
+	// File-based CPU profiling only when the live pprof endpoint is off:
+	// Go allows a single CPU profile at a time, so cpu.prof would make
+	// /debug/pprof/profile fail with "cpu profiling already in use".
+	var cpuProfile *os.File
+	if livePprofEnabled {
+		// CPU profiles come from the live endpoint instead
+	} else if f, err := os.Create("cpu.prof"); err != nil {
+		log.Println("Error creating CPU profile file:", err)
+	} else if err := pprof.StartCPUProfile(f); err != nil {
+		log.Println("Error starting CPU profiling:", err)
+		f.Close()
+	} else {
+		cpuProfile = f
+	}
 
 	if err := InitLogger(); err != nil {
 		log.Println("Error initializing logger:", err)
@@ -99,6 +115,12 @@ func main() {
 
 	// Create an instance of the app structure
 	app := NewApp(userAgent)
+	app.cpuProfile = cpuProfile
+	app.heapProfilePath = "mem.prof"
+	defer app.stopProfiling()
+
+	// Live pprof endpoint on 127.0.0.1:6060 (debug builds only, no-op otherwise)
+	startPprofServer()
 
 	// Parse args again to set startup file on the app instance
 	for _, arg := range args {
@@ -139,6 +161,7 @@ func main() {
 		MinHeight:                690,
 		Frameless:                frameless,
 		OnBeforeClose:            app.beforeClose,
+		OnShutdown:               app.shutdown,
 	}
 
 	pkglogger.TraceStep("wails_run_starting")

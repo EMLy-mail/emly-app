@@ -5,9 +5,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	goruntime "runtime"
+	"runtime/pprof"
 	"strings"
 	"sync"
 	"syscall"
@@ -57,6 +60,55 @@ type App struct {
 	// httpClient is a shared HTTP client with custom User-Agent for all
 	// outgoing requests (heartbeat, bug report upload, etc.)
 	httpClient *http.Client
+
+	// knownMails is the allowlist of mail files the frontend has loaded
+	// (normalized paths, see registerMailPath). Attachment bytes are only
+	// served for these files, so the /emly-attachment endpoint can't be
+	// used to parse arbitrary paths on disk.
+	knownMailsMux sync.Mutex
+	knownMails    map[string]bool
+
+	// cpuProfile is the open CPU profile file (nil when CPU profiling is off).
+	// heapProfilePath is where the heap profile is written on exit
+	// ("" when heap profiling is off).
+	// profilingOnce guarantees profiles are flushed exactly once, whichever
+	// exit path (shutdown, QuitApp, main defer) runs first.
+	cpuProfile      *os.File
+	heapProfilePath string
+	profilingOnce   sync.Once
+}
+
+// stopProfiling stops CPU profiling, closes the CPU profile file and writes
+// the heap profile. Safe to call multiple times and when profiling is off.
+func (a *App) stopProfiling() {
+	a.profilingOnce.Do(func() {
+		if a.cpuProfile != nil {
+			pprof.StopCPUProfile()
+			if err := a.cpuProfile.Close(); err != nil {
+				log.Println("Error closing CPU profile:", err)
+			}
+		}
+		if a.heapProfilePath != "" {
+			writeHeapProfile(a.heapProfilePath)
+		}
+	})
+}
+
+// writeHeapProfile writes a heap profile to path. It contains both
+// in-use memory at exit (inuse_space/inuse_objects) and everything
+// allocated over the process lifetime (alloc_space/alloc_objects).
+func writeHeapProfile(path string) {
+	f, err := os.Create(path)
+	if err != nil {
+		log.Println("Error creating heap profile file:", err)
+		return
+	}
+	defer f.Close()
+	// Run a GC so in-use statistics reflect live objects, not garbage
+	goruntime.GC()
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		log.Println("Error writing heap profile:", err)
+	}
 }
 
 // =============================================================================
@@ -148,7 +200,8 @@ func (a *App) startup(ctx context.Context) {
 // shutdown is called by Wails when the application is closing.
 // Used for cleanup operations.
 func (a *App) shutdown(ctx context.Context) {
-	// Best-effort cleanup - currently no resources require explicit cleanup
+	// Flush the CPU profile (no-op when profiling is off)
+	a.stopProfiling()
 }
 
 // QuitApp terminates the application.
@@ -156,6 +209,8 @@ func (a *App) shutdown(ctx context.Context) {
 // then forces an exit with a specific code.
 func (a *App) QuitApp() {
 	runtime.Quit(a.ctx)
+	// os.Exit skips defers and may race OnShutdown: flush the profile first
+	a.stopProfiling()
 	// Exit with code 133 (133 + 5 = 138, SIGTRAP-like exit)
 	os.Exit(133)
 }
