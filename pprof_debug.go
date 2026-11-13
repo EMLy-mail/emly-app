@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/pprof"
+	"os"
+	runtimepprof "runtime/pprof"
 	"time"
 )
 
@@ -14,10 +16,43 @@ import (
 // Bound to 127.0.0.1 so it is never reachable from the network.
 const pprofAddr = "127.0.0.1:6060"
 
-// livePprofEnabled reports whether the live pprof endpoint is compiled in.
-// When true, main skips file-based CPU profiling to leave the (single)
-// CPU profiler free for /debug/pprof/profile.
-const livePprofEnabled = true
+// Profile files written in the working directory by debug builds: the CPU
+// profile covers the whole run, the heap profile is written on exit (see
+// App.stopProfiling). Both are gitignored (*.prof).
+const (
+	cpuProfileFile  = "cpu.prof"
+	heapProfileFile = "mem.prof"
+)
+
+// liveCPUProfileEnv, set to 1, skips the cpu.prof recording: Go allows a
+// single CPU profile at a time, so while cpu.prof is being recorded
+// /debug/pprof/profile fails with "cpu profiling already in use". The other
+// live endpoints (heap, goroutine, ...) work either way.
+const liveCPUProfileEnv = "EMLY_PPROF_LIVE_CPU"
+
+// startFileProfiling starts recording cpu.prof (unless EMLY_PPROF_LIVE_CPU=1)
+// and returns the open file plus the mem.prof path for App.stopProfiling.
+// Compiled only into debug builds (-tags debug).
+func startFileProfiling() (cpuProfile *os.File, heapProfilePath string) {
+	heapProfilePath = heapProfileFile
+
+	if os.Getenv(liveCPUProfileEnv) == "1" {
+		log.Println("cpu.prof disabled (" + liveCPUProfileEnv + "=1): CPU profile via http://" + pprofAddr + "/debug/pprof/profile")
+		return nil, heapProfilePath
+	}
+
+	f, err := os.Create(cpuProfileFile)
+	if err != nil {
+		log.Println("Error creating CPU profile file:", err)
+		return nil, heapProfilePath
+	}
+	if err := runtimepprof.StartCPUProfile(f); err != nil {
+		log.Println("Error starting CPU profiling:", err)
+		f.Close()
+		return nil, heapProfilePath
+	}
+	return f, heapProfilePath
+}
 
 // startPprofServer exposes the net/http/pprof handlers on a dedicated mux
 // (not http.DefaultServeMux) at http://127.0.0.1:6060/debug/pprof/.

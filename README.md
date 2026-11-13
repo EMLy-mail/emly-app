@@ -50,6 +50,8 @@ wails dev -tags debug
 
 The app window opens automatically. The frontend is also reachable at `http://localhost:34115` for browser DevTools.
 
+Profiling (debug builds only, `-tags debug`; release builds never write profiles): EMLy records `cpu.prof` for the whole run and writes `mem.prof` on exit, both in the working directory (`go tool pprof cpu.prof`). A live pprof endpoint is served at `http://127.0.0.1:6060/debug/pprof/` (used by `scripts/heap-diff.ps1`). Set `EMLY_PPROF_LIVE_CPU=1` to skip `cpu.prof` when you need `/debug/pprof/profile`, since Go allows one CPU profile at a time.
+
 ## Building
 
 ```bash
