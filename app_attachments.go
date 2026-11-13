@@ -27,7 +27,8 @@ import (
 )
 
 // attachmentEndpoint is the AssetServer path that serves raw attachment
-// bytes: GET /emly-attachment?path=<mail file>&index=<n>
+// bytes: GET /emly-attachment?path=<mail file>&index=<n>[&display=1]
+// (display=1 converts HEIC/HEIF to JPEG, see heifToDisplayJPEG).
 const attachmentEndpoint = "/emly-attachment"
 
 // normalizeMailPath gives a stable allowlist key for a Windows path
@@ -218,15 +219,23 @@ func (a *App) serveAttachment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body := att.Data
 	contentType := att.ContentType
+	// display=1: the bytes are for an in-WebView viewer, not a save, so
+	// HEIC/HEIF may be swapped for a JPEG the WebView can render.
+	if q.Get("display") == "1" {
+		if jpg, converted := heifToDisplayJPEG(body, att.Filename); converted {
+			body, contentType = jpg, "image/jpeg"
+		}
+	}
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
 	h := w.Header()
 	h.Set("Content-Type", contentType)
-	h.Set("Content-Length", strconv.Itoa(len(att.Data)))
+	h.Set("Content-Length", strconv.Itoa(len(body)))
 	h.Set("Cache-Control", "no-store")
 	h.Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(att.Data)
+	_, err = w.Write(body)
 }

@@ -331,14 +331,22 @@ func (a *App) GetImageViewerData() (*ImageViewerData, error) {
 	if filePath == "" {
 		return nil, nil
 	}
+	return readImageViewerData(filePath)
+}
+
+// readImageViewerData reads the image at filePath for the viewer window.
+// HEIC/HEIF is converted to JPEG here (see heifToDisplayJPEG); Filename stays
+// the original name, and the frontend, seeing JPEG bytes behind a .heic name,
+// offers the JPEG with a .jpg name on download.
+func readImageViewerData(filePath string) (*ImageViewerData, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read image file: %w", err)
 	}
+	data, _ = heifToDisplayJPEG(data, filePath)
 	// Return as base64 for consistent frontend handling
-	encoded := base64.StdEncoding.EncodeToString(data)
 	return &ImageViewerData{
-		Data:     encoded,
+		Data:     base64.StdEncoding.EncodeToString(data),
 		Filename: filepath.Base(filePath),
 	}, nil
 }
@@ -377,17 +385,11 @@ func (a *App) GetPDFViewerData() (*PDFViewerData, error) {
 func (a *App) GetViewerData() (*ViewerData, error) {
 	// Check for image viewer mode
 	if filePath := findImageViewerPath(); filePath != "" {
-		data, err := os.ReadFile(filePath)
+		imageData, err := readImageViewerData(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read image file: %w", err)
+			return nil, err
 		}
-		encoded := base64.StdEncoding.EncodeToString(data)
-		return &ViewerData{
-			ImageData: &ImageViewerData{
-				Data:     encoded,
-				Filename: filepath.Base(filePath),
-			},
-		}, nil
+		return &ViewerData{ImageData: imageData}, nil
 	}
 
 	for _, arg := range os.Args {

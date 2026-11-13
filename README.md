@@ -57,6 +57,18 @@ The app window opens automatically. The frontend is also reachable at `http://lo
 wails build -platform windows/amd64
 ```
 
+### Native HEIC/HEIF decoding (libheif)
+
+HEIC/HEIF images are decoded in the Go backend via [libheif](https://github.com/strukturag/libheif) (`backend/utils/heif`). libheif is **not** linked into `EMLy.exe`: a small cgo shim loads `libheif.dll` at runtime (on the first HEIC, from EMLy's own folder only). libheif and libde265 are LGPL-3.0, so they stay in that separate, replaceable DLL. If the DLL is missing EMLy still works and the frontend falls back to its libheif-js (WASM) decoder.
+
+Build the DLL once (needs MinGW-w64 gcc, cmake and ninja on PATH, e.g. `scoop install mingw cmake ninja`):
+
+```powershell
+.\scripts\build-libheif.ps1
+```
+
+It writes `third_party/libheif/bin/libheif.dll` (self-contained, system DLLs only) plus `third_party/libheif/licenses/` (both picked up by `installer/installer.iss`), and copies the DLL to `build/bin` for `wails dev`. `wails build -clean` wipes `build/bin`: re-run the script (or copy the DLL) afterwards to test HEIC locally. EMLy itself needs cgo (`CGO_ENABLED=1`, the default when gcc is on PATH).
+
 Installer scripts are in `build/windows/installer/` (NSIS) and `installer/` (Inno Setup). macOS bundle config is in `build/darwin/`. File/image type associations (`.eml`, `.msg`, and the standalone image reader extensions) are registered via `[Registry]` entries in `installer/installer.iss`.
 
 ## Configuration

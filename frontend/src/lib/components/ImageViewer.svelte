@@ -50,9 +50,11 @@
   onMount(async () => {
     // Convert to a displayable <img> src: an object URL of the raw bytes for
     // regular formats (no base64 copy in the renderer), or a decoded JPEG
-    // for HEIC/HEIF/TIFF (which the browser can't render natively).
+    // for HEIC/HEIF/TIFF (which the browser can't render natively). With
+    // display: true the backend already converts HEIC/HEIF to JPEG via
+    // libheif; the in-browser decoder only runs as a fallback.
     try {
-      const blob = await attachmentSourceToBlob(source);
+      const blob = await attachmentSourceToBlob(source, undefined, { display: true });
       const result = await toDisplayableImageFromBlob(
         blob,
         filename,

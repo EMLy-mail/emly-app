@@ -62,6 +62,13 @@ Name: "{app}"; Permissions: users-modify
 ; Source path relative to this .iss file (assuming it is in the "installer" folder and build is in "../build")
 Source: "..\build\bin\{#ApplicationName}.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\config.ini"; DestDir: "{app}"; Flags: ignoreversion
+; Native HEIC/HEIF decoder, loaded by EMLy at runtime from {app} (see
+; backend/utils/heif). Built by scripts/build-libheif.ps1. libheif and
+; libde265 are LGPL-3.0: the DLL stays a separate, replaceable file and its
+; license texts ship alongside. signonce: signed with the SignTool above at
+; compile time, unless the DLL already carries a signature.
+Source: "..\third_party\libheif\bin\libheif.dll"; DestDir: "{app}"; Flags: ignoreversion signonce
+Source: "..\third_party\libheif\licenses\*"; DestDir: "{app}\licenses\libheif"; Flags: ignoreversion
 
 [Registry]
 ; Before /ALLUSERS, Aryx Agent's installs (as SYSTEM, per-user mode) left their

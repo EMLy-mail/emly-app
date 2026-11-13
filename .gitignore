@@ -54,3 +54,6 @@ docs/superpowers
 # pprof profiles (cpu.prof, mem.prof, scripts/heap-diff.ps1 output)
 *.prof
 profiles/
+
+# libheif static build output (scripts/build-libheif.ps1)
+third_party/

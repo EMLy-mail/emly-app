@@ -9,6 +9,12 @@
  * decode to a JPEG in-browser - HEIC via libheif-js (WASM), TIFF via utif -
  * purely for on-screen display.
  *
+ * HEIC/HEIF is normally converted to JPEG by the Go backend already (native
+ * libheif.dll, backend/utils/heif): such bytes sniff as JPEG behind a .heic
+ * name (see isBackendConvertedHeic). libheif-js stays as the fallback when
+ * libheif.dll is missing, for preloaded base64 attachments and for files the
+ * backend failed to decode.
+ *
  * The format is detected from the file's magic bytes rather than trusted from
  * the extension: scanners and document archives commonly emit TIFF files
  * named ".jpeg"/".jpg", which would otherwise show up as a broken image.
@@ -118,6 +124,13 @@ export async function toDisplayableImageSrc(
   const sniffed = sniffBase64(base64Data);
   const format = sniffed ?? (isHeic(filename) ? "heic" : isTiffFilename(filename) ? "tiff" : null);
 
+  if (isBackendConvertedHeic(format, filename)) {
+    return {
+      src: `data:image/jpeg;base64,${base64Data}`,
+      download: { base64: base64Data, filename: withJpgExtension(filename) },
+    };
+  }
+
   try {
     if (format === "heic") {
       const dataUrl = await decodeHeicToJpeg(base64Data);
@@ -160,6 +173,15 @@ export async function toDisplayableImageFromBlob(
 ): Promise<DisplayableImage & { objectUrl: boolean }> {
   const sniffed = await sniffBlob(blob);
   const format = sniffed ?? (isHeic(filename) ? "heic" : isTiffFilename(filename) ? "tiff" : null);
+
+  if (isBackendConvertedHeic(format, filename)) {
+    const jpeg = new Blob([blob], { type: "image/jpeg" });
+    return {
+      src: URL.createObjectURL(jpeg),
+      objectUrl: true,
+      download: { base64: await blobToBase64(jpeg), filename: withJpgExtension(filename) },
+    };
+  }
 
   if (format === "heic" || format === "tiff") {
     const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -274,6 +296,22 @@ function normalizeDecodeError(err: unknown): Error {
   } catch {
     return new Error(String(err));
   }
+}
+
+/** True for JPEG bytes behind a .heic/.heif name: the Go backend already
+ *  converted the HEIC (see app_heif.go). The download should then offer the
+ *  JPEG under a .jpg name, like the in-browser decoder does. */
+function isBackendConvertedHeic(format: SniffedFormat | null, filename: string): boolean {
+  return format === "jpeg" && isHeic(filename);
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(reader.error ?? new Error("FileReader failed"));
+    reader.readAsDataURL(blob);
+  });
 }
 
 function base64ToUint8Array(base64Data: string): Uint8Array {

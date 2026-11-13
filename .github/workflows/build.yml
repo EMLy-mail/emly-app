@@ -35,6 +35,46 @@ jobs:
       - name: Install UPX
         run: choco install upx -y
 
+      # MinGW-w64 toolchain (MSYS2 UCRT64: gcc, binutils, cmake, ninja) for
+      # cgo and scripts/build-libheif.ps1. UCRT64 matches the local
+      # MinGW-builds gcc (UCRT runtime, api-ms-win-crt-*.dll imports).
+      - name: Set up MinGW-w64 (MSYS2 UCRT64)
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: false
+          path-type: inherit
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-binutils
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+
+      # setup-msys2 only exposes the toolchain to `shell: msys2 {0}` steps.
+      # Prepend ucrt64\bin to PATH so pwsh steps, Go (cgo) and wails pick this
+      # gcc up instead of any MinGW preinstalled on the runner.
+      - name: Put MinGW-w64 on PATH
+        shell: pwsh
+        run: |
+          $bin = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "ucrt64\bin"
+          if (-not (Test-Path (Join-Path $bin "gcc.exe"))) { throw "gcc.exe not found in $bin" }
+          $bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Check toolchain
+        id: toolchain
+        shell: pwsh
+        run: |
+          (Get-Command gcc).Source
+          gcc --version | Select-Object -First 1
+          cmake --version | Select-Object -First 1
+          ninja --version
+          $env:CGO_ENABLED = "1"
+          go env CC CGO_ENABLED
+          if ((go env CGO_ENABLED) -ne "1") { throw "cgo not enabled" }
+          # Part of the libheif cache key: a new gcc rebuilds the DLL.
+          "gcc=$(gcc -dumpfullversion)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
         
@@ -51,8 +91,42 @@ jobs:
           $bytes = [Convert]::FromBase64String("${{ secrets.CODE_SIGN_PFX }}")
           [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\codesign.pfx", $bytes)
 
+      # Native HEIC/HEIF decoding: libheif.dll (libde265 inside), loaded by
+      # EMLy at runtime and shipped by the installer. Built with the MSYS2
+      # UCRT64 gcc above, cached by script hash + gcc version.
+      - name: Cache libheif
+        id: cache-libheif
+        uses: actions/cache@v4
+        with:
+          path: third_party/libheif
+          key: libheif-dll-${{ runner.os }}-ucrt64-gcc${{ steps.toolchain.outputs.gcc }}-${{ hashFiles('scripts/build-libheif.ps1') }}
+
+      - name: Build libheif
+        if: steps.cache-libheif.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: ./scripts/build-libheif.ps1
+
+      # cgo is required for the libheif loader; fail instead of silently
+      # building the no-op stub if gcc is missing.
       - name: Build EMLy
+        env:
+          CGO_ENABLED: "1"
         run: wails build
+
+      # After `wails build`: package main embeds frontend/build. Exercises the
+      # cgo loader against the built (or cached) libheif.dll - sample decode,
+      # libheif fuzz corpus when present, missing/foreign DLL fallback.
+      # EMLY_HEIF_REQUIRED turns "DLL unavailable" skips into failures.
+      - name: Test HEIC decoder
+        shell: pwsh
+        env:
+          CGO_ENABLED: "1"
+          EMLY_HEIF_REQUIRED: "1"
+        run: |
+          go test -count=1 -v ./backend/utils/heif/
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          go test -count=1 -v -run Heif .
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Sign EMLy.exe
         shell: pwsh
