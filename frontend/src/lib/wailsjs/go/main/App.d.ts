@@ -270,6 +270,12 @@ export function OpenAttachmentImageWindow(filePath:string,index:number,filename:
 export function OpenAttachmentPDFWindow(filePath:string,index:number,filename:string):Promise<void>;
 
 /**
+ * OpenAttachmentZip extracts the ZIP attachment at index of filePath into a
+ * temp folder and opens that folder in Windows Explorer.
+ */
+export function OpenAttachmentZip(filePath:string,index:number,filename:string):Promise<void>;
+
+/**
  * OpenDefaultAppsSettings opens the Windows Settings app to the Default Apps page.
  * This allows users to easily set EMLy as the default handler for email files.
  * 
@@ -408,6 +414,12 @@ export function OpenPDFWindow(base64Data:string,filename:string):Promise<void>;
  *   - error: Error if the scheme is not allowed or launching the browser fails
  */
 export function OpenURLInBrowser(url:string):Promise<void>;
+
+/**
+ * OpenZip is OpenAttachmentZip for base64 data already held by the frontend
+ * (attachment pre-loading enabled).
+ */
+export function OpenZip(base64Data:string,filename:string):Promise<void>;
 
 /**
  * QuitApp terminates the application.

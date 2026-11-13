@@ -139,6 +139,8 @@ export const CONTENT_TYPES = {
   PDF: 'application/pdf',
   DOCX: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   DOC: 'application/msword',
+  ZIP: 'application/zip',
+  ZIP_COMPRESSED: 'application/x-zip-compressed',
 } as const;
 
 /**

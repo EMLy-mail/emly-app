@@ -13,6 +13,8 @@ import {
   OpenAttachmentImageWindow,
   OpenAttachmentEMLWindow,
   OpenAttachmentExternal,
+  OpenAttachmentZip,
+  OpenZip,
 } from '#lib/wailsjs/go/main/App.js';
 import { type AttachmentSource, isAttachmentRef } from './attachment-source';
 import { settingsStore } from '#lib/stores/settings.svelte.js';
@@ -138,6 +140,38 @@ export async function openDocAttachment(
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('Failed to open document:', error);
     toast.error(m.mail_error_doc());
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Extracts a ZIP attachment into a temp folder and opens it in Explorer
+ * @param source - Attachment reference (mail path + index) or base64 ZIP data
+ * @param filename - Name of the ZIP file
+ */
+export async function openZipAttachment(
+  source: AttachmentSource,
+  filename: string
+): Promise<AttachmentHandlerResult> {
+  try {
+    toast.loading(m.mail_zip_extracting_toast(), {
+      id: "mail-zip-extracting",
+      duration: 2000,
+    });
+    if (isAttachmentRef(source)) {
+      await OpenAttachmentZip(source.filePath, source.index, filename);
+    } else {
+      await OpenZip(source, filename);
+    }
+    return { success: true };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Failed to open ZIP:', error);
+    toast.error(
+      errorMessage.includes('password protected')
+        ? m.mail_error_zip_encrypted()
+        : m.mail_error_zip()
+    );
     return { success: false, error: errorMessage };
   }
 }

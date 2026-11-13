@@ -30,6 +30,7 @@ export {
   openImageAttachment,
   openEMLAttachment,
   openDocAttachment,
+  openZipAttachment,
   type AttachmentHandlerResult,
 } from './attachment-handlers';
 

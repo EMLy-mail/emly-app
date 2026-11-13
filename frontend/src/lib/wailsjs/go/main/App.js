@@ -327,6 +327,14 @@ export function OpenAttachmentPDFWindow(filePath, index, filename) {
 }
 
 /**
+ * OpenAttachmentZip extracts the ZIP attachment at index of filePath into a
+ * temp folder and opens that folder in Windows Explorer.
+ */
+export function OpenAttachmentZip(filePath, index, filename) {
+  return window['go']['main']['App']['OpenAttachmentZip'](filePath, index, filename);
+}
+
+/**
  * OpenDefaultAppsSettings opens the Windows Settings app to the Default Apps page.
  * This allows users to easily set EMLy as the default handler for email files.
  * 
@@ -486,6 +494,14 @@ export function OpenPDFWindow(base64Data, filename) {
  */
 export function OpenURLInBrowser(url) {
   return window['go']['main']['App']['OpenURLInBrowser'](url);
+}
+
+/**
+ * OpenZip is OpenAttachmentZip for base64 data already held by the frontend
+ * (attachment pre-loading enabled).
+ */
+export function OpenZip(base64Data, filename) {
+  return window['go']['main']['App']['OpenZip'](base64Data, filename);
 }
 
 /**

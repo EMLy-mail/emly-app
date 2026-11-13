@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Image, FileText, MailOpen, File, Loader2 } from "@lucide/svelte";
+    import { Image, FileText, MailOpen, File, FileArchive, Loader2 } from "@lucide/svelte";
     import { toast } from "svelte-sonner";
     import { hostIntegrityFailed } from "#lib/stores/app.js";
     import * as m from "#lib/paraglide/messages.js";
@@ -13,6 +13,7 @@
         openImageAttachment,
         openEMLAttachment,
         openDocAttachment,
+        openZipAttachment,
     } from "#lib/utils/mail/index.js";
     import { showDefaultAttachmentToast } from "#lib/utils/open-default-attachment-toast.js";
     import { saveAttachmentNatively } from "#lib/utils/attachment-download.js";
@@ -132,6 +133,13 @@
         await withPending(index, () => openDocAttachment(source, filename));
     }
 
+    async function handleOpenZip(index: number, filename: string) {
+        if (isAttachmentBlocked()) return;
+        const source = attachmentSource(index);
+        if (source === null) return;
+        await withPending(index, () => openZipAttachment(source, filename));
+    }
+
     async function handleSaveDefault(index: number, filename: string) {
         if (isAttachmentBlocked()) return;
         showDefaultAttachmentToast({
@@ -163,6 +171,10 @@
                         .toLowerCase()
                         .endsWith(".docx") ||
                     att.filename.toLowerCase().endsWith(".doc")}
+                {@const isZip =
+                    att.contentType === CONTENT_TYPES.ZIP ||
+                    att.contentType === CONTENT_TYPES.ZIP_COMPRESSED ||
+                    att.filename.toLowerCase().endsWith(".zip")}
                 {@const isPending = pendingIndex === index}
 
                 {#if isSupportedImageType(att.contentType, att.filename)}
@@ -236,6 +248,25 @@
                             <Loader2 size="16" class="att-spinner" />
                         {:else}
                             <FileText size="16" />
+                        {/if}
+                        <span class="att-name"
+                            >{att.filename}</span
+                        >
+                    </button>
+                {:else if isZip}
+                    <button
+                        class="att-btn zip"
+                        class:integrity-blocked={$hostIntegrityFailed}
+                        disabled={isPending}
+                        onclick={() => handleOpenZip(index, att.filename)}
+                        title={$hostIntegrityFailed
+                            ? m.mail_attachments_disabled_hint()
+                            : undefined}
+                    >
+                        {#if isPending}
+                            <Loader2 size="16" class="att-spinner" />
+                        {:else}
+                            <FileArchive size="16" />
                         {/if}
                         <span class="att-name"
                             >{att.filename}</span
@@ -359,6 +390,14 @@
     }
     .att-btn.doc:hover {
         color: #93c5fd;
+    }
+
+    .att-btn.zip {
+        color: #c084fc;
+        border-color: rgba(192, 132, 252, 0.3);
+    }
+    .att-btn.zip:hover {
+        color: #d8b4fe;
     }
 
     .att-name {
